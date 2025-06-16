@@ -1,0 +1,2614 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3498db">
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeBook - Registro Profesional de Horas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --info: #1abc9c;
+            --border-radius: 12px;
+            --box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), #1a2536);
+            color: white;
+            padding: 15px 0;
+            box-shadow: var(--box-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 3px solid var(--secondary);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo i {
+            font-size: 32px;
+            color: var(--secondary);
+            background: rgba(255, 255, 255, 0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .logo h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary), #2980b9);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #219653);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--accent), #c0392b);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), #e67e22);
+            color: white;
+        }
+        
+        .btn-info {
+            background: linear-gradient(135deg, var(--info), #16a085);
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+        
+        .language-selector {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: blue;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 120px;
+        }
+        
+        .language-selector:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary), #2980b9);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 550px;
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .card-title {
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .card-title i {
+            color: var(--secondary);
+            background: rgba(52, 152, 219, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #dce1e6;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            background-color: #f8fafc;
+            transition: var(--transition);
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .time-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff, #f8fafc);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--secondary);
+            margin: 15px 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-label {
+            font-size: 15px;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 160px;
+        }
+        
+        .entries-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            background: white;
+        }
+        
+        .entry-group {
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            background: white;
+        }
+        
+        .group-header {
+            background: linear-gradient(135deg, var(--light), #dbe4ee);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .group-content {
+            padding: 15px;
+            background-color: white;
+        }
+        
+        .entry-item {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+        
+        .entry-item:hover {
+            background-color: #f8fafc;
+        }
+        
+        .entry-item:last-child {
+            border-bottom: none;
+        }
+        
+        .entry-details {
+            flex: 1;
+        }
+        
+        .entry-project {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 17px;
+        }
+        
+        .entry-time {
+            font-size: 15px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .entry-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background-color: var(--light);
+            color: var(--dark);
+            border: none;
+            transition: var(--transition);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .action-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .action-btn.edit {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--secondary);
+        }
+        
+        .action-btn.delete {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--accent);
+        }
+        
+        .collapse-icon {
+            transition: var(--transition);
+        }
+        
+        .collapsed .collapse-icon {
+            transform: rotate(-90deg);
+        }
+        
+        .collapsed .group-content {
+            display: none;
+        }
+        
+        .project-list {
+            list-style: none;
+            margin-top: 10px;
+        }
+        
+        .project-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .project-item:last-child {
+            border-bottom: none;
+        }
+        
+        .project-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .tab-container {
+            margin-top: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 12px 25px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+        
+        .tab:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--secondary);
+            color: var(--secondary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .user-form-container {
+            max-width: 700px;
+            margin: 50px auto;
+            padding: 40px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .section-title {
+            font-size: 20px;
+            color: var(--primary);
+            margin: 25px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            color: var(--secondary);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .resumen-container {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-top: 15px;
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .resumen-container table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+        
+        .resumen-container th, .resumen-container td {
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        
+        .resumen-container th {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .resumen-container tfoot th {
+            background-color: var(--info);
+        }
+        
+        .no-records {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            font-style: italic;
+            font-size: 18px;
+        }
+        
+        .summary-title {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .summary-title i {
+            color: var(--secondary);
+        }
+        
+        .week-number {
+            background-color: var(--info);
+            color: white;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-left: 10px;
+            font-weight: 600;
+        }
+        
+        .hint-text {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .date-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .total-hours {
+            font-weight: bold;
+            color: var(--success);
+            font-size: 18px;
+        }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .alert-success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+        
+        .alert-error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
+        }
+        
+        .alert i {
+            font-size: 22px;
+        }
+        
+        .chart-container {
+            margin-top: 25px;
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .chart-title {
+            font-size: 20px;
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-top: 25px;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--box-shadow);
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .chart-header h3 {
+            font-size: 18px;
+            color: var(--primary);
+        }
+        
+        .chart-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chart-btn {
+            padding: 8px 15px;
+            border-radius: 20px;
+            background: var(--light);
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .chart-btn.active {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .controls {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .form-row, .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                flex-direction: column;
+            }
+            
+            .user-form-container {
+                padding: 25px;
+                margin: 25px auto;
+            }
+            
+            .chart-container {
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .btn {
+                flex: 1;
+                min-width: 130px;
+                font-size: 14px;
+                padding: 10px 12px;
+            }
+            
+            .time-inputs {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                width: 100%;
+                text-align: center;
+            }
+        }
+<script src="js/licencia.js"></script>
+		
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-clock"></i>
+                <h1 id="app-title">TimeBook</h1>
+            </div>
+            <div class="controls">
+                <select id="language" class="language-selector">
+                    <option value="sv" selected>Svenska</option>				
+                    <option value="es">Spanska</option>
+                    <option value="en">Engelska</option>
+                    <option value="ru">Ryska</option>
+                    <option value="pl">Polska</option>
+                </select>
+                <button class="btn btn-warning" id="export-pdf">
+                    <i class="fas fa-file-pdf"></i> <span id="export-pdf-text">Exportera PDF</span>
+                </button>
+                <button class="btn btn-success" id="export-json">
+                    <i class="fas fa-file-code"></i> <span id="export-json-text">Exportera JSON</span>
+                </button>
+                <div class="file-input-wrapper">
+                    <button class="btn btn-primary" id="import-json">
+                        <i class="fas fa-file-import"></i> <span id="import-json-text">Importera JSON</span>
+                    </button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                </div>
+            </div>
+            <div class="user-section">
+                <div class="user-avatar" id="user-avatar">A</div>
+                <span id="user-name">Användare</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Användarformulär (initialt) -->
+        <div id="user-form" class="user-form-container">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <i class="fas fa-user-cog" style="font-size: 48px; color: var(--secondary);"></i>
+                <h2 id="initial-setup-title" style="margin: 15px 0;">Initial Konfiguration</h2>
+                <p id="initial-setup-desc" style="color: #7f8c8d;">Fyll i dina personuppgifter för att komma igång</p>
+            </div>
+
+            <form id="user-form-data">
+                <div class="section-title">
+                    <i class="fas fa-id-card"></i>
+                    <span id="personal-info-title">Personuppgifter</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first-name" id="first-name-label">Förnamn</label>
+                        <input type="text" id="first-name" required placeholder="Ange ditt förnamn">
+                    </div>
+                    <div class="form-group">
+                        <label for="last-name" id="last-name-label">Efternamn</label>
+                        <input type="text" id="last-name" required placeholder="Ange ditt efternamn">
+                    </div>
+                </div>
+
+                <div class="section-title">
+                    <i class="fas fa-address-book"></i>
+                    <span id="contact-info-title">Kontaktinformation</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="phone" id="phone-label">Telefon</label>
+                        <input type="tel" id="phone" required placeholder="Ange ditt telefonnummer">
+                    </div>
+                    <div class="form-group">
+                        <label for="id-number" id="id-number-label">ID-nummer</label>
+                        <input type="text" id="id-number" required placeholder="Ange ditt ID">
+                    </div>
+                </div>
+
+                <div class="form-group" style="text-align: center; margin-top: 30px;">
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 40px; font-size: 18px;" id="save-continue-btn">
+                        <i class="fas fa-check-circle"></i> <span>Spara och fortsätt</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div id="main-app" class="hidden">
+            <div class="main-content">
+                <div>
+                    <div class="card">
+                        <div class="card-title">
+                            <span><i class="fas fa-calendar-plus"></i> <span id="register-title">Registrera Tid</span></span>
+                        </div>
+                        <form id="time-entry-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="entry-date" id="date-label">Datum</label>
+                                    <input type="date" id="entry-date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="project" id="project-label">Projekt</label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <select id="project" required style="flex: 1;"></select>
+                                        <button type="button" id="manage-projects" class="btn btn-warning" style="padding: 12px;">
+                                            <i class="fas fa-cog"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label id="schedule-label">Tidsplan</label>
+                                    <div class="time-inputs">
+                                        <input type="time" id="start-time" required>
+                                        <input type="time" id="end-time" required>
+                                    </div>
+                                    <div class="hint-text" id="schedule-hint">Arbetstimmar</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="break-time" id="break-label">Rast</label>
+                                    <select id="break-time" required>
+                                        <option value="0.5">0.5 timmar</option>
+                                        <option value="1.0" selected>1.0 timmar</option>
+                                        <option value="1.5">1.5 timmar</option>
+                                        <option value="2.0">2.0 timmar</option>
+                                    </select>
+                                    <div class="hint-text" id="break-hint">Rast under arbetsdagen</div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="notes" id="notes-label">Anteckningar</label>
+                                <textarea id="notes" placeholder="Detaljer om utfört arbete..."></textarea>
+                                <div class="hint-text" id="notes-hint">Detaljer om arbetsuppgifterna</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="coworkers" id="coworkers-label">Kollegor (valfritt)</label>
+                                <input type="text" id="coworkers" placeholder="Namn separerade med kommatecken">
+                                <div class="hint-text" id="coworkers-hint">Vem arbetade med dig</div>
+                            </div>
+
+                            <div class="form-group" style="display: flex; gap: 15px; margin-top: 25px;">
+                                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 15px; font-size: 17px;" id="save-record-btn">
+                                    <i class="fas fa-save"></i> <span id="save-record-text">Spara Post</span>
+                                </button>
+                                <button type="button" id="reset-form" class="btn btn-danger" style="flex: 0.5; padding: 15px;">
+                                    <i class="fas fa-times"></i> <span id="cancel-text">Avbryt</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">
+                            <span><i class="fas fa-history"></i> <span id="history-title">Registerhistorik</span></span>
+                        </div>
+                        
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label for="year-filter" id="year-filter-label">År</label>
+                                <select id="year-filter" class="form-control">
+                                    <option value="all">Alla</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="month-filter" id="month-filter-label">Månad</label>
+                                <select id="month-filter" class="form-control">
+                                    <option value="all">Alla</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="week-filter" id="week-filter-label">Vecka</label>
+                                <select id="week-filter" class="form-control">
+                                    <option value="all">Alla</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="entries-container" id="entries-container">
+                            <div class="no-records" id="no-records-message">Inga poster ännu. Börja med att lägga till en ny post.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-title">
+                            <i class="fas fa-chart-bar"></i>
+                            <span id="charts-title">Visuell Statistik</span>
+                        </div>
+                        
+                        <div class="chart-row">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3 id="weekly-chart-title">Timmar per Vecka</h3>
+                                    <div class="chart-actions">
+                                        <button class="chart-btn active" data-period="month" id="chart-month">Månad</button>
+                                        <button class="chart-btn" data-period="quarter" id="chart-quarter">Kvartal</button>
+                                    </div>
+                                </div>
+                                <canvas id="weekly-chart"></canvas>
+                            </div>
+                            
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3 id="project-dist-title">Projektfördelning</h3>
+                                </div>
+                                <canvas id="project-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="card">
+                        <div class="card-title">
+                            <span><i class="fas fa-chart-line"></i> <span id="stats-title">Statistik</span></span>
+                        </div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <i class="fas fa-clock fa-2x"></i>
+                                <div class="stat-value" id="total-hours">0</div>
+                                <div class="stat-label" id="total-hours-label">Totala Timmar</div>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-calendar-day fa-2x"></i>
+                                <div class="stat-value" id="total-days">0</div>
+                                <div class="stat-label" id="total-days-label">Arbetsdagar</div>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-calendar-week fa-2x"></i>
+                                <div class="stat-value" id="week-hours">0</div>
+                                <div class="stat-label" id="week-hours-label">Denna Veckas Timmar</div>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-calendar-alt fa-2x"></i>
+                                <div class="stat-value" id="month-hours">0</div>
+                                <div class="stat-label" id="month-hours-label">Denna Månads Timmar</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-title">
+                            <span><i class="fas fa-user-cog"></i> <span id="user-info-title">Användarinformation</span></span>
+                        </div>
+                        
+                        <div class="user-info">
+                            <p><strong id="info-name-label">Namn:</strong> <span id="info-name"></span></p>
+                            <p><strong id="info-phone-label">Telefon:</strong> <span id="info-phone"></span></p>
+                            <p><strong id="info-id-label">ID:</strong> <span id="info-id"></span></p>
+                            <div style="margin-top: 20px;">
+                                <button id="edit-user-btn" class="btn btn-warning" style="width: 100%; padding: 12px;">
+                                    <i class="fas fa-edit"></i> <span id="edit-info-text">Redigera Information</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-title">
+                            <span><i class="fas fa-list-alt"></i> <span id="summary-title">Sammanfattning av Timmar</span></span>
+                        </div>
+                        <div class="resumen-container">
+                            <div id="summary-content">
+                                <table id="resumenHoras">
+                                    <thead>
+                                        <tr>
+                                            <th id="date-header">Datum</th>
+                                            <th id="week-header">Vecka</th>
+                                            <th id="project-header">Projekt</th>
+                                            <th id="hours-header">Arbetade Timmar</th>
+                                            <th id="break-header">Raster</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <th id="total-header" colspan="3">Summa för perioden</th>
+                                            <th id="total-mes">0</th>
+                                            <th></th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-title">
+                            <span><i class="fas fa-tasks"></i> <span id="project-management-title">Projekt­hantering</span></span>
+                        </div>
+                        
+                        <div class="tab-container">
+                            <div class="tabs">
+                                <div class="tab active" data-tab="projects" id="projects-tab">Projekt</div>
+                                <div class="tab" data-tab="add-project" id="add-project-tab">Lägg Till</div>
+                            </div>
+                            
+                            <div class="tab-content active" id="projects-content">
+                                <ul class="project-list" id="projects-list">
+                                    <!-- Projekt genereras dynamiskt här -->
+                                </ul>
+                            </div>
+                            
+                            <div class="tab-content" id="add-project-content">
+                                <div class="form-group">
+                                    <label for="new-project-name" id="new-project-name-label">Projektnamn</label>
+                                    <input type="text" id="new-project-name" placeholder="Projektnamn">
+                                </div>
+                                <div class="form-group">
+                                    <label for="new-project-code" id="new-project-code-label">Kod (valfri)</label>
+                                    <input type="text" id="new-project-code" placeholder="Projektkod">
+                                </div>
+                                <div class="form-group" style="margin-top: 20px;">
+                                    <button id="add-project-btn" class="btn btn-primary" style="width: 100%; padding: 12px;">
+                                        <i class="fas fa-plus"></i> <span id="add-project-text">Lägg Till Projekt</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+	
+	<script src="js/licencia.js"></script>
+    <script>
+        // Traducciones para la aplicación
+        const translations = {
+            es: {
+                title: "TimeBook - Registro Profesional de Horas",
+                save: "Guardar",
+                cancel: "Cancelar",
+                projects: "Proyectos",
+                add: "Agregar",
+                name: "Nombre",
+                lastName: "Apellido",
+                phone: "Teléfono",
+                idNumber: "Número de Identificación",
+                date: "Fecha",
+                project: "Proyecto",
+                schedule: "Horario",
+                breakTime: "Tiempo de Descanso",
+                notes: "Observaciones",
+                coworkers: "Compañeros de Trabajo",
+                saveRecord: "Guardar Registro",
+                history: "Historial de Registros",
+                stats: "Estadísticas",
+                userInfo: "Información de Usuario",
+                totalHours: "Horas Totales",
+                workedDays: "Días Trabajados",
+                weekHours: "Horas Esta Semana",
+                monthHours: "Horas Este Mes",
+                projectManagement: "Gestión de Proyectos",
+                projectName: "Nombre del Proyecto",
+                code: "Código",
+                addProject: "Agregar Proyecto",
+                editInfo: "Editar Información",
+                importSuccess: "Datos importados con éxito",
+                exportSuccess: "Datos exportados con éxito",
+                deleteConfirm: "¿Está seguro de que desea eliminar este registro?",
+                projectDeleteConfirm: "¿Está seguro de que desea eliminar este proyecto?",
+                newName: "Ingrese el nuevo nombre del proyecto:",
+                newCode: "Ingrese el nuevo código del proyecto (opcional):",
+                projectAdded: "Proyecto agregado con éxito",
+                projectUpdated: "Proyecto actualizado con éxito",
+                projectDeleted: "Proyecto eliminado con éxito",
+                entryDeleted: "Registro eliminado con éxito",
+                entrySaved: "Registro guardado con éxito",
+                all: "Todos",
+                year: "Año",
+                month: "Mes",
+                week: "Semana",
+                initialSetup: "Configuración Inicial",
+                saveAndContinue: "Guardar y Continuar",
+                registerTitle: "Registrar Horas",
+                summaryTitle: "Resumen de Horas",
+                noRecords: "No hay registros aún. Comience agregando un nuevo registro.",
+                scheduleHint: "Horas de trabajo",
+                breakHint: "Tiempo de descanso durante el día",
+                notesHint: "Detalles sobre el trabajo realizado",
+                coworkersHint: "Quién trabajó contigo",
+                exportPdf: "Exportar PDF",
+                exportJson: "Exportar JSON",
+                importJson: "Importar JSON",
+                hours: "horas",
+                totalPeriod: "Total para el período",
+                notesPlaceholder: "Detalles del trabajo realizado...",
+                coworkersPlaceholder: "Nombres separados por comas",
+                projectNamePlaceholder: "Nombre del proyecto",
+                projectCodePlaceholder: "Código del proyecto",
+                personalInfoTitle: "Datos Personales",
+                contactInfoTitle: "Información de Contacto",
+                initialSetupDesc: "Por favor, complete sus datos personales para comenzar",
+                weeklyChartTitle: "Horas por Semana",
+                projectDistTitle: "Distribución por Proyecto",
+                chartsTitle: "Estadísticas Visuales",
+                chartMonth: "Mes",
+                chartQuarter: "Trimestre"
+            },
+            en: {
+                title: "TimeBook - Professional Hours Tracker",
+                save: "Save",
+                cancel: "Cancel",
+                projects: "Projects",
+                add: "Add",
+                name: "First Name",
+                lastName: "Last Name",
+                phone: "Phone",
+                idNumber: "ID Number",
+                date: "Date",
+                project: "Project",
+                schedule: "Schedule",
+                breakTime: "Break Time",
+                notes: "Notes",
+                coworkers: "Coworkers",
+                saveRecord: "Save Record",
+                history: "History of Records",
+                stats: "Statistics",
+                userInfo: "User Information",
+                totalHours: "Total Hours",
+                workedDays: "Worked Days",
+                weekHours: "Hours This Week",
+                monthHours: "Hours This Month",
+                projectManagement: "Project Management",
+                projectName: "Project Name",
+                code: "Code",
+                addProject: "Add Project",
+                editInfo: "Edit Information",
+                importSuccess: "Data imported successfully",
+                exportSuccess: "Data exported successfully",
+                deleteConfirm: "Are you sure you want to delete this record?",
+                projectDeleteConfirm: "Are you sure you want to delete this project?",
+                newName: "Enter the new project name:",
+                newCode: "Enter the new project code (optional):",
+                projectAdded: "Project added successfully",
+                projectUpdated: "Project updated successfully",
+                projectDeleted: "Project deleted successfully",
+                entryDeleted: "Entry deleted successfully",
+                entrySaved: "Entry saved successfully",
+                all: "All",
+                year: "Year",
+                month: "Month",
+                week: "Week",
+                initialSetup: "Initial Setup",
+                saveAndContinue: "Save and Continue",
+                registerTitle: "Register Hours",
+                summaryTitle: "Hours Summary",
+                noRecords: "No records yet. Start by adding a new registration.",
+                scheduleHint: "Work hours",
+                breakHint: "Break time during the day",
+                notesHint: "Details about the work done",
+                coworkersHint: "Who worked with you",
+                exportPdf: "Export PDF",
+                exportJson: "Export JSON",
+                importJson: "Import JSON",
+                hours: "hours",
+                totalPeriod: "Total for the period",
+                notesPlaceholder: "Details of the work done...",
+                coworkersPlaceholder: "Names separated by commas",
+                projectNamePlaceholder: "Project name",
+                projectCodePlaceholder: "Project code",
+                personalInfoTitle: "Personal Information",
+                contactInfoTitle: "Contact Information",
+                initialSetupDesc: "Please complete your personal details to get started",
+                weeklyChartTitle: "Hours by Week",
+                projectDistTitle: "Project Distribution",
+                chartsTitle: "Visual Statistics",
+                chartMonth: "Month",
+                chartQuarter: "Quarter"
+            },
+            sv: {
+                title: "TimeBook - Professionell Timregistrering",
+                save: "Spara",
+                cancel: "Avbryt",
+                projects: "Projekt",
+                add: "Lägg till",
+                name: "Förnamn",
+                lastName: "Efternamn",
+                phone: "Telefon",
+                idNumber: "ID-nummer",
+                date: "Datum",
+                project: "Projekt",
+                schedule: "Schema",
+                breakTime: "Rasttid",
+                notes: "Anteckningar",
+                coworkers: "Kollegor",
+                saveRecord: "Spara registrering",
+                history: "Registreringshistorik",
+                stats: "Statistik",
+                userInfo: "Användarinformation",
+                totalHours: "Total timmar",
+                workedDays: "Arbetade dagar",
+                weekHours: "Timmar denna vecka",
+                monthHours: "Timmar denna månad",
+                projectManagement: "Projekthantering",
+                projectName: "Projektnamn",
+                code: "Kod",
+                addProject: "Lägg till projekt",
+                editInfo: "Redigera information",
+                importSuccess: "Data importerades",
+                exportSuccess: "Data exporterades",
+                deleteConfirm: "Är du säker på att du vill radera detta?",
+                projectDeleteConfirm: "Är du säker på att du vill radera detta projekt?",
+                newName: "Ange nytt projektnamn:",
+                newCode: "Ange ny projektkod (valfritt):",
+                projectAdded: "Projekt tillagt",
+                projectUpdated: "Projekt uppdaterat",
+                projectDeleted: "Projekt raderat",
+                entryDeleted: "Radering lyckades",
+                entrySaved: "Sparat",
+                all: "Alla",
+                year: "År",
+                month: "Månad",
+                week: "Vecka",
+                initialSetup: "Initialinställning",
+                saveAndContinue: "Spara och fortsätt",
+                registerTitle: "Registrera timmar",
+                summaryTitle: "Timmar sammanfattning",
+                noRecords: "Inga registreringar än. Börja med att lägga till en ny registrering.",
+                scheduleHint: "Arbetstid",
+                breakHint: "Rasttid under dagen",
+                notesHint: "Detaljer om utfört arbete",
+                coworkersHint: "Vem arbetade med dig",
+                exportPdf: "Exportera PDF",
+                exportJson: "Exportera JSON",
+                importJson: "Importera JSON",
+                hours: "timmar",
+                totalPeriod: "Totalt för perioden",
+                notesPlaceholder: "Detaljer om utfört arbete...",
+                coworkersPlaceholder: "Namn separerade med kommatecken",
+                projectNamePlaceholder: "Projektnamn",
+                projectCodePlaceholder: "Projektkod",
+                personalInfoTitle: "Personlig Information",
+                contactInfoTitle: "Kontaktinformation",
+                initialSetupDesc: "Vänligen fyll i dina personuppgifter för att komma igång",
+                weeklyChartTitle: "Timmar per Vecka",
+                projectDistTitle: "Projektfördelningsdiagram",
+                chartsTitle: "Visuell Statistik",
+                chartMonth: "Månad",
+                chartQuarter: "Kvartal"
+            },
+            ru: {
+                title: "TimeBook - Профессиональный учет времени",
+                save: "Сохранить",
+                cancel: "Отмена",
+                projects: "Проекты",
+                add: "Добавить",
+                name: "Имя",
+                lastName: "Фамилия",
+                phone: "Телефон",
+                idNumber: "Идентификационный номер",
+                date: "Дата",
+                project: "Проект",
+                schedule: "Расписание",
+                breakTime: "Время перерыва",
+                notes: "Примечания",
+                coworkers: "Коллеги",
+                saveRecord: "Сохранить запись",
+                history: "История записей",
+                stats: "Статистика",
+                userInfo: "Информация о пользователе",
+                totalHours: "Всего часов",
+                workedDays: "Отработанные дни",
+                weekHours: "Часов за неделю",
+                monthHours: "Часов за месяц",
+                projectManagement: "Управление проектами",
+                projectName: "Название проекта",
+                code: "Код",
+                addProject: "Добавить проект",
+                editInfo: "Редактировать информацию",
+                importSuccess: "Данные успешно импортированы",
+                exportSuccess: "Данные успешно экспортированы",
+                deleteConfirm: "Вы уверены, что хотите удалить эту запись?",
+                projectDeleteConfirm: "Вы уверены, что хотите удалить этот проект?",
+                newName: "Введите новое название проекта:",
+                newCode: "Введите новый код проекта (необязательно):",
+                projectAdded: "Проект успешно добавлен",
+                projectUpdated: "Проект успешно обновлен",
+                projectDeleted: "Проект успешно удален",
+                entryDeleted: "Запись успешно удалена",
+                entrySaved: "Запись успешно сохранена",
+                all: "Все",
+                year: "Год",
+                month: "Месяц",
+                week: "Неделя",
+                initialSetup: "Начальная настройка",
+                saveAndContinue: "Сохранить и продолжить",
+                registerTitle: "Регистрация часов",
+                summaryTitle: "Сводка часов",
+                noRecords: "Пока нет записей. Начните с добавления новой записи.",
+                scheduleHint: "Рабочее время",
+                breakHint: "Время перерыва в течение дня",
+                notesHint: "Подробности о выполненной работе",
+                coworkersHint: "Кто работал с вами",
+                exportPdf: "Экспорт PDF",
+                exportJson: "Экспорт JSON",
+                importJson: "Импорт JSON",
+                hours: "часов",
+                totalPeriod: "Итого за период",
+                notesPlaceholder: "Подробности о выполненной работе...",
+                coworkersPlaceholder: "Имена через запятую",
+                projectNamePlaceholder: "Название проекта",
+                projectCodePlaceholder: "Код проекта",
+                personalInfoTitle: "Личные данные",
+                contactInfoTitle: "Контактная информация",
+                initialSetupDesc: "Пожалуйста, заполните свои личные данные, чтобы начать",
+                weeklyChartTitle: "Часы по неделям",
+                projectDistTitle: "Распределение по проектам",
+                chartsTitle: "Визуальная статистика",
+                chartMonth: "Месяц",
+                chartQuarter: "Квартал"
+            },
+            pl: {
+                title: "TimeBook - Profesjonalny Rejestr Czasu",
+                save: "Zapisz",
+                cancel: "Anuluj",
+                projects: "Projekty",
+                add: "Dodaj",
+                name: "Imię",
+                lastName: "Nazwisko",
+                phone: "Telefon",
+                idNumber: "Numer identyfikacyjny",
+                date: "Data",
+                project: "Projekt",
+                schedule: "Harmonogram",
+                breakTime: "Czas przerwy",
+                notes: "Uwagi",
+                coworkers: "Współpracownicy",
+                saveRecord: "Zapisz rejestrację",
+                history: "Historia rejestracji",
+                stats: "Statystyki",
+                userInfo: "Informacje o użytkowniku",
+                totalHours: "Łączne godziny",
+                workedDays: "Dni pracy",
+                weekHours: "Godziny w tym tygodniu",
+                monthHours: "Godziny w tym miesiącu",
+                projectManagement: "Zarządzanie projektami",
+                projectName: "Nazwa projektu",
+                code: "Kod",
+                addProject: "Dodaj projekt",
+                editInfo: "Edytuj informacje",
+                importSuccess: "Dane zostały zaimportowane",
+                exportSuccess: "Dane zostały wyeksportowane",
+                deleteConfirm: "Czy na pewno chcesz usunąć ten wpis?",
+                projectDeleteConfirm: "Czy na pewno chcesz usunąć ten projekt?",
+                newName: "Wprowadź nową nazwę projektu:",
+                newCode: "Wprowadź nowy kod projektu (opcjonalnie):",
+                projectAdded: "Projekt dodany pomyślnie",
+                projectUpdated: "Projekt zaktualizowany pomyślnie",
+                projectDeleted: "Projekt usunięty pomyślnie",
+                entryDeleted: "Wpis usunięty pomyślnie",
+                entrySaved: "Wpis zapisany pomyślnie",
+                all: "Wszystkie",
+                year: "Rok",
+                month: "Miesiąc",
+                week: "Tydzień",
+                initialSetup: "Konfiguracja wstępna",
+                saveAndContinue: "Zapisz i kontynuuj",
+                registerTitle: "Rejestracja godzin",
+                summaryTitle: "Podsumowanie godzin",
+                noRecords: "Brak rejestracji. Zacznij od dodania nowej rejestracji.",
+                scheduleHint: "Godziny pracy",
+                breakHint: "Czas przerwy w ciągu dnia",
+                notesHint: "Szczegóły wykonanej pracy",
+                coworkersHint: "Kto z tobą pracował",
+                exportPdf: "Eksportuj PDF",
+                exportJson: "Eksportuj JSON",
+                importJson: "Importuj JSON",
+                hours: "godziny",
+                totalPeriod: "Razem za okres",
+                notesPlaceholder: "Szczegóły wykonanej pracy...",
+                coworkersPlaceholder: "Imiona oddzielone przecinkami",
+                projectNamePlaceholder: "Nazwa projektu",
+                projectCodePlaceholder: "Kod projektu",
+                personalInfoTitle: "Dane osobowe",
+                contactInfoTitle: "Dane kontaktowe",
+                initialSetupDesc: "Proszę wypełnić swoje dane osobowe, aby rozpocząć",
+                weeklyChartTitle: "Godziny według tygodnia",
+                projectDistTitle: "Rozkład według projektu",
+                chartsTitle: "Statystyki wizualne",
+                chartMonth: "Miesiąc",
+                chartQuarter: "Kwartał"
+            }
+        };
+
+        // Datos de la aplicación
+        const state = {
+            user: null,
+            projects: [
+                { id: 1, name: 'DP 5 Utemiljö', code: 'DP5' },
+                { id: 2, name: 'DP 1 Hus A', code: 'DP1' },
+                { id: 3, name: 'DP 2 Hus B', code: 'DP2' },
+                { id: 4, name: 'DP 4 Hus D', code: 'DP4' }
+            ],
+            timeEntries: [],
+            currentLanguage: 'es',
+            chartPeriod: 'month'
+        };
+
+        // Inicializar la aplicación
+        function initApp() {
+            // Cargar datos del localStorage
+            loadFromLocalStorage();
+            
+            // Configurar eventos
+            setupEventListeners();
+            
+            // Verificar si el usuario ya está configurado
+            if (state.user) {
+                document.getElementById('user-form').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                updateUserInfo();
+            }
+            
+            // Configurar fecha actual por defecto
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('entry-date').value = today;
+            
+            // Establecer hora por defecto según día de la semana
+            setDefaultWorkHours();
+            
+            // Establecer idioma
+            updateTranslations();
+            
+            // Actualizar listas
+            updateProjectsList();
+            updateProjectDropdown();
+            generateYearOptions();
+            updateEntriesDisplay();
+            updateStatistics();
+            updateHoursSummary();
+            
+            // Inicializar gráficos
+            initCharts();
+        }
+
+        // Actualizar traducciones
+        function updateTranslations() {
+            const lang = state.currentLanguage;
+            const t = translations[lang] || translations.es;
+            
+            // Actualizar elementos de la interfaz
+            document.querySelectorAll('[id]').forEach(el => {
+                const id = el.id;
+                if (id.endsWith('-label') || id.endsWith('-title') || id.endsWith('-text') || 
+                    id.endsWith('-header') || id.endsWith('-hint') || id.endsWith('-desc')) {
+                    const baseId = id.replace(/-label$/, '').replace(/-title$/, '')
+                                     .replace(/-text$/, '').replace(/-header$/, '')
+                                     .replace(/-hint$/, '').replace(/-desc$/, '');
+                    const key = baseId.split('-').map((word, i) => 
+                        i === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
+                    ).join('');
+                    
+                    if (t[key]) {
+                        el.textContent = t[key];
+                    }
+                }
+            });
+            
+            // Actualizar placeholders
+            const placeholders = [
+                { id: 'notes', key: 'notesPlaceholder' },
+                { id: 'coworkers', key: 'coworkersPlaceholder' },
+                { id: 'new-project-name', key: 'projectNamePlaceholder' },
+                { id: 'new-project-code', key: 'projectCodePlaceholder' },
+                { id: 'first-name', key: 'namePlaceholder' },
+                { id: 'last-name', key: 'lastNamePlaceholder' },
+                { id: 'phone', key: 'phonePlaceholder' },
+                { id: 'id-number', key: 'idNumberPlaceholder' }
+            ];
+            
+            placeholders.forEach(item => {
+                const element = document.getElementById(item.id);
+                if (element && t[item.key]) {
+                    element.placeholder = t[item.key];
+                }
+            });
+            
+            document.getElementById('app-title').textContent = t.title;
+            document.getElementById('no-records-message').textContent = t.noRecords;
+            document.querySelector('#import-file').setAttribute('accept', '.json');
+        }
+
+        // Cargar datos del localStorage
+        function loadFromLocalStorage() {
+            const user = localStorage.getItem('timeBookUser');
+            const projects = localStorage.getItem('timeBookProjects');
+            const entries = localStorage.getItem('timeBookEntries');
+            const lang = localStorage.getItem('timeBookLanguage');
+            
+            if (user) state.user = JSON.parse(user);
+            if (projects) state.projects = JSON.parse(projects);
+            if (entries) state.timeEntries = JSON.parse(entries);
+            if (lang) {
+                state.currentLanguage = lang;
+                document.getElementById('language').value = lang;
+            }
+        }
+
+        // Guardar datos en localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('timeBookUser', JSON.stringify(state.user));
+            localStorage.setItem('timeBookProjects', JSON.stringify(state.projects));
+            localStorage.setItem('timeBookEntries', JSON.stringify(state.timeEntries));
+            localStorage.setItem('timeBookLanguage', state.currentLanguage);
+        }
+
+        // Configurar eventos
+        function setupEventListeners() {
+            // Formulario de usuario
+            document.getElementById('user-form-data').addEventListener('submit', saveUserInfo);
+            
+            // Formulario de registro de tiempo
+            document.getElementById('time-entry-form').addEventListener('submit', saveTimeEntry);
+            document.getElementById('reset-form').addEventListener('click', resetForm);
+            
+            // Gestión de proyectos
+            document.getElementById('add-project-btn').addEventListener('click', addProject);
+            document.getElementById('manage-projects').addEventListener('click', showProjectManagement);
+            
+            // Filtros
+            document.getElementById('year-filter').addEventListener('change', updateEntriesDisplay);
+            document.getElementById('month-filter').addEventListener('change', updateEntriesDisplay);
+            document.getElementById('week-filter').addEventListener('change', updateEntriesDisplay);
+            
+            // Exportación
+            document.getElementById('export-pdf').addEventListener('click', exportToPDF);
+            document.getElementById('export-json').addEventListener('click', exportToJSON);
+            document.getElementById('import-json').addEventListener('click', () => {
+                document.getElementById('import-file').click();
+            });
+            document.getElementById('import-file').addEventListener('change', importFromJSON);
+            
+            // Tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    document.getElementById(`${tab.dataset.tab}-content`).classList.add('active');
+                });
+            });
+            
+            // Editar usuario
+            document.getElementById('edit-user-btn').addEventListener('click', () => {
+                document.getElementById('user-form').classList.remove('hidden');
+                document.getElementById('main-app').classList.add('hidden');
+                
+                // Prellenar datos del usuario
+                document.getElementById('first-name').value = state.user.firstName;
+                document.getElementById('last-name').value = state.user.lastName;
+                document.getElementById('phone').value = state.user.phone;
+                document.getElementById('id-number').value = state.user.idNumber;
+            });
+            
+            // Cambio de idioma
+            document.getElementById('language').addEventListener('change', function() {
+                state.currentLanguage = this.value;
+                saveToLocalStorage();
+                updateTranslations();
+                updateEntriesDisplay();
+                updateHoursSummary();
+                updateCharts();
+            });
+            
+            // Cambio de fecha para establecer horario predeterminado
+            document.getElementById('entry-date').addEventListener('change', setDefaultWorkHours);
+            
+            // Botones de gráficos
+            document.querySelectorAll('.chart-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.chartPeriod = btn.dataset.period;
+                    updateCharts();
+                });
+            });
+        }
+
+        // Establecer horas de trabajo por defecto según día de la semana
+        function setDefaultWorkHours() {
+            const dateInput = document.getElementById('entry-date').value;
+            const date = new Date(dateInput);
+            const day = date.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+            
+            if (day >= 1 && day <= 4) { // Lunes a Jueves
+                document.getElementById('start-time').value = '06:30';
+                document.getElementById('end-time').value = '16:00';
+            } else if (day === 5) { // Viernes
+                document.getElementById('start-time').value = '06:30';
+                document.getElementById('end-time').value = '13:00';
+            } else { // Fin de semana
+                document.getElementById('start-time').value = '08:00';
+                document.getElementById('end-time').value = '12:00';
+            }
+        }
+
+        // Guardar información del usuario
+        function saveUserInfo(e) {
+            e.preventDefault();
+            
+            state.user = {
+                firstName: document.getElementById('first-name').value,
+                lastName: document.getElementById('last-name').value,
+                phone: document.getElementById('phone').value,
+                idNumber: document.getElementById('id-number').value
+            };
+            
+            saveToLocalStorage();
+            updateUserInfo();
+            
+            document.getElementById('user-form').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            
+            // Crear alerta de éxito
+            showAlert(translations[state.currentLanguage].entrySaved, 'success');
+            
+            // Inicializar gráficos después de mostrar la aplicación principal
+            initCharts();
+        }
+
+        // Actualizar información del usuario en la UI
+        function updateUserInfo() {
+            if (!state.user) return;
+            
+            document.getElementById('user-avatar').textContent = 
+                state.user.firstName.charAt(0) + state.user.lastName.charAt(0);
+            document.getElementById('user-name').textContent = 
+                `${state.user.firstName} ${state.user.lastName}`;
+            
+            document.getElementById('info-name').textContent = 
+                `${state.user.firstName} ${state.user.lastName}`;
+            document.getElementById('info-phone').textContent = state.user.phone;
+            document.getElementById('info-id').textContent = state.user.idNumber;
+        }
+
+        // Guardar registro de tiempo
+        function saveTimeEntry(e) {
+            e.preventDefault();
+            
+            const projectId = parseInt(document.getElementById('project').value);
+            const project = state.projects.find(p => p.id === projectId);
+            
+            if (!project) {
+                showAlert('Seleccione un proyecto válido', 'error');
+                return;
+            }
+            
+            const startTime = document.getElementById('start-time').value;
+            const endTime = document.getElementById('end-time').value;
+            const breakTime = parseFloat(document.getElementById('break-time').value);
+            
+            // Validar horas
+            if (startTime >= endTime) {
+                showAlert('La hora de inicio debe ser anterior a la hora de fin', 'error');
+                return;
+            }
+            
+            const entry = {
+                id: Date.now(),
+                date: document.getElementById('entry-date').value,
+                project: {
+                    id: project.id,
+                    name: project.name,
+                    code: project.code || ''
+                },
+                startTime: startTime,
+                endTime: endTime,
+                breakTime: breakTime,
+                notes: document.getElementById('notes').value,
+                coworkers: document.getElementById('coworkers').value.split(',').map(c => c.trim()).filter(c => c)
+            };
+            
+            state.timeEntries.push(entry);
+            saveToLocalStorage();
+            
+            resetForm();
+            updateEntriesDisplay();
+            updateStatistics();
+            updateHoursSummary();
+            updateCharts();
+            
+            // Mostrar notificación
+            showAlert(translations[state.currentLanguage].entrySaved, 'success');
+        }
+
+        // Resetear formulario
+        function resetForm() {
+            document.getElementById('time-entry-form').reset();
+            document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
+            setDefaultWorkHours();
+            document.getElementById('break-time').value = '1.0';
+        }
+
+        // Actualizar lista de proyectos en el dropdown
+        function updateProjectDropdown() {
+            const select = document.getElementById('project');
+            select.innerHTML = '';
+            
+            state.projects.forEach(project => {
+                const option = document.createElement('option');
+                option.value = project.id;
+                option.textContent = project.name + (project.code ? ` (${project.code})` : '');
+                select.appendChild(option);
+            });
+        }
+
+        // Actualizar lista de proyectos en la UI
+        function updateProjectsList() {
+            const list = document.getElementById('projects-list');
+            list.innerHTML = '';
+            
+            state.projects.forEach(project => {
+                const li = document.createElement('li');
+                li.className = 'project-item';
+                
+                li.innerHTML = `
+                    <div>
+                        <strong>${project.name}</strong>
+                        ${project.code ? `<div><small>${translations[state.currentLanguage].code}: ${project.code}</small></div>` : ''}
+                    </div>
+                    <div class="project-actions">
+                        <button class="action-btn edit edit-project" data-id="${project.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete delete-project" data-id="${project.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                list.appendChild(li);
+            });
+            
+            // Agregar eventos a los botones
+            document.querySelectorAll('.edit-project').forEach(btn => {
+                btn.addEventListener('click', () => editProject(parseInt(btn.dataset.id)));
+            });
+            
+            document.querySelectorAll('.delete-project').forEach(btn => {
+                btn.addEventListener('click', () => deleteProject(parseInt(btn.dataset.id)));
+            });
+        }
+
+        // Mostrar gestión de proyectos
+        function showProjectManagement() {
+            document.querySelector('.tab[data-tab="projects"]').click();
+        }
+
+        // Agregar proyecto
+        function addProject() {
+            const name = document.getElementById('new-project-name').value.trim();
+            const code = document.getElementById('new-project-code').value.trim();
+            
+            if (!name) {
+                showAlert('Por favor ingrese un nombre para el proyecto', 'error');
+                return;
+            }
+            
+            const newProject = {
+                id: Date.now(),
+                name: name,
+                code: code || null
+            };
+            
+            state.projects.push(newProject);
+            saveToLocalStorage();
+            
+            updateProjectsList();
+            updateProjectDropdown();
+            updateCharts();
+            
+            // Resetear formulario
+            document.getElementById('new-project-name').value = '';
+            document.getElementById('new-project-code').value = '';
+            
+            // Mostrar notificación
+            showAlert(translations[state.currentLanguage].projectAdded, 'success');
+        }
+
+        // Editar proyecto
+        function editProject(projectId) {
+            const project = state.projects.find(p => p.id === projectId);
+            if (!project) return;
+            
+            const t = translations[state.currentLanguage];
+            const newName = prompt(t.newName, project.name);
+            if (newName === null) return; // Usuario canceló
+            
+            const newCode = prompt(t.newCode, project.code || '');
+            
+            project.name = newName.trim();
+            project.code = newCode ? newCode.trim() : null;
+            
+            saveToLocalStorage();
+            updateProjectsList();
+            updateProjectDropdown();
+            updateCharts();
+            
+            showAlert(t.projectUpdated, 'success');
+        }
+
+        // Eliminar proyecto
+        function deleteProject(projectId) {
+            const t = translations[state.currentLanguage];
+            if (!confirm(t.projectDeleteConfirm)) return;
+            
+            state.projects = state.projects.filter(p => p.id !== projectId);
+            saveToLocalStorage();
+            
+            updateProjectsList();
+            updateProjectDropdown();
+            updateCharts();
+            
+            showAlert(t.projectDeleted, 'success');
+        }
+
+        // Generar opciones de años para el filtro
+        function generateYearOptions() {
+            const yearSelect = document.getElementById('year-filter');
+            const monthSelect = document.getElementById('month-filter');
+            const weekSelect = document.getElementById('week-filter');
+            const t = translations[state.currentLanguage];
+            
+            // Obtener años únicos de los registros
+            const years = [...new Set(state.timeEntries.map(entry => new Date(entry.date).getFullYear()))];
+            
+            // Ordenar años
+            years.sort((a, b) => b - a);
+            
+            // Limpiar y agregar opciones
+            yearSelect.innerHTML = `<option value="all">${t.all}</option>`;
+            years.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            });
+            
+            // Llenar meses
+            monthSelect.innerHTML = `<option value="all">${t.all}</option>`;
+            for (let i = 1; i <= 12; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = new Date(0, i - 1).toLocaleString(state.currentLanguage, { month: 'long' });
+                monthSelect.appendChild(option);
+            }
+            
+            // Llenar semanas
+            weekSelect.innerHTML = `<option value="all">${t.all}</option>`;
+            for (let i = 1; i <= 52; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${t.week} ${i}`;
+                weekSelect.appendChild(option);
+            }
+        }
+
+        // Actualizar visualización de registros
+        function updateEntriesDisplay() {
+            const container = document.getElementById('entries-container');
+            const t = translations[state.currentLanguage];
+            
+            // Obtener filtros
+            const yearFilter = document.getElementById('year-filter').value;
+            const monthFilter = document.getElementById('month-filter').value;
+            const weekFilter = document.getElementById('week-filter').value;
+            
+            // Filtrar registros
+            let filteredEntries = [...state.timeEntries];
+            
+            if (yearFilter !== 'all') {
+                filteredEntries = filteredEntries.filter(entry => 
+                    new Date(entry.date).getFullYear() === parseInt(yearFilter));
+            }
+            
+            if (monthFilter !== 'all') {
+                filteredEntries = filteredEntries.filter(entry => 
+                    new Date(entry.date).getMonth() + 1 === parseInt(monthFilter));
+            }
+            
+            if (weekFilter !== 'all') {
+                filteredEntries = filteredEntries.filter(entry => 
+                    getWeekNumber(entry.date) === parseInt(weekFilter));
+            }
+            
+            // Comprobar si hay registros
+            if (filteredEntries.length === 0) {
+                container.innerHTML = `<div class="no-records">${t.noRecords}</div>`;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            // Agrupar por fecha
+            const groupedEntries = {};
+            filteredEntries.forEach(entry => {
+                if (!groupedEntries[entry.date]) {
+                    groupedEntries[entry.date] = [];
+                }
+                groupedEntries[entry.date].push(entry);
+            });
+            
+            // Ordenar fechas (más recientes primero)
+            const sortedDates = Object.keys(groupedEntries).sort((a, b) => 
+                new Date(b) - new Date(a));
+            
+            // Crear elementos para cada grupo
+            sortedDates.forEach(date => {
+                const group = document.createElement('div');
+                group.className = 'entry-group';
+                
+                const dateObj = new Date(date);
+                const formattedDate = dateObj.toLocaleDateString(state.currentLanguage, {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                // Obtener número de semana
+                const weekNumber = getWeekNumber(date);
+                
+                group.innerHTML = `
+                    <div class="group-header">
+                        <div class="date-header">
+                            <span>${formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)}</span>
+                            <span class="week-number">${t.week} ${weekNumber}</span>
+                        </div>
+                        <span class="collapse-icon"><i class="fas fa-chevron-down"></i></span>
+                    </div>
+                    <div class="group-content">
+                        <!-- Entradas se agregarán aquí -->
+                    </div>
+                `;
+                
+                const content = group.querySelector('.group-content');
+                
+                // Agregar entradas
+                groupedEntries[date].forEach(entry => {
+                    const entryEl = document.createElement('div');
+                    entryEl.className = 'entry-item';
+                    
+                    // Calcular horas trabajadas
+                    const hours = calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime).toFixed(1);
+                    
+                    entryEl.innerHTML = `
+                        <div class="entry-details">
+                            <div class="entry-project">${entry.project.name}${entry.project.code ? ` (${entry.project.code})` : ''}</div>
+                            <div class="entry-time">${entry.startTime} - ${entry.endTime} (${hours} ${t.hours})</div>
+                            ${entry.notes ? `<div><small>${entry.notes}</small></div>` : ''}
+                        </div>
+                        <div class="entry-actions">
+                            <button class="action-btn edit edit-entry" data-id="${entry.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn delete delete-entry" data-id="${entry.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    content.appendChild(entryEl);
+                });
+                
+                // Evento para colapsar/expandir
+                group.querySelector('.group-header').addEventListener('click', () => {
+                    group.classList.toggle('collapsed');
+                });
+                
+                container.appendChild(group);
+            });
+            
+            // Agregar eventos a los botones de editar/eliminar
+            document.querySelectorAll('.edit-entry').forEach(btn => {
+                btn.addEventListener('click', () => editTimeEntry(parseInt(btn.dataset.id)));
+            });
+            
+            document.querySelectorAll('.delete-entry').forEach(btn => {
+                btn.addEventListener('click', () => deleteTimeEntry(parseInt(btn.dataset.id)));
+            });
+        }
+
+        // Editar entrada de tiempo
+        function editTimeEntry(entryId) {
+            const entry = state.timeEntries.find(e => e.id === entryId);
+            if (!entry) return;
+            
+            // Prellenar formulario con datos existentes
+            document.getElementById('entry-date').value = entry.date;
+            document.getElementById('project').value = entry.project.id;
+            document.getElementById('start-time').value = entry.startTime;
+            document.getElementById('end-time').value = entry.endTime;
+            document.getElementById('break-time').value = entry.breakTime;
+            document.getElementById('notes').value = entry.notes || '';
+            document.getElementById('coworkers').value = entry.coworkers.join(', ');
+            
+            // Eliminar entrada original
+            state.timeEntries = state.timeEntries.filter(e => e.id !== entryId);
+            saveToLocalStorage();
+            updateEntriesDisplay();
+            updateStatistics();
+            updateHoursSummary();
+            updateCharts();
+        }
+
+        // Eliminar entrada de tiempo
+        function deleteTimeEntry(entryId) {
+            const t = translations[state.currentLanguage];
+            if (!confirm(t.deleteConfirm)) return;
+            
+            state.timeEntries = state.timeEntries.filter(entry => entry.id !== entryId);
+            saveToLocalStorage();
+            
+            updateEntriesDisplay();
+            updateStatistics();
+            updateHoursSummary();
+            updateCharts();
+            
+            showAlert(t.entryDeleted, 'success');
+        }
+
+        // Actualizar estadísticas
+        function updateStatistics() {
+            const t = translations[state.currentLanguage];
+            // Calcular total de horas
+            let totalHours = 0;
+            state.timeEntries.forEach(entry => {
+                totalHours += calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime);
+            });
+            
+            // Calcular días trabajados
+            const uniqueDays = new Set(state.timeEntries.map(entry => entry.date)).size;
+            
+            // Calcular horas esta semana
+            const now = new Date();
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
+            startOfWeek.setHours(0, 0, 0, 0);
+            
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            
+            let weekHours = 0;
+            state.timeEntries.forEach(entry => {
+                const entryDate = new Date(entry.date);
+                if (entryDate >= startOfWeek && entryDate <= endOfWeek) {
+                    weekHours += calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime);
+                }
+            });
+            
+            // Calcular horas este mes
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            
+            let monthHours = 0;
+            state.timeEntries.forEach(entry => {
+                const entryDate = new Date(entry.date);
+                if (entryDate >= startOfMonth && entryDate <= endOfMonth) {
+                    monthHours += calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime);
+                }
+            });
+            
+            // Actualizar UI
+            document.getElementById('total-hours').textContent = totalHours.toFixed(1);
+            document.getElementById('total-days').textContent = uniqueDays;
+            document.getElementById('week-hours').textContent = weekHours.toFixed(1);
+            document.getElementById('month-hours').textContent = monthHours.toFixed(1);
+        }
+
+        // Función para calcular las horas trabajadas
+        function calculateWorkedHours(start, end, breakTime) {
+            const [startHours, startMinutes] = start.split(':').map(Number);
+            const [endHours, endMinutes] = end.split(':').map(Number);
+            
+            let totalMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
+            if (totalMinutes < 0) totalMinutes += 24 * 60;
+            
+            return (totalMinutes / 60) - parseFloat(breakTime);
+        }
+
+        // Función para obtener el número de semana
+        function getWeekNumber(dateString) {
+            const date = new Date(dateString);
+            date.setHours(0, 0, 0, 0);
+            date.setDate(date.getDate() + 4 - (date.getDay() || 7));
+            const yearStart = new Date(date.getFullYear(), 0, 1);
+            const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+            return weekNo;
+        }
+
+        // Actualizar resumen de horas
+        function updateHoursSummary() {
+            const tbody = document.querySelector('#resumenHoras tbody');
+            const tfoot = document.querySelector('#resumenHoras tfoot');
+            const t = translations[state.currentLanguage];
+            
+            // Agrupar por fecha
+            const groupedByDate = {};
+            state.timeEntries.forEach(entry => {
+                if (!groupedByDate[entry.date]) {
+                    groupedByDate[entry.date] = [];
+                }
+                groupedByDate[entry.date].push(entry);
+            });
+            
+            tbody.innerHTML = '';
+            let totalPeriod = 0;
+            
+            Object.keys(groupedByDate).sort().forEach(date => {
+                const dayEntries = groupedByDate[date];
+                const totalDay = dayEntries.reduce((sum, entry) => {
+                    return sum + calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime);
+                }, 0);
+                
+                totalPeriod += totalDay;
+                
+                const weekNumber = getWeekNumber(date);
+                const firstProject = dayEntries[0].project.name;
+                const breakTime = dayEntries[0].breakTime;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${date}</td>
+                    <td>${weekNumber}</td>
+                    <td>${firstProject}</td>
+                    <td>${totalDay.toFixed(1)}</td>
+                    <td>${breakTime}</td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            document.getElementById('total-mes').textContent = totalPeriod.toFixed(1);
+            document.getElementById('resumenHoras').style.display = 'table';
+        }
+
+        // Inicializar gráficos
+        function initCharts() {
+            // Crear instancias de gráficos
+            const weeklyCtx = document.getElementById('weekly-chart').getContext('2d');
+            const projectCtx = document.getElementById('project-chart').getContext('2d');
+            
+            state.weeklyChart = new Chart(weeklyCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Horas trabajadas',
+                        data: [],
+                        backgroundColor: '#3498db',
+                        borderColor: '#2980b9',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Horas'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Semanas'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            state.projectChart = new Chart(projectCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6',
+                            '#1abc9c', '#d35400', '#c0392b', '#7f8c8d', '#34495e'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+            
+            // Actualizar datos de los gráficos
+            updateCharts();
+        }
+
+        // Actualizar datos de los gráficos
+        function updateCharts() {
+            if (!state.weeklyChart || !state.projectChart) return;
+            
+            // Actualizar gráfico de horas por semana
+            const weeklyData = getWeeklyHoursData();
+            state.weeklyChart.data.labels = weeklyData.labels;
+            state.weeklyChart.data.datasets[0].data = weeklyData.data;
+            state.weeklyChart.update();
+            
+            // Actualizar gráfico de distribución por proyecto
+            const projectData = getProjectDistributionData();
+            state.projectChart.data.labels = projectData.labels;
+            state.projectChart.data.datasets[0].data = projectData.data;
+            state.projectChart.update();
+        }
+
+        // Obtener datos de horas por semana
+        function getWeeklyHoursData() {
+            const now = new Date();
+            const weeks = 12; // Mostrar 12 semanas
+            const data = [];
+            const labels = [];
+            
+            // Determinar fecha de inicio según el periodo seleccionado
+            let startDate = new Date(now);
+            if (state.chartPeriod === 'month') {
+                startDate.setDate(startDate.getDate() - 28); // 4 semanas
+            } else {
+                startDate.setDate(startDate.getDate() - 84); // 12 semanas
+            }
+            
+            // Calcular horas por semana
+            for (let i = 0; i < weeks; i++) {
+                const weekStart = new Date(startDate);
+                weekStart.setDate(weekStart.getDate() + (i * 7));
+                
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                
+                const weekNumber = getWeekNumber(weekStart);
+                
+                let weekHours = 0;
+                state.timeEntries.forEach(entry => {
+                    const entryDate = new Date(entry.date);
+                    if (entryDate >= weekStart && entryDate <= weekEnd) {
+                        weekHours += calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime);
+                    }
+                });
+                
+                data.push(weekHours);
+                labels.push(`Sem ${weekNumber}`);
+            }
+            
+            return { labels, data };
+        }
+
+        // Obtener datos de distribución por proyecto
+        function getProjectDistributionData() {
+            const projectHours = {};
+            
+            // Calcular horas totales por proyecto
+            state.timeEntries.forEach(entry => {
+                const projectName = entry.project.name;
+                const hours = calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime);
+                
+                if (!projectHours[projectName]) {
+                    projectHours[projectName] = 0;
+                }
+                projectHours[projectName] += hours;
+            });
+            
+            // Convertir a arrays para el gráfico
+            const labels = Object.keys(projectHours);
+            const data = Object.values(projectHours);
+            
+            return { labels, data };
+        }
+
+        // Exportar a PDF
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const t = translations[state.currentLanguage];
+            
+            // Encabezado profesional
+            doc.setFillColor(44, 62, 80);
+            doc.rect(0, 0, 210, 30, 'F');
+            doc.setFontSize(24);
+            doc.setTextColor(255, 255, 255);
+			const userTitle = `${state.user.firstName} ${state.user.lastName} - ${state.user.idNumber}`;
+			doc.text(userTitle, 105, 14, 'center');
+            
+            // Información del usuario
+            doc.setFontSize(12);
+            doc.setTextColor(200, 200, 200);
+            doc.text(`${t.name}: ${state.user.firstName} ${state.user.lastName}`, 20, 40);
+            doc.text(`${t.phone}: ${state.user.phone}`, 20, 46);
+            doc.text(`${t.idNumber}: ${state.user.idNumber}`, 20, 52);
+            
+            // Fecha de exportación
+            const exportDate = new Date().toLocaleDateString(state.currentLanguage, {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            doc.text(`${t.date}: ${exportDate}`, 20, 58);
+            
+            // Tabla de registros
+            doc.setFontSize(14);
+            doc.setTextColor(44, 62, 80);
+            doc.text(t.history, 20, 70);
+            
+            const headers = [[t.date, t.project, t.schedule, t.hours, t.breakTime, t.notes]];
+            const data = state.timeEntries.map(entry => {
+                const hours = calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime).toFixed(1);
+                return [
+                    entry.date,
+                    entry.project.name + (entry.project.code ? ` (${entry.project.code})` : ''),
+                    `${entry.startTime} - ${entry.endTime}`,
+                    hours,
+                    entry.breakTime,
+                    entry.notes || ''
+                ];
+            });
+
+            doc.autoTable({
+                head: headers,
+                body: data,
+                startY: 75,
+                theme: 'grid',
+                styles: { 
+                    fontSize: 10, 
+                    cellPadding: 3,
+                    textColor: [60, 60, 60]
+                },
+                headStyles: { 
+                    fillColor: [52, 152, 219],
+                    textColor: 255,
+                    fontStyle: 'bold'
+                },
+                alternateRowStyles: { 
+                    fillColor: [245, 245, 245]
+                },
+                margin: { top: 75 }
+            });
+
+            // Resumen de horas
+            const summaryY = doc.lastAutoTable.finalY + 15;
+            doc.setFontSize(14);
+            doc.setTextColor(44, 62, 80);
+            doc.text(t.summaryTitle, 20, summaryY);
+            
+            const groupedByDate = {};
+            state.timeEntries.forEach(entry => {
+                if (!groupedByDate[entry.date]) groupedByDate[entry.date] = [];
+                groupedByDate[entry.date].push(entry);
+            });
+
+			const summaryData = Object.entries(groupedByDate).map(([date, entries]) => {
+				const weekNumber = getWeekNumber(date);
+				const totalDay = entries.reduce((sum, entry) =>
+					sum + calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime), 0);
+
+				// Sumamos todos los tiempos de descanso si se espera como número (por ejemplo, en horas o minutos)
+				let totalBreak = entries.reduce((sum, entry) => {
+					const parsedBreak = parseFloat(entry.breakTime) || 0;
+					return sum + parsedBreak;
+				}, 0);
+
+				// Mostrar proyectos únicos del día
+				const projectNames = [...new Set(entries.map(e => e.project.name))].join(', ');
+
+				return [
+					date,
+					weekNumber,
+					projectNames,
+					totalDay.toFixed(1),
+					totalBreak.toFixed(1)
+				];
+			});
+
+
+            doc.autoTable({
+                head: [[t.date, t.week, t.project, t.hours, t.breakTime]],
+                body: summaryData,
+                startY: summaryY + 5,
+                theme: 'grid',
+                styles: { 
+                    fontSize: 10, 
+                    cellPadding: 3,
+                    textColor: [60, 60, 60]
+                },
+                headStyles: { 
+                    fillColor: [26, 188, 156],
+                    textColor: 255,
+                    fontStyle: 'bold'
+                },
+                alternateRowStyles: { 
+                    fillColor: [245, 245, 245]
+                }
+            });
+
+            // Total general
+            const totalPeriod = state.timeEntries.reduce((sum, entry) =>
+                sum + calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime), 0);
+            
+            const totalY = doc.lastAutoTable.finalY + 5;
+            doc.autoTable({
+                body: [[t.totalPeriod, '', '', totalPeriod.toFixed(1), '']],
+                startY: totalY,
+                theme: 'grid',
+                styles: { 
+                    fontSize: 11, 
+                    cellPadding: 4,
+                    fontStyle: 'bold'
+                },
+                bodyStyles: { 
+                    fillColor: [39, 174, 96],
+                    textColor: 255
+                }
+            });
+
+            // Pie de página
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(10);
+                doc.setTextColor(100);
+                doc.text(`Página ${i} de ${pageCount}`, 105, 285, 'center');
+                doc.text(`© ${new Date().getFullYear()} TimeBook`, 105, 290, 'center');
+            }
+
+            // Guardar PDF
+            doc.save(`TimeBook_${state.user.firstName}_${state.user.lastName}.pdf`);
+            showAlert(t.exportSuccess, 'success');
+        }
+
+        // Exportar a JSON
+        function exportToJSON() {
+            const data = {
+                user: state.user,
+                projects: state.projects,
+                entries: state.timeEntries
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `timebook-${state.user.firstName}-${state.user.lastName}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showAlert(translations[state.currentLanguage].exportSuccess, 'success');
+        }
+
+        // Importar desde JSON
+        function importFromJSON(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    
+                    // Validar estructura básica
+                    if (!data.user || !data.projects || !data.entries) {
+                        throw new Error('Formato de archivo inválido');
+                    }
+                    
+                    // Actualizar estado
+                    state.user = data.user;
+                    state.projects = data.projects;
+                    state.timeEntries = data.entries;
+                    
+                    // Guardar en localStorage
+                    saveToLocalStorage();
+                    
+                    // Actualizar UI
+                    document.getElementById('user-form').classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+                    updateUserInfo();
+                    updateProjectsList();
+                    updateProjectDropdown();
+                    generateYearOptions();
+                    updateEntriesDisplay();
+                    updateStatistics();
+                    updateHoursSummary();
+                    initCharts();
+                    
+                    showAlert(translations[state.currentLanguage].importSuccess, 'success');
+                } catch (error) {
+                    showAlert(`Error: ${error.message}`, 'error');
+                }
+            };
+            reader.readAsText(file);
+            
+            // Resetear input para permitir importar el mismo archivo nuevamente
+            e.target.value = '';
+        }
+
+        // Mostrar alerta
+        function showAlert(message, type) {
+            // Eliminar alertas anteriores
+            const existingAlerts = document.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => alert.remove());
+            
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.querySelector('.container').insertBefore(alert, document.querySelector('.container').firstChild);
+            
+            // Eliminar alerta después de 3 segundos
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
+        }
+
+        // Inicializar la aplicación cuando el DOM esté cargado
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+    <script src="js/licencia.js"></script>	
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log("✅ Service Worker registrado"))
+    .catch(err => console.error("❌ Error al registrar:", err));
+}
+</script>
+
+</body>
+</html>
