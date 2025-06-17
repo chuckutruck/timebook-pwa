@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,13 +8,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="app.js"></script>
-    
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    
     <style>
         :root {
             --primary: #2c3e50;
@@ -150,7 +147,7 @@
         
         .language-selector {
             background-color: rgba(255, 255, 255, 0.2);
-            color: blue;
+            color: white;
             padding: 10px 15px;
             border-radius: var(--border-radius);
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -839,7 +836,7 @@
                 <i class="fas fa-clock"></i>
                 <h1 id="app-title">TimeBook</h1>
             </div>
-            <div class="controls">
+            <div class="controls" id="app-controls">
                 <select id="language" class="language-selector">
                     <option value="sv" selected>Svenska</option>                
                     <option value="es">Spanska</option>
@@ -863,17 +860,82 @@
             <div class="user-section">
                 <div class="user-avatar" id="user-avatar">A</div>
                 <span id="user-name">Användare</span>
+                <button id="logout-btn" class="logout-btn hidden">
+                    <i class="fas fa-sign-out-alt"></i> <span>Logga ut</span>
+                </button>
             </div>
         </div>
     </header>
 
     <div class="container">
-        <!-- Användarformulär (initialt) -->
-        <div id="user-form" class="user-form-container">
+        <!-- Authentication Container -->
+        <div id="auth-container" class="auth-container hidden">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <i class="fas fa-user-clock" style="font-size: 48px; color: var(--secondary);"></i>
+                <h2 id="auth-title">Logga in på TimeBook</h2>
+            </div>
+            
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="login-tab">Logga in</div>
+                <div class="auth-tab" id="register-tab">Registrera</div>
+            </div>
+            
+            <div id="login-form">
+                <form id="login-form-data">
+                    <div class="form-group">
+                        <label for="login-email">E-post</label>
+                        <input type="email" id="login-email" required placeholder="Din e-postadress">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Lösenord</label>
+                        <input type="password" id="login-password" required placeholder="Ditt lösenord">
+                    </div>
+                    <div class="form-group" style="margin-top: 25px;">
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 17px;">
+                            <i class="fas fa-sign-in-alt"></i> <span>Logga in</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div id="register-form" class="hidden">
+                <form id="register-form-data">
+                    <div class="form-group">
+                        <label for="register-name">Namn</label>
+                        <input type="text" id="register-name" required placeholder="Ditt fullständiga namn">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">E-post</label>
+                        <input type="email" id="register-email" required placeholder="Din e-postadress">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Lösenord</label>
+                        <input type="password" id="register-password" required placeholder="Minst 6 tecken">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-confirm-password">Bekräfta lösenord</label>
+                        <input type="password" id="register-confirm-password" required placeholder="Bekräfta lösenordet">
+                    </div>
+                    <div class="form-group" style="margin-top: 25px;">
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 17px;">
+                            <i class="fas fa-user-plus"></i> <span>Skapa konto</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div id="auth-message" class="alert hidden">
+                <i class="fas fa-info-circle"></i>
+                <span>Meddelande</span>
+            </div>
+        </div>
+
+        <!-- User Form (Initial Setup) -->
+        <div id="user-form" class="user-form-container hidden">
             <div style="text-align: center; margin-bottom: 30px;">
                 <i class="fas fa-user-cog" style="font-size: 48px; color: var(--secondary);"></i>
-                <h2 id="initial-setup-title" style="margin: 15px 0;">Initial Konfiguration</h2>
-                <p id="initial-setup-desc" style="color: #7f8c8d;">Fyll i dina personuppgifter för att komma igång</p>
+                <h2 id="initial-setup-title">Initial Konfiguration</h2>
+                <p id="initial-setup-desc">Fyll i dina personuppgifter för att komma igång</p>
             </div>
 
             <form id="user-form-data">
@@ -884,11 +946,11 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="first-name" id="first-name-label">Förnamn</label>
+                        <label for="first-name">Förnamn</label>
                         <input type="text" id="first-name" required placeholder="Ange ditt förnamn">
                     </div>
                     <div class="form-group">
-                        <label for="last-name" id="last-name-label">Efternamn</label>
+                        <label for="last-name">Efternamn</label>
                         <input type="text" id="last-name" required placeholder="Ange ditt efternamn">
                     </div>
                 </div>
@@ -900,23 +962,24 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="phone" id="phone-label">Telefon</label>
+                        <label for="phone">Telefon</label>
                         <input type="tel" id="phone" required placeholder="Ange ditt telefonnummer">
                     </div>
                     <div class="form-group">
-                        <label for="id-number" id="id-number-label">ID-nummer</label>
+                        <label for="id-number">ID-nummer</label>
                         <input type="text" id="id-number" required placeholder="Ange ditt ID">
                     </div>
                 </div>
 
                 <div class="form-group" style="text-align: center; margin-top: 30px;">
-                    <button type="submit" class="btn btn-primary" style="padding: 12px 40px; font-size: 18px;" id="save-continue-btn">
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 40px; font-size: 18px;">
                         <i class="fas fa-check-circle"></i> <span>Spara och fortsätt</span>
                     </button>
                 </div>
             </form>
         </div>
 
+        <!-- Main Application -->
         <div id="main-app" class="hidden">
             <div class="main-content">
                 <div>
@@ -927,11 +990,11 @@
                         <form id="time-entry-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="entry-date" id="date-label">Datum</label>
+                                    <label for="entry-date">Datum</label>
                                     <input type="date" id="entry-date" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="project" id="project-label">Projekt</label>
+                                    <label for="project">Projekt</label>
                                     <div style="display: flex; gap: 8px;">
                                         <select id="project" required style="flex: 1;"></select>
                                         <button type="button" id="manage-projects" class="btn btn-warning" style="padding: 12px;">
@@ -943,47 +1006,48 @@
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label id="schedule-label">Tidsplan</label>
+                                    <label>Tidsplan</label>
                                     <div class="time-inputs">
                                         <input type="time" id="start-time" required>
                                         <input type="time" id="end-time" required>
                                     </div>
-                                    <div class="hint-text" id="schedule-hint">Arbetstimmar</div>
+                                    <div class="hint-text">Arbetstimmar</div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="break-time" id="break-label">Rast</label>
+                                    <label for="break-time">Rast</label>
                                     <select id="break-time" required>
                                         <option value="0.5">0.5 timmar</option>
                                         <option value="1.0" selected>1.0 timmar</option>
                                         <option value="1.5">1.5 timmar</option>
                                         <option value="2.0">2.0 timmar</option>
                                     </select>
-                                    <div class="hint-text" id="break-hint">Rast under arbetsdagen</div>
+                                    <div class="hint-text">Rast under arbetsdagen</div>
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                <label for="notes" id="notes-label">Anteckningar</label>
+                                <label for="notes">Anteckningar</label>
                                 <textarea id="notes" placeholder="Detaljer om utfört arbete..."></textarea>
-                                <div class="hint-text" id="notes-hint">Detaljer om arbetsuppgifterna</div>
+                                <div class="hint-text">Detaljer om arbetsuppgifterna</div>
                             </div>
 
                             <div class="form-group">
-                                <label for="coworkers" id="coworkers-label">Kollegor (valfritt)</label>
+                                <label for="coworkers">Kollegor (valfritt)</label>
                                 <input type="text" id="coworkers" placeholder="Namn separerade med kommatecken">
-                                <div class="hint-text" id="coworkers-hint">Vem arbetade med dig</div>
+                                <div class="hint-text">Vem arbetade med dig</div>
                             </div>
 
                             <div class="form-group" style="display: flex; gap: 15px; margin-top: 25px;">
-                                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 15px; font-size: 17px;" id="save-record-btn">
-                                    <i class="fas fa-save"></i> <span id="save-record-text">Spara Post</span>
+                                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 15px; font-size: 17px;">
+                                    <i class="fas fa-save"></i> <span>Spara Post</span>
                                 </button>
                                 <button type="button" id="reset-form" class="btn btn-danger" style="flex: 0.5; padding: 15px;">
-                                    <i class="fas fa-times"></i> <span id="cancel-text">Avbryt</span>
+                                    <i class="fas fa-times"></i> <span>Avbryt</span>
                                 </button>
                             </div>
                         </form>
                     </div>
+                    
                     <div class="card">
                         <div class="card-title">
                             <span><i class="fas fa-history"></i> <span id="history-title">Registerhistorik</span></span>
@@ -991,19 +1055,19 @@
                         
                         <div class="filters">
                             <div class="filter-group">
-                                <label for="year-filter" id="year-filter-label">År</label>
+                                <label for="year-filter">År</label>
                                 <select id="year-filter" class="form-control">
                                     <option value="all">Alla</option>
                                 </select>
                             </div>
                             <div class="filter-group">
-                                <label for="month-filter" id="month-filter-label">Månad</label>
+                                <label for="month-filter">Månad</label>
                                 <select id="month-filter" class="form-control">
                                     <option value="all">Alla</option>
                                 </select>
                             </div>
                             <div class="filter-group">
-                                <label for="week-filter" id="week-filter-label">Vecka</label>
+                                <label for="week-filter">Vecka</label>
                                 <select id="week-filter" class="form-control">
                                     <option value="all">Alla</option>
                                 </select>
@@ -1018,16 +1082,16 @@
                     <div class="chart-container">
                         <div class="chart-title">
                             <i class="fas fa-chart-bar"></i>
-                            <span id="charts-title">Visuell Statistik</span>
+                            <span>Visuell Statistik</span>
                         </div>
                         
                         <div class="chart-row">
                             <div class="chart-card">
                                 <div class="chart-header">
-                                    <h3 id="weekly-chart-title">Timmar per Vecka</h3>
+                                    <h3>Timmar per Vecka</h3>
                                     <div class="chart-actions">
-                                        <button class="chart-btn active" data-period="month" id="chart-month">Månad</button>
-                                        <button class="chart-btn" data-period="quarter" id="chart-quarter">Kvartal</button>
+                                        <button class="chart-btn active" data-period="month">Månad</button>
+                                        <button class="chart-btn" data-period="quarter">Kvartal</button>
                                     </div>
                                 </div>
                                 <canvas id="weekly-chart"></canvas>
@@ -1035,7 +1099,7 @@
                             
                             <div class="chart-card">
                                 <div class="chart-header">
-                                    <h3 id="project-dist-title">Projektfördelning</h3>
+                                    <h3>Projektfördelning</h3>
                                 </div>
                                 <canvas id="project-chart"></canvas>
                             </div>
@@ -1046,45 +1110,45 @@
                 <div>
                     <div class="card">
                         <div class="card-title">
-                            <span><i class="fas fa-chart-line"></i> <span id="stats-title">Statistik</span></span>
+                            <span><i class="fas fa-chart-line"></i> <span>Statistik</span></span>
                         </div>
                         
                         <div class="stats-grid">
                             <div class="stat-card">
                                 <i class="fas fa-clock fa-2x"></i>
                                 <div class="stat-value" id="total-hours">0</div>
-                                <div class="stat-label" id="total-hours-label">Totala Timmar</div>
+                                <div class="stat-label">Totala Timmar</div>
                             </div>
                             <div class="stat-card">
                                 <i class="fas fa-calendar-day fa-2x"></i>
                                 <div class="stat-value" id="total-days">0</div>
-                                <div class="stat-label" id="total-days-label">Arbetsdagar</div>
+                                <div class="stat-label">Arbetsdagar</div>
                             </div>
                             <div class="stat-card">
                                 <i class="fas fa-calendar-week fa-2x"></i>
                                 <div class="stat-value" id="week-hours">0</div>
-                                <div class="stat-label" id="week-hours-label">Denna Veckas Timmar</div>
+                                <div class="stat-label">Denna Veckas Timmar</div>
                             </div>
                             <div class="stat-card">
                                 <i class="fas fa-calendar-alt fa-2x"></i>
                                 <div class="stat-value" id="month-hours">0</div>
-                                <div class="stat-label" id="month-hours-label">Denna Månads Timmar</div>
+                                <div class="stat-label">Denna Månads Timmar</div>
                             </div>
                         </div>
                     </div>
                     
                     <div class="card">
                         <div class="card-title">
-                            <span><i class="fas fa-user-cog"></i> <span id="user-info-title">Användarinformation</span></span>
+                            <span><i class="fas fa-user-cog"></i> <span>Användarinformation</span></span>
                         </div>
                         
                         <div class="user-info">
-                            <p><strong id="info-name-label">Namn:</strong> <span id="info-name"></span></p>
-                            <p><strong id="info-phone-label">Telefon:</strong> <span id="info-phone"></span></p>
-                            <p><strong id="info-id-label">ID:</strong> <span id="info-id"></span></p>
+                            <p><strong>Namn:</strong> <span id="info-name"></span></p>
+                            <p><strong>Telefon:</strong> <span id="info-phone"></span></p>
+                            <p><strong>ID:</strong> <span id="info-id"></span></p>
                             <div style="margin-top: 20px;">
                                 <button id="edit-user-btn" class="btn btn-warning" style="width: 100%; padding: 12px;">
-                                    <i class="fas fa-edit"></i> <span id="edit-info-text">Redigera Information</span>
+                                    <i class="fas fa-edit"></i> <span>Redigera Information</span>
                                 </button>
                             </div>
                         </div>
@@ -1092,24 +1156,24 @@
                     
                     <div class="card">
                         <div class="card-title">
-                            <span><i class="fas fa-list-alt"></i> <span id="summary-title">Sammanfattning av Timmar</span></span>
+                            <span><i class="fas fa-list-alt"></i> <span>Sammanfattning av Timmar</span></span>
                         </div>
                         <div class="resumen-container">
                             <div id="summary-content">
                                 <table id="resumenHoras">
                                     <thead>
                                         <tr>
-                                            <th id="date-header">Datum</th>
-                                            <th id="week-header">Vecka</th>
-                                            <th id="project-header">Projekt</th>
-                                            <th id="hours-header">Arbetade Timmar</th>
-                                            <th id="break-header">Raster</th>
+                                            <th>Datum</th>
+                                            <th>Vecka</th>
+                                            <th>Projekt</th>
+                                            <th>Arbetade Timmar</th>
+                                            <th>Raster</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
                                     <tfoot>
                                         <tr>
-                                            <th id="total-header" colspan="3">Summa för perioden</th>
+                                            <th colspan="3">Summa för perioden</th>
                                             <th id="total-mes">0</th>
                                             <th></th>
                                         </tr>
@@ -1121,13 +1185,13 @@
                     
                     <div class="card">
                         <div class="card-title">
-                            <span><i class="fas fa-tasks"></i> <span id="project-management-title">Projekt­hantering</span></span>
+                            <span><i class="fas fa-tasks"></i> <span>Projekt­hantering</span></span>
                         </div>
                         
                         <div class="tab-container">
                             <div class="tabs">
-                                <div class="tab active" data-tab="projects" id="projects-tab">Projekt</div>
-                                <div class="tab" data-tab="add-project" id="add-project-tab">Lägg Till</div>
+                                <div class="tab active" data-tab="projects">Projekt</div>
+                                <div class="tab" data-tab="add-project">Lägg Till</div>
                             </div>
                             
                             <div class="tab-content active" id="projects-content">
@@ -1138,16 +1202,16 @@
                             
                             <div class="tab-content" id="add-project-content">
                                 <div class="form-group">
-                                    <label for="new-project-name" id="new-project-name-label">Projektnamn</label>
+                                    <label for="new-project-name">Projektnamn</label>
                                     <input type="text" id="new-project-name" placeholder="Projektnamn">
                                 </div>
                                 <div class="form-group">
-                                    <label for="new-project-code" id="new-project-code-label">Kod (valfri)</label>
+                                    <label for="new-project-code">Kod (valfri)</label>
                                     <input type="text" id="new-project-code" placeholder="Projektkod">
                                 </div>
                                 <div class="form-group" style="margin-top: 20px;">
                                     <button id="add-project-btn" class="btn btn-primary" style="width: 100%; padding: 12px;">
-                                        <i class="fas fa-plus"></i> <span id="add-project-text">Lägg Till Projekt</span>
+                                        <i class="fas fa-plus"></i> <span>Lägg Till Projekt</span>
                                     </button>
                                 </div>
                             </div>
@@ -1165,7 +1229,7 @@
             authDomain: "tidbok-df555.firebaseapp.com",
             databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "tidbok-df555",
-            storageBucket: "tidbok-df555.firebasestorage.app",
+            storageBucket: "tidbok-df555.appspot.com",
             messagingSenderId: "467331966400",
             appId: "1:467331966400:web:abb6949a76918f2eb8d425"
         };
@@ -1184,92 +1248,6 @@
             currentLanguage: 'sv',
             chartPeriod: 'month',
             editingEntryId: null
-        };
-
-        // Translations
-        const translations = {
-            sv: {
-                title: "TimeBook - Professionell Timregistrering",
-                save: "Spara",
-                cancel: "Avbryt",
-                projects: "Projekt",
-                add: "Lägg till",
-                name: "Förnamn",
-                lastName: "Efternamn",
-                phone: "Telefon",
-                idNumber: "ID-nummer",
-                date: "Datum",
-                project: "Projekt",
-                schedule: "Schema",
-                breakTime: "Rasttid",
-                notes: "Anteckningar",
-                coworkers: "Kollegor",
-                saveRecord: "Spara registrering",
-                history: "Registreringshistorik",
-                stats: "Statistik",
-                userInfo: "Användarinformation",
-                totalHours: "Total timmar",
-                workedDays: "Arbetade dagar",
-                weekHours: "Timmar denna vecka",
-                monthHours: "Timmar denna månad",
-                projectManagement: "Projekthantering",
-                projectName: "Projektnamn",
-                code: "Kod",
-                addProject: "Lägg till projekt",
-                editInfo: "Redigera information",
-                importSuccess: "Data importerades",
-                exportSuccess: "Data exporterades",
-                deleteConfirm: "Är du säker på att du vill radera detta?",
-                projectDeleteConfirm: "Är du säker på att du vill radera detta projekt?",
-                newName: "Ange nytt projektnamn:",
-                newCode: "Ange ny projektkod (valfritt):",
-                projectAdded: "Projekt tillagt",
-                projectUpdated: "Projekt uppdaterat",
-                projectDeleted: "Projekt raderat",
-                entryDeleted: "Radering lyckades",
-                entrySaved: "Sparat",
-                all: "Alla",
-                year: "År",
-                month: "Månad",
-                week: "Vecka",
-                initialSetup: "Initialinställning",
-                saveAndContinue: "Spara och fortsätt",
-                registerTitle: "Registrera timmar",
-                summaryTitle: "Timmar sammanfattning",
-                noRecords: "Inga registreringar än. Börja med att lägga till en ny registrering.",
-                scheduleHint: "Arbetstid",
-                breakHint: "Rasttid under dagen",
-                notesHint: "Detaljer om utfört arbete",
-                coworkersHint: "Vem arbetade med dig",
-                exportPdf: "Exportera PDF",
-                exportJson: "Exportera JSON",
-                importJson: "Importera JSON",
-                hours: "timmar",
-                totalPeriod: "Totalt för perioden",
-                notesPlaceholder: "Detaljer om utfört arbete...",
-                coworkersPlaceholder: "Namn separerade med kommatecken",
-                projectNamePlaceholder: "Projektnamn",
-                projectCodePlaceholder: "Projektkod",
-                personalInfoTitle: "Personlig Information",
-                contactInfoTitle: "Kontaktinformation",
-                initialSetupDesc: "Vänligen fyll i dina personuppgifter för att komma igång",
-                weeklyChartTitle: "Timmar per Vecka",
-                projectDistTitle: "Projektfördelningsdiagram",
-                chartsTitle: "Visuell Statistik",
-                chartMonth: "Månad",
-                chartQuarter: "Kvartal",
-                loginTitle: "Logga in",
-                registerTitle: "Registrera konto",
-                logout: "Logga ut",
-                email: "E-post",
-                password: "Lösenord",
-                registerName: "Namn",
-                confirmPassword: "Bekräfta lösenord",
-                loginError: "Felaktig e-post eller lösenord",
-                registerError: "Registrering misslyckades",
-                passwordsDontMatch: "Lösenorden matchar inte",
-                completeProfile: "Komplettera din profil"
-            }
         };
 
         // Initialize the application
@@ -1304,8 +1282,8 @@
             document.getElementById('entry-date').value = today;
             setDefaultWorkHours();
             
-            // Update translations
-            updateTranslations();
+            // Initialize year filter
+            initYearFilter();
         }
 
         // Set default work hours based on day of week
@@ -1323,6 +1301,23 @@
             } else {
                 document.getElementById('start-time').value = '08:00';
                 document.getElementById('end-time').value = '12:00';
+            }
+        }
+
+        // Initialize year filter dropdown
+        function initYearFilter() {
+            const yearFilter = document.getElementById('year-filter');
+            const currentYear = new Date().getFullYear();
+            
+            // Add years from 2020 to current year + 2
+            for (let year = 2020; year <= currentYear + 2; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                if (year === currentYear) {
+                    option.selected = true;
+                }
+                yearFilter.appendChild(option);
             }
         }
 
@@ -1430,14 +1425,14 @@
                 document.getElementById('login-form').classList.add('hidden');
             });
             
-            document.getElementById('login-form').addEventListener('submit', e => {
+            document.getElementById('login-form-data').addEventListener('submit', e => {
                 e.preventDefault();
                 const email = document.getElementById('login-email').value;
                 const password = document.getElementById('login-password').value;
                 loginUser(email, password);
             });
             
-            document.getElementById('register-form').addEventListener('submit', e => {
+            document.getElementById('register-form-data').addEventListener('submit', e => {
                 e.preventDefault();
                 const name = document.getElementById('register-name').value;
                 const email = document.getElementById('register-email').value;
@@ -1602,6 +1597,12 @@
                 return;
             }
             
+            // Calculate worked hours
+            const start = new Date(`1970-01-01T${startTime}:00`);
+            const end = new Date(`1970-01-01T${endTime}:00`);
+            const diff = (end - start) / (1000 * 60 * 60); // hours
+            const workedHours = (diff - breakTime).toFixed(2);
+            
             const entry = {
                 date: document.getElementById('entry-date').value,
                 project: {
@@ -1612,6 +1613,7 @@
                 startTime: startTime,
                 endTime: endTime,
                 breakTime: breakTime,
+                workedHours: workedHours,
                 notes: document.getElementById('notes').value,
                 coworkers: document.getElementById('coworkers').value.split(',').map(c => c.trim()).filter(c => c),
                 userId: state.currentUser.uid
@@ -1661,12 +1663,24 @@
                 option.textContent = project.name + (project.code ? ` (${project.code})` : '');
                 select.appendChild(option);
             });
+            
+            if (state.projects.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'Inga projekt - skapa ett nytt';
+                select.appendChild(option);
+            }
         }
 
         // Update projects list
         function updateProjectsList() {
             const list = document.getElementById('projects-list');
             list.innerHTML = '';
+            
+            if (state.projects.length === 0) {
+                list.innerHTML = '<li class="no-records">Inga projekt än. Skapa ditt första projekt.</li>';
+                return;
+            }
             
             state.projects.forEach(project => {
                 const li = document.createElement('li');
@@ -1740,7 +1754,7 @@
             if (!project) return;
             
             const newName = prompt('Ange nytt projektnamn:', project.name);
-            if (newName === null) return;
+            if (newName === null || !newName.trim()) return;
             
             const newCode = prompt('Ange ny projektkod (valfritt):', project.code || '');
             
@@ -1761,6 +1775,13 @@
         function deleteProject(projectId) {
             if (!confirm('Är du säker på att du vill radera detta projekt?')) return;
             
+            // Check if project has time entries
+            const hasEntries = state.timeEntries.some(entry => entry.project.id === projectId);
+            if (hasEntries) {
+                showAlert('Det går inte att radera ett projekt med tidsregistreringar', 'error');
+                return;
+            }
+            
             // Delete from Firebase
             database.ref(`projects/${projectId}`).remove()
                 .then(() => {
@@ -1771,57 +1792,449 @@
                 });
         }
 
-        // Update translations
-        function updateTranslations() {
-            const lang = state.currentLanguage;
-            const t = translations[lang] || translations.sv;
+        // Update entries display
+        function updateEntriesDisplay() {
+            const entriesContainer = document.getElementById('entries-container');
+            const noRecordsMessage = document.getElementById('no-records-message');
             
-            // Update interface elements
-            document.querySelectorAll('[id]').forEach(el => {
-                const id = el.id;
-                if (id.endsWith('-label') || id.endsWith('-title') || id.endsWith('-text') || 
-                    id.endsWith('-header') || id.endsWith('-hint') || id.endsWith('-desc')) {
-                    const baseId = id.replace(/-label$/, '').replace(/-title$/, '')
-                                     .replace(/-text$/, '').replace(/-header$/, '')
-                                     .replace(/-hint$/, '').replace(/-desc$/, '');
-                    const key = baseId.split('-').map((word, i) => 
-                        i === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
-                    ).join('');
+            if (state.timeEntries.length === 0) {
+                noRecordsMessage.classList.remove('hidden');
+                entriesContainer.innerHTML = '';
+                return;
+            }
+            
+            noRecordsMessage.classList.add('hidden');
+            
+            // Group entries by date
+            const groupedEntries = {};
+            state.timeEntries.forEach(entry => {
+                if (!groupedEntries[entry.date]) {
+                    groupedEntries[entry.date] = [];
+                }
+                groupedEntries[entry.date].push(entry);
+            });
+            
+            // Sort dates descending
+            const sortedDates = Object.keys(groupedEntries).sort((a, b) => 
+                new Date(b) - new Date(a)
+            );
+            
+            let entriesHTML = '';
+            
+            sortedDates.forEach(date => {
+                const dateObj = new Date(date);
+                const formattedDate = dateObj.toLocaleDateString('sv-SE', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                entriesHTML += `
+                    <div class="entry-group">
+                        <div class="group-header">
+                            <div class="date-header">
+                                <span>${formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)}</span>
+                                <span class="total-hours">Totalt: ${calculateTotalHours(groupedEntries[date])} timmar</span>
+                            </div>
+                            <i class="fas fa-chevron-down collapse-icon"></i>
+                        </div>
+                        <div class="group-content">
+                `;
+                
+                groupedEntries[date].forEach(entry => {
+                    const startTime = entry.startTime.substring(0, 5);
+                    const endTime = entry.endTime.substring(0, 5);
                     
-                    if (t[key]) {
-                        el.textContent = t[key];
+                    entriesHTML += `
+                        <div class="entry-item" data-id="${entry.id}">
+                            <div class="entry-details">
+                                <div class="entry-project">${entry.project.name}</div>
+                                <div class="entry-time">${startTime} - ${endTime} (${entry.workedHours} timmar)</div>
+                                ${entry.notes ? `<div class="entry-notes">${entry.notes}</div>` : ''}
+                            </div>
+                            <div class="entry-actions">
+                                <button class="action-btn edit edit-entry">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn delete delete-entry">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                entriesHTML += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            entriesContainer.innerHTML = entriesHTML;
+            
+            // Add event listeners for entry actions
+            document.querySelectorAll('.group-header').forEach(header => {
+                header.addEventListener('click', function() {
+                    this.parentElement.classList.toggle('collapsed');
+                });
+            });
+            
+            document.querySelectorAll('.edit-entry').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const entryId = this.closest('.entry-item').dataset.id;
+                    editTimeEntry(entryId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-entry').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const entryId = this.closest('.entry-item').dataset.id;
+                    deleteTimeEntry(entryId);
+                });
+            });
+        }
+
+        // Calculate total hours for a date
+        function calculateTotalHours(entries) {
+            return entries.reduce((sum, entry) => sum + parseFloat(entry.workedHours), 0).toFixed(1);
+        }
+
+        // Edit time entry
+        function editTimeEntry(entryId) {
+            const entry = state.timeEntries.find(e => e.id === entryId);
+            if (!entry) return;
+            
+            // Fill form with entry data
+            document.getElementById('entry-date').value = entry.date;
+            document.getElementById('project').value = entry.project.id;
+            document.getElementById('start-time').value = entry.startTime;
+            document.getElementById('end-time').value = entry.endTime;
+            document.getElementById('break-time').value = entry.breakTime.toString();
+            document.getElementById('notes').value = entry.notes || '';
+            document.getElementById('coworkers').value = entry.coworkers?.join(', ') || '';
+            
+            state.editingEntryId = entryId;
+            
+            // Scroll to form
+            document.getElementById('time-entry-form').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Delete time entry
+        function deleteTimeEntry(entryId) {
+            if (!confirm('Är du säker på att du vill radera denna tidpost?')) return;
+            
+            database.ref(`timeEntries/${entryId}`).remove()
+                .then(() => {
+                    showAlert('Tidpost raderad', 'success');
+                })
+                .catch(error => {
+                    showAlert('Fel vid radering: ' + error.message, 'error');
+                });
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            // Total hours
+            const totalHours = state.timeEntries.reduce((sum, entry) => 
+                sum + parseFloat(entry.workedHours), 0);
+            document.getElementById('total-hours').textContent = totalHours.toFixed(1);
+            
+            // Total days
+            const uniqueDates = [...new Set(state.timeEntries.map(entry => entry.date))];
+            document.getElementById('total-days').textContent = uniqueDates.length;
+            
+            // Current week hours
+            const today = new Date();
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay() + 1);
+            const endOfWeek = new Date(today);
+            endOfWeek.setDate(today.getDate() - today.getDay() + 7);
+            
+            const weekEntries = state.timeEntries.filter(entry => {
+                const entryDate = new Date(entry.date);
+                return entryDate >= startOfWeek && entryDate <= endOfWeek;
+            });
+            
+            const weekHours = weekEntries.reduce((sum, entry) => 
+                sum + parseFloat(entry.workedHours), 0);
+            document.getElementById('week-hours').textContent = weekHours.toFixed(1);
+            
+            // Current month hours
+            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            
+            const monthEntries = state.timeEntries.filter(entry => {
+                const entryDate = new Date(entry.date);
+                return entryDate >= startOfMonth && entryDate <= endOfMonth;
+            });
+            
+            const monthHours = monthEntries.reduce((sum, entry) => 
+                sum + parseFloat(entry.workedHours), 0);
+            document.getElementById('month-hours').textContent = monthHours.toFixed(1);
+        }
+
+        // Update hours summary
+        function updateHoursSummary() {
+            const summaryTable = document.querySelector('#resumenHoras tbody');
+            summaryTable.innerHTML = '';
+            
+            if (state.timeEntries.length === 0) {
+                document.getElementById('total-mes').textContent = '0';
+                return;
+            }
+            
+            let totalHours = 0;
+            
+            // Sort entries by date
+            const sortedEntries = [...state.timeEntries].sort((a, b) => 
+                new Date(a.date) - new Date(b.date)
+            );
+            
+            sortedEntries.forEach(entry => {
+                const date = new Date(entry.date);
+                const weekNumber = getWeekNumber(date);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${date.toLocaleDateString('sv-SE')}</td>
+                    <td>${weekNumber}</td>
+                    <td>${entry.project.name}</td>
+                    <td>${entry.workedHours}</td>
+                    <td>${entry.breakTime}</td>
+                `;
+                summaryTable.appendChild(row);
+                
+                totalHours += parseFloat(entry.workedHours);
+            });
+            
+            document.getElementById('total-mes').textContent = totalHours.toFixed(1);
+        }
+
+        // Get ISO week number
+        function getWeekNumber(date) {
+            const d = new Date(date);
+            d.setHours(0, 0, 0, 0);
+            d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+            const yearStart = new Date(d.getFullYear(), 0, 1);
+            const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+            return weekNo;
+        }
+
+        // Update charts
+        function updateCharts() {
+            // Weekly chart data
+            const weeklyData = calculateWeeklyData();
+            updateWeeklyChart(weeklyData);
+            
+            // Project distribution chart
+            const projectData = calculateProjectDistribution();
+            updateProjectChart(projectData);
+        }
+
+        // Calculate weekly data for chart
+        function calculateWeeklyData() {
+            // For simplicity, we'll show data for the last 8 weeks
+            const weeks = [];
+            const today = new Date();
+            
+            for (let i = 7; i >= 0; i--) {
+                const weekStart = new Date(today);
+                weekStart.setDate(today.getDate() - today.getDay() - i * 7);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                
+                const weekEntries = state.timeEntries.filter(entry => {
+                    const entryDate = new Date(entry.date);
+                    return entryDate >= weekStart && entryDate <= weekEnd;
+                });
+                
+                const weekHours = weekEntries.reduce((sum, entry) => 
+                    sum + parseFloat(entry.workedHours), 0);
+                
+                weeks.push({
+                    label: `V${getWeekNumber(weekStart)}`,
+                    hours: weekHours
+                });
+            }
+            
+            return weeks;
+        }
+
+        // Calculate project distribution
+        function calculateProjectDistribution() {
+            const projectMap = {};
+            
+            state.timeEntries.forEach(entry => {
+                const projectId = entry.project.id;
+                if (!projectMap[projectId]) {
+                    projectMap[projectId] = {
+                        name: entry.project.name,
+                        hours: 0,
+                        color: getRandomColor()
+                    };
+                }
+                projectMap[projectId].hours += parseFloat(entry.workedHours);
+            });
+            
+            return Object.values(projectMap).sort((a, b) => b.hours - a.hours);
+        }
+
+        // Generate random color for charts
+        function getRandomColor() {
+            return `#${Math.floor(Math.random()*16777215).toString(16)}`;
+        }
+
+        // Update weekly chart
+        function updateWeeklyChart(data) {
+            const ctx = document.getElementById('weekly-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (window.weeklyChart) {
+                window.weeklyChart.destroy();
+            }
+            
+            window.weeklyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.label),
+                    datasets: [{
+                        label: 'Timmar per vecka',
+                        data: data.map(item => item.hours),
+                        backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Timmar'
+                            }
+                        }
                     }
                 }
             });
+        }
+
+        // Update project chart
+        function updateProjectChart(data) {
+            const ctx = document.getElementById('project-chart').getContext('2d');
             
-            // Update placeholders
-            const placeholders = [
-                { id: 'notes', key: 'notesPlaceholder' },
-                { id: 'coworkers', key: 'coworkersPlaceholder' },
-                { id: 'new-project-name', key: 'projectNamePlaceholder' },
-                { id: 'new-project-code', key: 'projectCodePlaceholder' },
-                { id: 'first-name', key: 'namePlaceholder' },
-                { id: 'last-name', key: 'lastNamePlaceholder' },
-                { id: 'phone', key: 'phonePlaceholder' },
-                { id: 'id-number', key: 'idNumberPlaceholder' },
-                { id: 'login-email', key: 'emailPlaceholder' },
-                { id: 'login-password', key: 'passwordPlaceholder' },
-                { id: 'register-name', key: 'registerNamePlaceholder' },
-                { id: 'register-email', key: 'emailPlaceholder' },
-                { id: 'register-password', key: 'passwordPlaceholder' },
-                { id: 'register-confirm-password', key: 'confirmPasswordPlaceholder' }
-            ];
+            // Destroy existing chart if it exists
+            if (window.projectChart) {
+                window.projectChart.destroy();
+            }
             
-            placeholders.forEach(item => {
-                const element = document.getElementById(item.id);
-                if (element && t[item.key]) {
-                    element.placeholder = t[item.key];
+            window.projectChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(item => item.name),
+                    datasets: [{
+                        data: data.map(item => item.hours),
+                        backgroundColor: data.map(item => item.color),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
                 }
             });
+        }
+
+        // Export to PDF
+        function exportToPDF() {
+            showAlert('PDF export funktionalitet kommer snart!', 'info');
+        }
+
+        // Export to JSON
+        function exportToJSON() {
+            const data = {
+                user: state.userProfile,
+                projects: state.projects,
+                timeEntries: state.timeEntries
+            };
             
-            document.getElementById('app-title').textContent = t.title;
-            document.getElementById('no-records-message').textContent = t.noRecords;
-            document.getElementById('logout-btn').querySelector('span').textContent = t.logout;
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `timebook_${new Date().toISOString().split('T')[0]}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showAlert('Data exporterad som JSON', 'success');
+        }
+
+        // Import from JSON
+        function importFromJSON(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    
+                    // Validate data structure
+                    if (!data.user || !data.projects || !data.timeEntries) {
+                        throw new Error('Ogiltig filformat');
+                    }
+                    
+                    // Save to Firebase
+                    saveImportedData(data);
+                } catch (error) {
+                    showAlert('Fel vid import: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Save imported data to Firebase
+        function saveImportedData(data) {
+            const userId = state.currentUser.uid;
+            
+            // Save user profile
+            database.ref(`users/${userId}`).set(data.user)
+                .then(() => {
+                    // Save projects
+                    const projectsPromises = data.projects.map(project => {
+                        project.ownerId = userId;
+                        return database.ref('projects').push(project);
+                    });
+                    
+                    return Promise.all(projectsPromises);
+                })
+                .then(() => {
+                    // Save time entries
+                    const entriesPromises = data.timeEntries.map(entry => {
+                        entry.userId = userId;
+                        return database.ref('timeEntries').push(entry);
+                    });
+                    
+                    return Promise.all(entriesPromises);
+                })
+                .then(() => {
+                    showAlert('Data importerad framgångsrikt', 'success');
+                    // Reload data
+                    loadUserProfile(userId);
+                })
+                .catch(error => {
+                    showAlert('Fel vid import: ' + error.message, 'error');
+                });
         }
 
         // Show alert message
