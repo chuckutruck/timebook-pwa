@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#3498db">
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TimeBook - Registro Profesional de Horas</title>
@@ -11,6 +8,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    
     <style>
         :root {
             --primary: #2c3e50;
@@ -761,8 +763,6 @@
                 text-align: center;
             }
         }
-<script src="js/licencia.js"></script>
-		
     </style>
 </head>
 <body>
@@ -774,7 +774,7 @@
             </div>
             <div class="controls">
                 <select id="language" class="language-selector">
-                    <option value="sv" selected>Svenska</option>				
+                    <option value="sv" selected>Svenska</option>                
                     <option value="es">Spanska</option>
                     <option value="en">Engelska</option>
                     <option value="ru">Ryska</option>
@@ -1090,9 +1090,42 @@
             </div>
         </div>
     </div>
-	
-	<script src="js/licencia.js"></script>
+    
     <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
+            authDomain: "tidbok-df555.firebaseapp.com",
+            databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "tidbok-df555",
+            storageBucket: "tidbok-df555.firebasestorage.app",
+            messagingSenderId: "467331966400",
+            appId: "1:467331966400:web:abb6949a76918f2eb8d425"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Generate a unique user ID
+        function getUserId() {
+            let userId = localStorage.getItem('userId');
+            if (!userId) {
+                userId = 'user_' + Date.now();
+                localStorage.setItem('userId', userId);
+            }
+            return userId;
+        }
+        
+        const userId = getUserId();
+        
+        // Database paths
+        const dbPaths = {
+            user: `users/${userId}`,
+            projects: `projects/${userId}`,
+            timeEntries: `timeEntries/${userId}`
+        };
+        
         // Traducciones para la aplicación
         const translations = {
             es: {
@@ -1455,31 +1488,20 @@
         // Datos de la aplicación
         const state = {
             user: null,
-            projects: [
-                { id: 1, name: 'DP 5 Utemiljö', code: 'DP5' },
-                { id: 2, name: 'DP 1 Hus A', code: 'DP1' },
-                { id: 3, name: 'DP 2 Hus B', code: 'DP2' },
-                { id: 4, name: 'DP 4 Hus D', code: 'DP4' }
-            ],
+            projects: [],
             timeEntries: [],
-            currentLanguage: 'es',
-            chartPeriod: 'month'
+            currentLanguage: 'sv',
+            chartPeriod: 'month',
+            editingEntryId: null
         };
 
         // Inicializar la aplicación
         function initApp() {
-            // Cargar datos del localStorage
-            loadFromLocalStorage();
+            // Cargar datos de Firebase
+            loadFromFirebase();
             
             // Configurar eventos
             setupEventListeners();
-            
-            // Verificar si el usuario ya está configurado
-            if (state.user) {
-                document.getElementById('user-form').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                updateUserInfo();
-            }
             
             // Configurar fecha actual por defecto
             const today = new Date().toISOString().split('T')[0];
@@ -1492,21 +1514,57 @@
             updateTranslations();
             
             // Actualizar listas
-            updateProjectsList();
             updateProjectDropdown();
             generateYearOptions();
-            updateEntriesDisplay();
-            updateStatistics();
-            updateHoursSummary();
+        }
+
+        // Cargar datos de Firebase
+        function loadFromFirebase() {
+            // Cargar usuario
+            database.ref(dbPaths.user).on('value', snapshot => {
+                state.user = snapshot.val();
+                if (state.user) {
+                    document.getElementById('user-form').classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+                    updateUserInfo();
+                }
+            });
             
-            // Inicializar gráficos
-            initCharts();
+            // Cargar proyectos
+            database.ref(dbPaths.projects).on('value', snapshot => {
+                const projectsData = snapshot.val();
+                state.projects = projectsData ? Object.entries(projectsData).map(([id, project]) => ({
+                    id,
+                    ...project
+                })) : [];
+                updateProjectsList();
+                updateProjectDropdown();
+                updateCharts();
+            });
+            
+            // Cargar entradas de tiempo
+            database.ref(dbPaths.timeEntries).on('value', snapshot => {
+                const entriesData = snapshot.val();
+                state.timeEntries = entriesData ? Object.entries(entriesData).map(([id, entry]) => ({
+                    id,
+                    ...entry
+                })) : [];
+                updateEntriesDisplay();
+                updateStatistics();
+                updateHoursSummary();
+                updateCharts();
+            });
+        }
+
+        // Guardar datos en Firebase
+        function saveToFirebase(path, data) {
+            return database.ref(path).set(data);
         }
 
         // Actualizar traducciones
         function updateTranslations() {
             const lang = state.currentLanguage;
-            const t = translations[lang] || translations.es;
+            const t = translations[lang] || translations.sv;
             
             // Actualizar elementos de la interfaz
             document.querySelectorAll('[id]').forEach(el => {
@@ -1548,30 +1606,6 @@
             document.getElementById('app-title').textContent = t.title;
             document.getElementById('no-records-message').textContent = t.noRecords;
             document.querySelector('#import-file').setAttribute('accept', '.json');
-        }
-
-        // Cargar datos del localStorage
-        function loadFromLocalStorage() {
-            const user = localStorage.getItem('timeBookUser');
-            const projects = localStorage.getItem('timeBookProjects');
-            const entries = localStorage.getItem('timeBookEntries');
-            const lang = localStorage.getItem('timeBookLanguage');
-            
-            if (user) state.user = JSON.parse(user);
-            if (projects) state.projects = JSON.parse(projects);
-            if (entries) state.timeEntries = JSON.parse(entries);
-            if (lang) {
-                state.currentLanguage = lang;
-                document.getElementById('language').value = lang;
-            }
-        }
-
-        // Guardar datos en localStorage
-        function saveToLocalStorage() {
-            localStorage.setItem('timeBookUser', JSON.stringify(state.user));
-            localStorage.setItem('timeBookProjects', JSON.stringify(state.projects));
-            localStorage.setItem('timeBookEntries', JSON.stringify(state.timeEntries));
-            localStorage.setItem('timeBookLanguage', state.currentLanguage);
         }
 
         // Configurar eventos
@@ -1626,7 +1660,7 @@
             // Cambio de idioma
             document.getElementById('language').addEventListener('change', function() {
                 state.currentLanguage = this.value;
-                saveToLocalStorage();
+                saveToFirebase(dbPaths.user, state.user);
                 updateTranslations();
                 updateEntriesDisplay();
                 updateHoursSummary();
@@ -1669,24 +1703,21 @@
         function saveUserInfo(e) {
             e.preventDefault();
             
-            state.user = {
+            const userData = {
                 firstName: document.getElementById('first-name').value,
                 lastName: document.getElementById('last-name').value,
                 phone: document.getElementById('phone').value,
                 idNumber: document.getElementById('id-number').value
             };
             
-            saveToLocalStorage();
-            updateUserInfo();
-            
-            document.getElementById('user-form').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            
-            // Crear alerta de éxito
-            showAlert(translations[state.currentLanguage].entrySaved, 'success');
-            
-            // Inicializar gráficos después de mostrar la aplicación principal
-            initCharts();
+            // Guardar en Firebase
+            saveToFirebase(dbPaths.user, userData)
+                .then(() => {
+                    showAlert(translations[state.currentLanguage].entrySaved, 'success');
+                })
+                .catch(error => {
+                    showAlert(`Error: ${error.message}`, 'error');
+                });
         }
 
         // Actualizar información del usuario en la UI
@@ -1708,7 +1739,7 @@
         function saveTimeEntry(e) {
             e.preventDefault();
             
-            const projectId = parseInt(document.getElementById('project').value);
+            const projectId = document.getElementById('project').value;
             const project = state.projects.find(p => p.id === projectId);
             
             if (!project) {
@@ -1727,7 +1758,6 @@
             }
             
             const entry = {
-                id: Date.now(),
                 date: document.getElementById('entry-date').value,
                 project: {
                     id: project.id,
@@ -1741,17 +1771,29 @@
                 coworkers: document.getElementById('coworkers').value.split(',').map(c => c.trim()).filter(c => c)
             };
             
-            state.timeEntries.push(entry);
-            saveToLocalStorage();
-            
-            resetForm();
-            updateEntriesDisplay();
-            updateStatistics();
-            updateHoursSummary();
-            updateCharts();
-            
-            // Mostrar notificación
-            showAlert(translations[state.currentLanguage].entrySaved, 'success');
+            if (state.editingEntryId) {
+                // Actualizar entrada existente
+                saveToFirebase(`${dbPaths.timeEntries}/${state.editingEntryId}`, entry)
+                    .then(() => {
+                        resetForm();
+                        state.editingEntryId = null;
+                        showAlert(translations[state.currentLanguage].entrySaved, 'success');
+                    })
+                    .catch(error => {
+                        showAlert(`Error: ${error.message}`, 'error');
+                    });
+            } else {
+                // Crear nueva entrada
+                const newEntryRef = database.ref(dbPaths.timeEntries).push();
+                newEntryRef.set(entry)
+                    .then(() => {
+                        resetForm();
+                        showAlert(translations[state.currentLanguage].entrySaved, 'success');
+                    })
+                    .catch(error => {
+                        showAlert(`Error: ${error.message}`, 'error');
+                    });
+            }
         }
 
         // Resetear formulario
@@ -1760,6 +1802,7 @@
             document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
             setDefaultWorkHours();
             document.getElementById('break-time').value = '1.0';
+            state.editingEntryId = null;
         }
 
         // Actualizar lista de proyectos en el dropdown
@@ -1804,11 +1847,11 @@
             
             // Agregar eventos a los botones
             document.querySelectorAll('.edit-project').forEach(btn => {
-                btn.addEventListener('click', () => editProject(parseInt(btn.dataset.id)));
+                btn.addEventListener('click', () => editProject(btn.dataset.id));
             });
             
             document.querySelectorAll('.delete-project').forEach(btn => {
-                btn.addEventListener('click', () => deleteProject(parseInt(btn.dataset.id)));
+                btn.addEventListener('click', () => deleteProject(btn.dataset.id));
             });
         }
 
@@ -1828,24 +1871,22 @@
             }
             
             const newProject = {
-                id: Date.now(),
                 name: name,
                 code: code || null
             };
             
-            state.projects.push(newProject);
-            saveToLocalStorage();
-            
-            updateProjectsList();
-            updateProjectDropdown();
-            updateCharts();
-            
-            // Resetear formulario
-            document.getElementById('new-project-name').value = '';
-            document.getElementById('new-project-code').value = '';
-            
-            // Mostrar notificación
-            showAlert(translations[state.currentLanguage].projectAdded, 'success');
+            // Guardar en Firebase
+            const newProjectRef = database.ref(dbPaths.projects).push();
+            newProjectRef.set(newProject)
+                .then(() => {
+                    // Resetear formulario
+                    document.getElementById('new-project-name').value = '';
+                    document.getElementById('new-project-code').value = '';
+                    showAlert(translations[state.currentLanguage].projectAdded, 'success');
+                })
+                .catch(error => {
+                    showAlert(`Error: ${error.message}`, 'error');
+                });
         }
 
         // Editar proyecto
@@ -1859,15 +1900,17 @@
             
             const newCode = prompt(t.newCode, project.code || '');
             
-            project.name = newName.trim();
-            project.code = newCode ? newCode.trim() : null;
-            
-            saveToLocalStorage();
-            updateProjectsList();
-            updateProjectDropdown();
-            updateCharts();
-            
-            showAlert(t.projectUpdated, 'success');
+            // Actualizar en Firebase
+            saveToFirebase(`${dbPaths.projects}/${projectId}`, {
+                name: newName.trim(),
+                code: newCode ? newCode.trim() : null
+            })
+                .then(() => {
+                    showAlert(t.projectUpdated, 'success');
+                })
+                .catch(error => {
+                    showAlert(`Error: ${error.message}`, 'error');
+                });
         }
 
         // Eliminar proyecto
@@ -1875,14 +1918,14 @@
             const t = translations[state.currentLanguage];
             if (!confirm(t.projectDeleteConfirm)) return;
             
-            state.projects = state.projects.filter(p => p.id !== projectId);
-            saveToLocalStorage();
-            
-            updateProjectsList();
-            updateProjectDropdown();
-            updateCharts();
-            
-            showAlert(t.projectDeleted, 'success');
+            // Eliminar de Firebase
+            database.ref(`${dbPaths.projects}/${projectId}`).remove()
+                .then(() => {
+                    showAlert(t.projectDeleted, 'success');
+                })
+                .catch(error => {
+                    showAlert(`Error: ${error.message}`, 'error');
+                });
         }
 
         // Generar opciones de años para el filtro
@@ -2043,11 +2086,11 @@
             
             // Agregar eventos a los botones de editar/eliminar
             document.querySelectorAll('.edit-entry').forEach(btn => {
-                btn.addEventListener('click', () => editTimeEntry(parseInt(btn.dataset.id)));
+                btn.addEventListener('click', () => editTimeEntry(btn.dataset.id));
             });
             
             document.querySelectorAll('.delete-entry').forEach(btn => {
-                btn.addEventListener('click', () => deleteTimeEntry(parseInt(btn.dataset.id)));
+                btn.addEventListener('click', () => deleteTimeEntry(btn.dataset.id));
             });
         }
 
@@ -2063,15 +2106,13 @@
             document.getElementById('end-time').value = entry.endTime;
             document.getElementById('break-time').value = entry.breakTime;
             document.getElementById('notes').value = entry.notes || '';
-            document.getElementById('coworkers').value = entry.coworkers.join(', ');
+            document.getElementById('coworkers').value = entry.coworkers ? entry.coworkers.join(', ') : '';
             
-            // Eliminar entrada original
-            state.timeEntries = state.timeEntries.filter(e => e.id !== entryId);
-            saveToLocalStorage();
-            updateEntriesDisplay();
-            updateStatistics();
-            updateHoursSummary();
-            updateCharts();
+            // Establecer que estamos editando
+            state.editingEntryId = entryId;
+            
+            // Desplazar hacia el formulario
+            document.getElementById('time-entry-form').scrollIntoView({ behavior: 'smooth' });
         }
 
         // Eliminar entrada de tiempo
@@ -2079,15 +2120,14 @@
             const t = translations[state.currentLanguage];
             if (!confirm(t.deleteConfirm)) return;
             
-            state.timeEntries = state.timeEntries.filter(entry => entry.id !== entryId);
-            saveToLocalStorage();
-            
-            updateEntriesDisplay();
-            updateStatistics();
-            updateHoursSummary();
-            updateCharts();
-            
-            showAlert(t.entryDeleted, 'success');
+            // Eliminar de Firebase
+            database.ref(`${dbPaths.timeEntries}/${entryId}`).remove()
+                .then(() => {
+                    showAlert(t.entryDeleted, 'success');
+                })
+                .catch(error => {
+                    showAlert(`Error: ${error.message}`, 'error');
+                });
         }
 
         // Actualizar estadísticas
@@ -2361,8 +2401,8 @@
             doc.rect(0, 0, 210, 30, 'F');
             doc.setFontSize(24);
             doc.setTextColor(255, 255, 255);
-			const userTitle = `${state.user.firstName} ${state.user.lastName} - ${state.user.idNumber}`;
-			doc.text(userTitle, 105, 14, 'center');
+            const userTitle = `${state.user.firstName} ${state.user.lastName} - ${state.user.idNumber}`;
+            doc.text(userTitle, 105, 14, 'center');
             
             // Información del usuario
             doc.setFontSize(12);
@@ -2430,29 +2470,28 @@
                 groupedByDate[entry.date].push(entry);
             });
 
-			const summaryData = Object.entries(groupedByDate).map(([date, entries]) => {
-				const weekNumber = getWeekNumber(date);
-				const totalDay = entries.reduce((sum, entry) =>
-					sum + calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime), 0);
+            const summaryData = Object.entries(groupedByDate).map(([date, entries]) => {
+                const weekNumber = getWeekNumber(date);
+                const totalDay = entries.reduce((sum, entry) =>
+                    sum + calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime), 0);
 
-				// Sumamos todos los tiempos de descanso si se espera como número (por ejemplo, en horas o minutos)
-				let totalBreak = entries.reduce((sum, entry) => {
-					const parsedBreak = parseFloat(entry.breakTime) || 0;
-					return sum + parsedBreak;
-				}, 0);
+                // Sumamos todos los tiempos de descanso si se espera como número (por ejemplo, en horas o minutos)
+                let totalBreak = entries.reduce((sum, entry) => {
+                    const parsedBreak = parseFloat(entry.breakTime) || 0;
+                    return sum + parsedBreak;
+                }, 0);
 
-				// Mostrar proyectos únicos del día
-				const projectNames = [...new Set(entries.map(e => e.project.name))].join(', ');
+                // Mostrar proyectos únicos del día
+                const projectNames = [...new Set(entries.map(e => e.project.name))].join(', ');
 
-				return [
-					date,
-					weekNumber,
-					projectNames,
-					totalDay.toFixed(1),
-					totalBreak.toFixed(1)
-				];
-			});
-
+                return [
+                    date,
+                    weekNumber,
+                    projectNames,
+                    totalDay.toFixed(1),
+                    totalBreak.toFixed(1)
+                ];
+            });
 
             doc.autoTable({
                 head: [[t.date, t.week, t.project, t.hours, t.breakTime]],
@@ -2545,27 +2584,20 @@
                         throw new Error('Formato de archivo inválido');
                     }
                     
-                    // Actualizar estado
-                    state.user = data.user;
-                    state.projects = data.projects;
-                    state.timeEntries = data.entries;
+                    // Guardar datos en Firebase
+                    const savePromises = [
+                        saveToFirebase(dbPaths.user, data.user),
+                        saveToFirebase(dbPaths.projects, data.projects),
+                        saveToFirebase(dbPaths.timeEntries, data.entries)
+                    ];
                     
-                    // Guardar en localStorage
-                    saveToLocalStorage();
-                    
-                    // Actualizar UI
-                    document.getElementById('user-form').classList.add('hidden');
-                    document.getElementById('main-app').classList.remove('hidden');
-                    updateUserInfo();
-                    updateProjectsList();
-                    updateProjectDropdown();
-                    generateYearOptions();
-                    updateEntriesDisplay();
-                    updateStatistics();
-                    updateHoursSummary();
-                    initCharts();
-                    
-                    showAlert(translations[state.currentLanguage].importSuccess, 'success');
+                    Promise.all(savePromises)
+                        .then(() => {
+                            showAlert(translations[state.currentLanguage].importSuccess, 'success');
+                        })
+                        .catch(error => {
+                            showAlert(`Error: ${error.message}`, 'error');
+                        });
                 } catch (error) {
                     showAlert(`Error: ${error.message}`, 'error');
                 }
@@ -2600,15 +2632,5 @@
         // Inicializar la aplicación cuando el DOM esté cargado
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
-    <script src="js/licencia.js"></script>	
-
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js')
-    .then(() => console.log("✅ Service Worker registrado"))
-    .catch(err => console.error("❌ Error al registrar:", err));
-}
-</script>
-
 </body>
 </html>
