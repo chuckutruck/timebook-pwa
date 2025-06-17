@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimeBook - Registro Profesional de Horas</title>
+    <title>TimeBook - Professional Time Tracker</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -11,8 +11,8 @@
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <script src="app.js"></script>
     
     <style>
         :root {
@@ -703,6 +703,67 @@
             color: white;
         }
         
+        .auth-container {
+            max-width: 500px;
+            margin: 80px auto;
+            padding: 40px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+        }
+        
+        .auth-switch {
+            margin-top: 20px;
+            font-size: 15px;
+        }
+        
+        .auth-switch a {
+            color: var(--secondary);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+        
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .auth-tab {
+            flex: 1;
+            padding: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            border-bottom: 3px solid transparent;
+        }
+        
+        .auth-tab.active {
+            border-bottom-color: var(--secondary);
+            color: var(--secondary);
+        }
+        
+        .logout-btn {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
         @media (max-width: 992px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -733,7 +794,7 @@
                 flex-direction: column;
             }
             
-            .user-form-container {
+            .user-form-container, .auth-container {
                 padding: 25px;
                 margin: 25px auto;
             }
@@ -763,6 +824,10 @@
                 width: 100%;
                 text-align: center;
             }
+            
+            .auth-tabs {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -773,7 +838,7 @@
                 <i class="fas fa-clock"></i>
                 <h1 id="app-title">TimeBook</h1>
             </div>
-            <div class="controls">
+            <div class="controls" id="app-controls">
                 <select id="language" class="language-selector">
                     <option value="sv" selected>Svenska</option>                
                     <option value="es">Spanska</option>
@@ -794,19 +859,85 @@
                     <input type="file" id="import-file" accept=".json" style="display: none;">
                 </div>
             </div>
-            <div class="user-section">
+            <div class="user-section" id="user-section">
                 <div class="user-avatar" id="user-avatar">A</div>
                 <span id="user-name">Användare</span>
+                <button id="logout-btn" class="logout-btn hidden">
+                    <i class="fas fa-sign-out-alt"></i> <span>Logga ut</span>
+                </button>
             </div>
         </div>
     </header>
 
     <div class="container">
-        <!-- Användarformulär (initialt) -->
-        <div id="user-form" class="user-form-container">
+        <!-- Authentication Container -->
+        <div id="auth-container" class="auth-container">
+            <div class="logo" style="justify-content: center; margin-bottom: 25px;">
+                <i class="fas fa-clock" style="font-size: 48px; color: var(--secondary);"></i>
+                <h1>TimeBook</h1>
+            </div>
+            
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="login-tab">Logga in</div>
+                <div class="auth-tab" id="register-tab">Registrera</div>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="login-email">E-post</label>
+                    <input type="email" id="login-email" required placeholder="Ange din e-post">
+                </div>
+                
+                <div class="form-group">
+                    <label for="login-password">Lösenord</label>
+                    <input type="password" id="login-password" required placeholder="Ange ditt lösenord">
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 15px;">
+                        <i class="fas fa-sign-in-alt"></i> Logga in
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form hidden">
+                <div class="form-group">
+                    <label for="register-name">Namn</label>
+                    <input type="text" id="register-name" required placeholder="Ange ditt fullständiga namn">
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-email">E-post</label>
+                    <input type="email" id="register-email" required placeholder="Ange din e-post">
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-password">Lösenord (minst 6 tecken)</label>
+                    <input type="password" id="register-password" required placeholder="Skapa ett lösenord">
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-confirm-password">Bekräfta lösenord</label>
+                    <input type="password" id="register-confirm-password" required placeholder="Bekräfta ditt lösenord">
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn btn-success" style="width: 100%; padding: 15px;">
+                        <i class="fas fa-user-plus"></i> Registrera konto
+                    </button>
+                </div>
+            </form>
+            
+            <div id="auth-message" class="alert hidden"></div>
+        </div>
+
+        <!-- User Profile Form -->
+        <div id="user-form" class="user-form-container hidden">
             <div style="text-align: center; margin-bottom: 30px;">
                 <i class="fas fa-user-cog" style="font-size: 48px; color: var(--secondary);"></i>
-                <h2 id="initial-setup-title" style="margin: 15px 0;">Initial Konfiguration</h2>
+                <h2 id="initial-setup-title">Komplettera din profil</h2>
                 <p id="initial-setup-desc" style="color: #7f8c8d;">Fyll i dina personuppgifter för att komma igång</p>
             </div>
 
@@ -851,6 +982,7 @@
             </form>
         </div>
 
+        <!-- Main Application -->
         <div id="main-app" class="hidden">
             <div class="main-content">
                 <div>
@@ -1106,171 +1238,22 @@
         
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const database = firebase.database();
         
-        // Generate a unique user ID
-        function getUserId() {
-            let userId = localStorage.getItem('userId');
-            if (!userId) {
-                userId = 'user_' + Date.now();
-                localStorage.setItem('userId', userId);
-            }
-            return userId;
-        }
-        
-        const userId = getUserId();
-        
-        // Database paths
-        const dbPaths = {
-            user: `users/${userId}`,
-            projects: `projects/${userId}`,
-            timeEntries: `timeEntries/${userId}`
+        // State management
+        const state = {
+            currentUser: null,
+            userProfile: null,
+            projects: [],
+            timeEntries: [],
+            currentLanguage: 'sv',
+            chartPeriod: 'month',
+            editingEntryId: null
         };
-        
-        // Traducciones para la aplicación
+
+        // Translations
         const translations = {
-            es: {
-                title: "TimeBook - Registro Profesional de Horas",
-                save: "Guardar",
-                cancel: "Cancelar",
-                projects: "Proyectos",
-                add: "Agregar",
-                name: "Nombre",
-                lastName: "Apellido",
-                phone: "Teléfono",
-                idNumber: "Número de Identificación",
-                date: "Fecha",
-                project: "Proyecto",
-                schedule: "Horario",
-                breakTime: "Tiempo de Descanso",
-                notes: "Observaciones",
-                coworkers: "Compañeros de Trabajo",
-                saveRecord: "Guardar Registro",
-                history: "Historial de Registros",
-                stats: "Estadísticas",
-                userInfo: "Información de Usuario",
-                totalHours: "Horas Totales",
-                workedDays: "Días Trabajados",
-                weekHours: "Horas Esta Semana",
-                monthHours: "Horas Este Mes",
-                projectManagement: "Gestión de Proyectos",
-                projectName: "Nombre del Proyecto",
-                code: "Código",
-                addProject: "Agregar Proyecto",
-                editInfo: "Editar Información",
-                importSuccess: "Datos importados con éxito",
-                exportSuccess: "Datos exportados con éxito",
-                deleteConfirm: "¿Está seguro de que desea eliminar este registro?",
-                projectDeleteConfirm: "¿Está seguro de que desea eliminar este proyecto?",
-                newName: "Ingrese el nuevo nombre del proyecto:",
-                newCode: "Ingrese el nuevo código del proyecto (opcional):",
-                projectAdded: "Proyecto agregado con éxito",
-                projectUpdated: "Proyecto actualizado con éxito",
-                projectDeleted: "Proyecto eliminado con éxito",
-                entryDeleted: "Registro eliminado con éxito",
-                entrySaved: "Registro guardado con éxito",
-                all: "Todos",
-                year: "Año",
-                month: "Mes",
-                week: "Semana",
-                initialSetup: "Configuración Inicial",
-                saveAndContinue: "Guardar y Continuar",
-                registerTitle: "Registrar Horas",
-                summaryTitle: "Resumen de Horas",
-                noRecords: "No hay registros aún. Comience agregando un nuevo registro.",
-                scheduleHint: "Horas de trabajo",
-                breakHint: "Tiempo de descanso durante el día",
-                notesHint: "Detalles sobre el trabajo realizado",
-                coworkersHint: "Quién trabajó contigo",
-                exportPdf: "Exportar PDF",
-                exportJson: "Exportar JSON",
-                importJson: "Importar JSON",
-                hours: "horas",
-                totalPeriod: "Total para el período",
-                notesPlaceholder: "Detalles del trabajo realizado...",
-                coworkersPlaceholder: "Nombres separados por comas",
-                projectNamePlaceholder: "Nombre del proyecto",
-                projectCodePlaceholder: "Código del proyecto",
-                personalInfoTitle: "Datos Personales",
-                contactInfoTitle: "Información de Contacto",
-                initialSetupDesc: "Por favor, complete sus datos personales para comenzar",
-                weeklyChartTitle: "Horas por Semana",
-                projectDistTitle: "Distribución por Proyecto",
-                chartsTitle: "Estadísticas Visuales",
-                chartMonth: "Mes",
-                chartQuarter: "Trimestre"
-            },
-            en: {
-                title: "TimeBook - Professional Hours Tracker",
-                save: "Save",
-                cancel: "Cancel",
-                projects: "Projects",
-                add: "Add",
-                name: "First Name",
-                lastName: "Last Name",
-                phone: "Phone",
-                idNumber: "ID Number",
-                date: "Date",
-                project: "Project",
-                schedule: "Schedule",
-                breakTime: "Break Time",
-                notes: "Notes",
-                coworkers: "Coworkers",
-                saveRecord: "Save Record",
-                history: "History of Records",
-                stats: "Statistics",
-                userInfo: "User Information",
-                totalHours: "Total Hours",
-                workedDays: "Worked Days",
-                weekHours: "Hours This Week",
-                monthHours: "Hours This Month",
-                projectManagement: "Project Management",
-                projectName: "Project Name",
-                code: "Code",
-                addProject: "Add Project",
-                editInfo: "Edit Information",
-                importSuccess: "Data imported successfully",
-                exportSuccess: "Data exported successfully",
-                deleteConfirm: "Are you sure you want to delete this record?",
-                projectDeleteConfirm: "Are you sure you want to delete this project?",
-                newName: "Enter the new project name:",
-                newCode: "Enter the new project code (optional):",
-                projectAdded: "Project added successfully",
-                projectUpdated: "Project updated successfully",
-                projectDeleted: "Project deleted successfully",
-                entryDeleted: "Entry deleted successfully",
-                entrySaved: "Entry saved successfully",
-                all: "All",
-                year: "Year",
-                month: "Month",
-                week: "Week",
-                initialSetup: "Initial Setup",
-                saveAndContinue: "Save and Continue",
-                registerTitle: "Register Hours",
-                summaryTitle: "Hours Summary",
-                noRecords: "No records yet. Start by adding a new registration.",
-                scheduleHint: "Work hours",
-                breakHint: "Break time during the day",
-                notesHint: "Details about the work done",
-                coworkersHint: "Who worked with you",
-                exportPdf: "Export PDF",
-                exportJson: "Export JSON",
-                importJson: "Import JSON",
-                hours: "hours",
-                totalPeriod: "Total for the period",
-                notesPlaceholder: "Details of the work done...",
-                coworkersPlaceholder: "Names separated by commas",
-                projectNamePlaceholder: "Project name",
-                projectCodePlaceholder: "Project code",
-                personalInfoTitle: "Personal Information",
-                contactInfoTitle: "Contact Information",
-                initialSetupDesc: "Please complete your personal details to get started",
-                weeklyChartTitle: "Hours by Week",
-                projectDistTitle: "Project Distribution",
-                chartsTitle: "Visual Statistics",
-                chartMonth: "Month",
-                chartQuarter: "Quarter"
-            },
             sv: {
                 title: "TimeBook - Professionell Timregistrering",
                 save: "Spara",
@@ -1340,216 +1323,138 @@
                 projectDistTitle: "Projektfördelningsdiagram",
                 chartsTitle: "Visuell Statistik",
                 chartMonth: "Månad",
-                chartQuarter: "Kvartal"
-            },
-            ru: {
-                title: "TimeBook - Профессиональный учет времени",
-                save: "Сохранить",
-                cancel: "Отмена",
-                projects: "Проекты",
-                add: "Добавить",
-                name: "Имя",
-                lastName: "Фамилия",
-                phone: "Телефон",
-                idNumber: "Идентификационный номер",
-                date: "Дата",
-                project: "Проект",
-                schedule: "Расписание",
-                breakTime: "Время перерыва",
-                notes: "Примечания",
-                coworkers: "Коллеги",
-                saveRecord: "Сохранить запись",
-                history: "История записей",
-                stats: "Статистика",
-                userInfo: "Информация о пользователе",
-                totalHours: "Всего часов",
-                workedDays: "Отработанные дни",
-                weekHours: "Часов за неделю",
-                monthHours: "Часов за месяц",
-                projectManagement: "Управление проектами",
-                projectName: "Название проекта",
-                code: "Код",
-                addProject: "Добавить проект",
-                editInfo: "Редактировать информацию",
-                importSuccess: "Данные успешно импортированы",
-                exportSuccess: "Данные успешно экспортированы",
-                deleteConfirm: "Вы уверены, что хотите удалить эту запись?",
-                projectDeleteConfirm: "Вы уверены, что хотите удалить этот проект?",
-                newName: "Введите новое название проекта:",
-                newCode: "Введите новый код проекта (необязательно):",
-                projectAdded: "Проект успешно добавлен",
-                projectUpdated: "Проект успешно обновлен",
-                projectDeleted: "Проект успешно удален",
-                entryDeleted: "Запись успешно удалена",
-                entrySaved: "Запись успешно сохранена",
-                all: "Все",
-                year: "Год",
-                month: "Месяц",
-                week: "Неделя",
-                initialSetup: "Начальная настройка",
-                saveAndContinue: "Сохранить и продолжить",
-                registerTitle: "Регистрация часов",
-                summaryTitle: "Сводка часов",
-                noRecords: "Пока нет записей. Начните с добавления новой записи.",
-                scheduleHint: "Рабочее время",
-                breakHint: "Время перерыва в течение дня",
-                notesHint: "Подробности о выполненной работе",
-                coworkersHint: "Кто работал с вами",
-                exportPdf: "Экспорт PDF",
-                exportJson: "Экспорт JSON",
-                importJson: "Импорт JSON",
-                hours: "часов",
-                totalPeriod: "Итого за период",
-                notesPlaceholder: "Подробности о выполненной работе...",
-                coworkersPlaceholder: "Имена через запятую",
-                projectNamePlaceholder: "Название проекта",
-                projectCodePlaceholder: "Код проекта",
-                personalInfoTitle: "Личные данные",
-                contactInfoTitle: "Контактная информация",
-                initialSetupDesc: "Пожалуйста, заполните свои личные данные, чтобы начать",
-                weeklyChartTitle: "Часы по неделям",
-                projectDistTitle: "Распределение по проектам",
-                chartsTitle: "Визуальная статистика",
-                chartMonth: "Месяц",
-                chartQuarter: "Квартал"
-            },
-            pl: {
-                title: "TimeBook - Profesjonalny Rejestr Czasu",
-                save: "Zapisz",
-                cancel: "Anuluj",
-                projects: "Projekty",
-                add: "Dodaj",
-                name: "Imię",
-                lastName: "Nazwisko",
-                phone: "Telefon",
-                idNumber: "Numer identyfikacyjny",
-                date: "Data",
-                project: "Projekt",
-                schedule: "Harmonogram",
-                breakTime: "Czas przerwy",
-                notes: "Uwagi",
-                coworkers: "Współpracownicy",
-                saveRecord: "Zapisz rejestrację",
-                history: "Historia rejestracji",
-                stats: "Statystyki",
-                userInfo: "Informacje o użytkowniku",
-                totalHours: "Łączne godziny",
-                workedDays: "Dni pracy",
-                weekHours: "Godziny w tym tygodniu",
-                monthHours: "Godziny w tym miesiącu",
-                projectManagement: "Zarządzanie projektami",
-                projectName: "Nazwa projektu",
-                code: "Kod",
-                addProject: "Dodaj projekt",
-                editInfo: "Edytuj informacje",
-                importSuccess: "Dane zostały zaimportowane",
-                exportSuccess: "Dane zostały wyeksportowane",
-                deleteConfirm: "Czy na pewno chcesz usunąć ten wpis?",
-                projectDeleteConfirm: "Czy na pewno chcesz usunąć ten projekt?",
-                newName: "Wprowadź nową nazwę projektu:",
-                newCode: "Wprowadź nowy kod projektu (opcjonalnie):",
-                projectAdded: "Projekt dodany pomyślnie",
-                projectUpdated: "Projekt zaktualizowany pomyślnie",
-                projectDeleted: "Projekt usunięty pomyślnie",
-                entryDeleted: "Wpis usunięty pomyślnie",
-                entrySaved: "Wpis zapisany pomyślnie",
-                all: "Wszystkie",
-                year: "Rok",
-                month: "Miesiąc",
-                week: "Tydzień",
-                initialSetup: "Konfiguracja wstępna",
-                saveAndContinue: "Zapisz i kontynuuj",
-                registerTitle: "Rejestracja godzin",
-                summaryTitle: "Podsumowanie godzin",
-                noRecords: "Brak rejestracji. Zacznij od dodania nowej rejestracji.",
-                scheduleHint: "Godziny pracy",
-                breakHint: "Czas przerwy w ciągu dnia",
-                notesHint: "Szczegóły wykonanej pracy",
-                coworkersHint: "Kto z tobą pracował",
-                exportPdf: "Eksportuj PDF",
-                exportJson: "Eksportuj JSON",
-                importJson: "Importuj JSON",
-                hours: "godziny",
-                totalPeriod: "Razem za okres",
-                notesPlaceholder: "Szczegóły wykonanej pracy...",
-                coworkersPlaceholder: "Imiona oddzielone przecinkami",
-                projectNamePlaceholder: "Nazwa projektu",
-                projectCodePlaceholder: "Kod projektu",
-                personalInfoTitle: "Dane osobowe",
-                contactInfoTitle: "Dane kontaktowe",
-                initialSetupDesc: "Proszę wypełnić swoje dane osobowe, aby rozpocząć",
-                weeklyChartTitle: "Godziny według tygodnia",
-                projectDistTitle: "Rozkład według projektu",
-                chartsTitle: "Statystyki wizualne",
-                chartMonth: "Miesiąc",
-                chartQuarter: "Kwartał"
+                chartQuarter: "Kvartal",
+                loginTitle: "Logga in",
+                registerTitle: "Registrera konto",
+                logout: "Logga ut",
+                email: "E-post",
+                password: "Lösenord",
+                registerName: "Namn",
+                confirmPassword: "Bekräfta lösenord",
+                loginError: "Felaktig e-post eller lösenord",
+                registerError: "Registrering misslyckades",
+                passwordsDontMatch: "Lösenorden matchar inte",
+                completeProfile: "Komplettera din profil"
             }
         };
 
-        // Datos de la aplicación
-        const state = {
-            user: null,
-            projects: [],
-            timeEntries: [],
-            currentLanguage: 'sv',
-            chartPeriod: 'month',
-            editingEntryId: null
-        };
-
-        // Inicializar la aplicación
+        // Initialize the application
         function initApp() {
-            // Cargar datos de Firebase
-            loadFromFirebase();
-            
-            // Configurar eventos
-            setupEventListeners();
-            
-            // Configurar fecha actual por defecto
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('entry-date').value = today;
-            
-            // Establecer hora por defecto según día de la semana
-            setDefaultWorkHours();
-            
-            // Establecer idioma
-            updateTranslations();
-            
-            // Actualizar listas
-            updateProjectDropdown();
-            generateYearOptions();
-        }
-
-        // Cargar datos de Firebase
-        function loadFromFirebase() {
-            // Cargar usuario
-            database.ref(dbPaths.user).on('value', snapshot => {
-                state.user = snapshot.val();
-                if (state.user) {
+            // Set up authentication state observer
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // User is signed in
+                    state.currentUser = user;
+                    document.getElementById('logout-btn').classList.remove('hidden');
+                    document.getElementById('user-name').textContent = user.displayName || user.email;
+                    
+                    // Load user profile and data
+                    loadUserProfile(user.uid);
+                } else {
+                    // User is signed out
+                    state.currentUser = null;
+                    document.getElementById('logout-btn').classList.add('hidden');
+                    
+                    // Show authentication form
+                    document.getElementById('auth-container').classList.remove('hidden');
                     document.getElementById('user-form').classList.add('hidden');
-                    document.getElementById('main-app').classList.remove('hidden');
-                    updateUserInfo();
+                    document.getElementById('main-app').classList.add('hidden');
                 }
             });
             
-            // Cargar proyectos
-            database.ref(dbPaths.projects).on('value', snapshot => {
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Set default date and time
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('entry-date').value = today;
+            setDefaultWorkHours();
+            
+            // Update translations
+            updateTranslations();
+        }
+
+        // Set default work hours based on day of week
+        function setDefaultWorkHours() {
+            const dateInput = document.getElementById('entry-date').value;
+            const date = new Date(dateInput);
+            const day = date.getDay();
+            
+            if (day >= 1 && day <= 4) {
+                document.getElementById('start-time').value = '06:30';
+                document.getElementById('end-time').value = '16:00';
+            } else if (day === 5) {
+                document.getElementById('start-time').value = '06:30';
+                document.getElementById('end-time').value = '13:00';
+            } else {
+                document.getElementById('start-time').value = '08:00';
+                document.getElementById('end-time').value = '12:00';
+            }
+        }
+
+        // Load user profile and data
+        function loadUserProfile(userId) {
+            // Load user profile
+            database.ref(`users/${userId}`).on('value', snapshot => {
+                state.userProfile = snapshot.val();
+                
+                if (state.userProfile) {
+                    // User profile exists, show main app
+                    document.getElementById('auth-container').classList.add('hidden');
+                    document.getElementById('user-form').classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+                    
+                    // Update UI with user info
+                    updateUserInfo();
+                    
+                    // Load projects and time entries
+                    loadProjects();
+                    loadTimeEntries();
+                } else {
+                    // No profile exists, show profile form
+                    document.getElementById('auth-container').classList.add('hidden');
+                    document.getElementById('user-form').classList.remove('hidden');
+                    document.getElementById('main-app').classList.add('hidden');
+                    
+                    // Set default values for profile form
+                    if (state.currentUser.displayName) {
+                        const names = state.currentUser.displayName.split(' ');
+                        document.getElementById('first-name').value = names[0] || '';
+                        document.getElementById('last-name').value = names.slice(1).join(' ') || '';
+                    }
+                    document.getElementById('phone').value = '';
+                    document.getElementById('id-number').value = '';
+                }
+            });
+        }
+
+        // Load projects from database
+        function loadProjects() {
+            const userId = state.currentUser.uid;
+            
+            database.ref('projects').orderByChild('ownerId').equalTo(userId).on('value', snapshot => {
                 const projectsData = snapshot.val();
                 state.projects = projectsData ? Object.entries(projectsData).map(([id, project]) => ({
                     id,
                     ...project
                 })) : [];
-                updateProjectsList();
+                
                 updateProjectDropdown();
-                updateCharts();
+                updateProjectsList();
             });
+        }
+
+        // Load time entries from database
+        function loadTimeEntries() {
+            const userId = state.currentUser.uid;
             
-            // Cargar entradas de tiempo
-            database.ref(dbPaths.timeEntries).on('value', snapshot => {
+            database.ref('timeEntries').orderByChild('userId').equalTo(userId).on('value', snapshot => {
                 const entriesData = snapshot.val();
                 state.timeEntries = entriesData ? Object.entries(entriesData).map(([id, entry]) => ({
                     id,
                     ...entry
                 })) : [];
+                
                 updateEntriesDisplay();
                 updateStatistics();
                 updateHoursSummary();
@@ -1557,77 +1462,82 @@
             });
         }
 
-        // Guardar datos en Firebase
-        function saveToFirebase(path, data) {
-            return database.ref(path).set(data);
+        // Update UI with user information
+        function updateUserInfo() {
+            if (!state.userProfile || !state.currentUser) return;
+            
+            const firstName = state.userProfile.firstName || '';
+            const lastName = state.userProfile.lastName || '';
+            const fullName = `${firstName} ${lastName}`;
+            
+            document.getElementById('user-avatar').textContent = 
+                (firstName.charAt(0) || '') + (lastName.charAt(0) || '');
+            document.getElementById('user-name').textContent = fullName || state.currentUser.email;
+            
+            document.getElementById('info-name').textContent = fullName;
+            document.getElementById('info-phone').textContent = state.userProfile.phone || '';
+            document.getElementById('info-id').textContent = state.userProfile.idNumber || '';
         }
 
-        // Actualizar traducciones
-        function updateTranslations() {
-            const lang = state.currentLanguage;
-            const t = translations[lang] || translations.sv;
-            
-            // Actualizar elementos de la interfaz
-            document.querySelectorAll('[id]').forEach(el => {
-                const id = el.id;
-                if (id.endsWith('-label') || id.endsWith('-title') || id.endsWith('-text') || 
-                    id.endsWith('-header') || id.endsWith('-hint') || id.endsWith('-desc')) {
-                    const baseId = id.replace(/-label$/, '').replace(/-title$/, '')
-                                     .replace(/-text$/, '').replace(/-header$/, '')
-                                     .replace(/-hint$/, '').replace(/-desc$/, '');
-                    const key = baseId.split('-').map((word, i) => 
-                        i === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
-                    ).join('');
-                    
-                    if (t[key]) {
-                        el.textContent = t[key];
-                    }
-                }
-            });
-            
-            // Actualizar placeholders
-            const placeholders = [
-                { id: 'notes', key: 'notesPlaceholder' },
-                { id: 'coworkers', key: 'coworkersPlaceholder' },
-                { id: 'new-project-name', key: 'projectNamePlaceholder' },
-                { id: 'new-project-code', key: 'projectCodePlaceholder' },
-                { id: 'first-name', key: 'namePlaceholder' },
-                { id: 'last-name', key: 'lastNamePlaceholder' },
-                { id: 'phone', key: 'phonePlaceholder' },
-                { id: 'id-number', key: 'idNumberPlaceholder' }
-            ];
-            
-            placeholders.forEach(item => {
-                const element = document.getElementById(item.id);
-                if (element && t[item.key]) {
-                    element.placeholder = t[item.key];
-                }
-            });
-            
-            document.getElementById('app-title').textContent = t.title;
-            document.getElementById('no-records-message').textContent = t.noRecords;
-            document.querySelector('#import-file').setAttribute('accept', '.json');
-        }
-
-        // Configurar eventos
+        // Set up event listeners
         function setupEventListeners() {
-            // Formulario de usuario
+            // Authentication
+            document.getElementById('login-tab').addEventListener('click', () => {
+                document.getElementById('login-tab').classList.add('active');
+                document.getElementById('register-tab').classList.remove('active');
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('register-form').classList.add('hidden');
+            });
+            
+            document.getElementById('register-tab').addEventListener('click', () => {
+                document.getElementById('register-tab').classList.add('active');
+                document.getElementById('login-tab').classList.remove('active');
+                document.getElementById('register-form').classList.remove('hidden');
+                document.getElementById('login-form').classList.add('hidden');
+            });
+            
+            document.getElementById('login-form').addEventListener('submit', e => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                loginUser(email, password);
+            });
+            
+            document.getElementById('register-form').addEventListener('submit', e => {
+                e.preventDefault();
+                const name = document.getElementById('register-name').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const confirmPassword = document.getElementById('register-confirm-password').value;
+                
+                if (password !== confirmPassword) {
+                    showAlert('Lösenorden matchar inte', 'error');
+                    return;
+                }
+                
+                registerUser(name, email, password);
+            });
+            
+            document.getElementById('logout-btn').addEventListener('click', logoutUser);
+            
+            // User profile form
             document.getElementById('user-form-data').addEventListener('submit', saveUserInfo);
             
-            // Formulario de registro de tiempo
+            // Time entry form
             document.getElementById('time-entry-form').addEventListener('submit', saveTimeEntry);
             document.getElementById('reset-form').addEventListener('click', resetForm);
+            document.getElementById('entry-date').addEventListener('change', setDefaultWorkHours);
             
-            // Gestión de proyectos
+            // Project management
             document.getElementById('add-project-btn').addEventListener('click', addProject);
             document.getElementById('manage-projects').addEventListener('click', showProjectManagement);
             
-            // Filtros
+            // Filters
             document.getElementById('year-filter').addEventListener('change', updateEntriesDisplay);
             document.getElementById('month-filter').addEventListener('change', updateEntriesDisplay);
             document.getElementById('week-filter').addEventListener('change', updateEntriesDisplay);
             
-            // Exportación
+            // Export/import
             document.getElementById('export-pdf').addEventListener('click', exportToPDF);
             document.getElementById('export-json').addEventListener('click', exportToJSON);
             document.getElementById('import-json').addEventListener('click', () => {
@@ -1646,32 +1556,28 @@
                 });
             });
             
-            // Editar usuario
+            // Edit user info
             document.getElementById('edit-user-btn').addEventListener('click', () => {
                 document.getElementById('user-form').classList.remove('hidden');
                 document.getElementById('main-app').classList.add('hidden');
                 
-                // Prellenar datos del usuario
-                document.getElementById('first-name').value = state.user.firstName;
-                document.getElementById('last-name').value = state.user.lastName;
-                document.getElementById('phone').value = state.user.phone;
-                document.getElementById('id-number').value = state.user.idNumber;
+                // Pre-fill form with existing data
+                document.getElementById('first-name').value = state.userProfile.firstName || '';
+                document.getElementById('last-name').value = state.userProfile.lastName || '';
+                document.getElementById('phone').value = state.userProfile.phone || '';
+                document.getElementById('id-number').value = state.userProfile.idNumber || '';
             });
             
-            // Cambio de idioma
+            // Language selector
             document.getElementById('language').addEventListener('change', function() {
                 state.currentLanguage = this.value;
-                saveToFirebase(dbPaths.user, state.user);
                 updateTranslations();
                 updateEntriesDisplay();
                 updateHoursSummary();
                 updateCharts();
             });
             
-            // Cambio de fecha para establecer horario predeterminado
-            document.getElementById('entry-date').addEventListener('change', setDefaultWorkHours);
-            
-            // Botones de gráficos
+            // Chart buttons
             document.querySelectorAll('.chart-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
@@ -1682,25 +1588,44 @@
             });
         }
 
-        // Establecer horas de trabajo por defecto según día de la semana
-        function setDefaultWorkHours() {
-            const dateInput = document.getElementById('entry-date').value;
-            const date = new Date(dateInput);
-            const day = date.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
-            
-            if (day >= 1 && day <= 4) { // Lunes a Jueves
-                document.getElementById('start-time').value = '06:30';
-                document.getElementById('end-time').value = '16:00';
-            } else if (day === 5) { // Viernes
-                document.getElementById('start-time').value = '06:30';
-                document.getElementById('end-time').value = '13:00';
-            } else { // Fin de semana
-                document.getElementById('start-time').value = '08:00';
-                document.getElementById('end-time').value = '12:00';
-            }
+        // Authentication functions
+        function loginUser(email, password) {
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => {
+                    showAlert('Felaktig e-post eller lösenord', 'error');
+                    console.error('Login error:', error);
+                });
         }
 
-        // Guardar información del usuario
+        function registerUser(name, email, password) {
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    // Set display name
+                    return userCredential.user.updateProfile({
+                        displayName: name
+                    });
+                })
+                .then(() => {
+                    // User registered successfully
+                    showAlert('Konto skapat! Komplettera nu din profil.', 'success');
+                })
+                .catch(error => {
+                    showAlert('Registrering misslyckades: ' + error.message, 'error');
+                    console.error('Registration error:', error);
+                });
+        }
+
+        function logoutUser() {
+            auth.signOut()
+                .then(() => {
+                    showAlert('Du har loggat ut', 'success');
+                })
+                .catch(error => {
+                    showAlert('Utloggning misslyckades: ' + error.message, 'error');
+                });
+        }
+
+        // Save user profile information
         function saveUserInfo(e) {
             e.preventDefault();
             
@@ -1711,32 +1636,18 @@
                 idNumber: document.getElementById('id-number').value
             };
             
-            // Guardar en Firebase
-            saveToFirebase(dbPaths.user, userData)
+            // Save to Firebase
+            database.ref(`users/${state.currentUser.uid}`).set(userData)
                 .then(() => {
-                    showAlert(translations[state.currentLanguage].entrySaved, 'success');
+                    showAlert('Profil sparad', 'success');
+                    loadUserProfile(state.currentUser.uid);
                 })
                 .catch(error => {
-                    showAlert(`Error: ${error.message}`, 'error');
+                    showAlert('Fel vid sparning: ' + error.message, 'error');
                 });
         }
 
-        // Actualizar información del usuario en la UI
-        function updateUserInfo() {
-            if (!state.user) return;
-            
-            document.getElementById('user-avatar').textContent = 
-                state.user.firstName.charAt(0) + state.user.lastName.charAt(0);
-            document.getElementById('user-name').textContent = 
-                `${state.user.firstName} ${state.user.lastName}`;
-            
-            document.getElementById('info-name').textContent = 
-                `${state.user.firstName} ${state.user.lastName}`;
-            document.getElementById('info-phone').textContent = state.user.phone;
-            document.getElementById('info-id').textContent = state.user.idNumber;
-        }
-
-        // Guardar registro de tiempo
+        // Save time entry
         function saveTimeEntry(e) {
             e.preventDefault();
             
@@ -1744,7 +1655,7 @@
             const project = state.projects.find(p => p.id === projectId);
             
             if (!project) {
-                showAlert('Seleccione un proyecto válido', 'error');
+                showAlert('Välj ett giltigt projekt', 'error');
                 return;
             }
             
@@ -1752,9 +1663,8 @@
             const endTime = document.getElementById('end-time').value;
             const breakTime = parseFloat(document.getElementById('break-time').value);
             
-            // Validar horas
             if (startTime >= endTime) {
-                showAlert('La hora de inicio debe ser anterior a la hora de fin', 'error');
+                showAlert('Starttiden måste vara före sluttiden', 'error');
                 return;
             }
             
@@ -1769,35 +1679,35 @@
                 endTime: endTime,
                 breakTime: breakTime,
                 notes: document.getElementById('notes').value,
-                coworkers: document.getElementById('coworkers').value.split(',').map(c => c.trim()).filter(c => c)
+                coworkers: document.getElementById('coworkers').value.split(',').map(c => c.trim()).filter(c => c),
+                userId: state.currentUser.uid
             };
             
             if (state.editingEntryId) {
-                // Actualizar entrada existente
-                saveToFirebase(`${dbPaths.timeEntries}/${state.editingEntryId}`, entry)
+                // Update existing entry
+                database.ref(`timeEntries/${state.editingEntryId}`).set(entry)
                     .then(() => {
                         resetForm();
                         state.editingEntryId = null;
-                        showAlert(translations[state.currentLanguage].entrySaved, 'success');
+                        showAlert('Tidpost uppdaterad', 'success');
                     })
                     .catch(error => {
-                        showAlert(`Error: ${error.message}`, 'error');
+                        showAlert('Fel vid uppdatering: ' + error.message, 'error');
                     });
             } else {
-                // Crear nueva entrada
-                const newEntryRef = database.ref(dbPaths.timeEntries).push();
-                newEntryRef.set(entry)
+                // Create new entry
+                database.ref('timeEntries').push(entry)
                     .then(() => {
                         resetForm();
-                        showAlert(translations[state.currentLanguage].entrySaved, 'success');
+                        showAlert('Tidpost sparad', 'success');
                     })
                     .catch(error => {
-                        showAlert(`Error: ${error.message}`, 'error');
+                        showAlert('Fel vid sparning: ' + error.message, 'error');
                     });
             }
         }
 
-        // Resetear formulario
+        // Reset time entry form
         function resetForm() {
             document.getElementById('time-entry-form').reset();
             document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
@@ -1806,7 +1716,7 @@
             state.editingEntryId = null;
         }
 
-        // Actualizar lista de proyectos en el dropdown
+        // Update project dropdown
         function updateProjectDropdown() {
             const select = document.getElementById('project');
             select.innerHTML = '';
@@ -1819,7 +1729,7 @@
             });
         }
 
-        // Actualizar lista de proyectos en la UI
+        // Update projects list
         function updateProjectsList() {
             const list = document.getElementById('projects-list');
             list.innerHTML = '';
@@ -1831,7 +1741,7 @@
                 li.innerHTML = `
                     <div>
                         <strong>${project.name}</strong>
-                        ${project.code ? `<div><small>${translations[state.currentLanguage].code}: ${project.code}</small></div>` : ''}
+                        ${project.code ? `<div><small>Kod: ${project.code}</small></div>` : ''}
                     </div>
                     <div class="project-actions">
                         <button class="action-btn edit edit-project" data-id="${project.id}">
@@ -1846,7 +1756,7 @@
                 list.appendChild(li);
             });
             
-            // Agregar eventos a los botones
+            // Add event listeners
             document.querySelectorAll('.edit-project').forEach(btn => {
                 btn.addEventListener('click', () => editProject(btn.dataset.id));
             });
@@ -1856,781 +1766,144 @@
             });
         }
 
-        // Mostrar gestión de proyectos
+        // Show project management tab
         function showProjectManagement() {
             document.querySelector('.tab[data-tab="projects"]').click();
         }
 
-        // Agregar proyecto
+        // Add new project
         function addProject() {
             const name = document.getElementById('new-project-name').value.trim();
             const code = document.getElementById('new-project-code').value.trim();
             
             if (!name) {
-                showAlert('Por favor ingrese un nombre para el proyecto', 'error');
+                showAlert('Ange ett projektnamn', 'error');
                 return;
             }
             
             const newProject = {
                 name: name,
-                code: code || null
+                code: code || null,
+                ownerId: state.currentUser.uid
             };
             
-            // Guardar en Firebase
-            const newProjectRef = database.ref(dbPaths.projects).push();
-            newProjectRef.set(newProject)
+            // Save to Firebase
+            database.ref('projects').push(newProject)
                 .then(() => {
-                    // Resetear formulario
+                    // Reset form
                     document.getElementById('new-project-name').value = '';
                     document.getElementById('new-project-code').value = '';
-                    showAlert(translations[state.currentLanguage].projectAdded, 'success');
+                    showAlert('Projekt tillagt', 'success');
                 })
                 .catch(error => {
-                    showAlert(`Error: ${error.message}`, 'error');
+                    showAlert('Fel vid sparning: ' + error.message, 'error');
                 });
         }
 
-        // Editar proyecto
+        // Edit project
         function editProject(projectId) {
             const project = state.projects.find(p => p.id === projectId);
             if (!project) return;
             
-            const t = translations[state.currentLanguage];
-            const newName = prompt(t.newName, project.name);
-            if (newName === null) return; // Usuario canceló
+            const newName = prompt('Ange nytt projektnamn:', project.name);
+            if (newName === null) return;
             
-            const newCode = prompt(t.newCode, project.code || '');
+            const newCode = prompt('Ange ny projektkod (valfritt):', project.code || '');
             
-            // Actualizar en Firebase
-            saveToFirebase(`${dbPaths.projects}/${projectId}`, {
+            // Update in Firebase
+            database.ref(`projects/${projectId}`).update({
                 name: newName.trim(),
                 code: newCode ? newCode.trim() : null
             })
                 .then(() => {
-                    showAlert(t.projectUpdated, 'success');
+                    showAlert('Projekt uppdaterat', 'success');
                 })
                 .catch(error => {
-                    showAlert(`Error: ${error.message}`, 'error');
+                    showAlert('Fel vid uppdatering: ' + error.message, 'error');
                 });
         }
 
-        // Eliminar proyecto
+        // Delete project
         function deleteProject(projectId) {
-            const t = translations[state.currentLanguage];
-            if (!confirm(t.projectDeleteConfirm)) return;
+            if (!confirm('Är du säker på att du vill radera detta projekt?')) return;
             
-            // Eliminar de Firebase
-            database.ref(`${dbPaths.projects}/${projectId}`).remove()
+            // Delete from Firebase
+            database.ref(`projects/${projectId}`).remove()
                 .then(() => {
-                    showAlert(t.projectDeleted, 'success');
+                    showAlert('Projekt raderat', 'success');
                 })
                 .catch(error => {
-                    showAlert(`Error: ${error.message}`, 'error');
+                    showAlert('Fel vid radering: ' + error.message, 'error');
                 });
         }
 
-        // Generar opciones de años para el filtro
-        function generateYearOptions() {
-            const yearSelect = document.getElementById('year-filter');
-            const monthSelect = document.getElementById('month-filter');
-            const weekSelect = document.getElementById('week-filter');
-            const t = translations[state.currentLanguage];
+        // Update translations
+        function updateTranslations() {
+            const lang = state.currentLanguage;
+            const t = translations[lang] || translations.sv;
             
-            // Obtener años únicos de los registros
-            const years = [...new Set(state.timeEntries.map(entry => new Date(entry.date).getFullYear()))];
-            
-            // Ordenar años
-            years.sort((a, b) => b - a);
-            
-            // Limpiar y agregar opciones
-            yearSelect.innerHTML = `<option value="all">${t.all}</option>`;
-            years.forEach(year => {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year;
-                yearSelect.appendChild(option);
-            });
-            
-            // Llenar meses
-            monthSelect.innerHTML = `<option value="all">${t.all}</option>`;
-            for (let i = 1; i <= 12; i++) {
-                const option = document.createElement('option');
-                option.value = i;
-                option.textContent = new Date(0, i - 1).toLocaleString(state.currentLanguage, { month: 'long' });
-                monthSelect.appendChild(option);
-            }
-            
-            // Llenar semanas
-            weekSelect.innerHTML = `<option value="all">${t.all}</option>`;
-            for (let i = 1; i <= 52; i++) {
-                const option = document.createElement('option');
-                option.value = i;
-                option.textContent = `${t.week} ${i}`;
-                weekSelect.appendChild(option);
-            }
-        }
-
-        // Actualizar visualización de registros
-        function updateEntriesDisplay() {
-            const container = document.getElementById('entries-container');
-            const t = translations[state.currentLanguage];
-            
-            // Obtener filtros
-            const yearFilter = document.getElementById('year-filter').value;
-            const monthFilter = document.getElementById('month-filter').value;
-            const weekFilter = document.getElementById('week-filter').value;
-            
-            // Filtrar registros
-            let filteredEntries = [...state.timeEntries];
-            
-            if (yearFilter !== 'all') {
-                filteredEntries = filteredEntries.filter(entry => 
-                    new Date(entry.date).getFullYear() === parseInt(yearFilter));
-            }
-            
-            if (monthFilter !== 'all') {
-                filteredEntries = filteredEntries.filter(entry => 
-                    new Date(entry.date).getMonth() + 1 === parseInt(monthFilter));
-            }
-            
-            if (weekFilter !== 'all') {
-                filteredEntries = filteredEntries.filter(entry => 
-                    getWeekNumber(entry.date) === parseInt(weekFilter));
-            }
-            
-            // Comprobar si hay registros
-            if (filteredEntries.length === 0) {
-                container.innerHTML = `<div class="no-records">${t.noRecords}</div>`;
-                return;
-            }
-            
-            container.innerHTML = '';
-            
-            // Agrupar por fecha
-            const groupedEntries = {};
-            filteredEntries.forEach(entry => {
-                if (!groupedEntries[entry.date]) {
-                    groupedEntries[entry.date] = [];
-                }
-                groupedEntries[entry.date].push(entry);
-            });
-            
-            // Ordenar fechas (más recientes primero)
-            const sortedDates = Object.keys(groupedEntries).sort((a, b) => 
-                new Date(b) - new Date(a));
-            
-            // Crear elementos para cada grupo
-            sortedDates.forEach(date => {
-                const group = document.createElement('div');
-                group.className = 'entry-group';
-                
-                const dateObj = new Date(date);
-                const formattedDate = dateObj.toLocaleDateString(state.currentLanguage, {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-                
-                // Obtener número de semana
-                const weekNumber = getWeekNumber(date);
-                
-                group.innerHTML = `
-                    <div class="group-header">
-                        <div class="date-header">
-                            <span>${formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)}</span>
-                            <span class="week-number">${t.week} ${weekNumber}</span>
-                        </div>
-                        <span class="collapse-icon"><i class="fas fa-chevron-down"></i></span>
-                    </div>
-                    <div class="group-content">
-                        <!-- Entradas se agregarán aquí -->
-                    </div>
-                `;
-                
-                const content = group.querySelector('.group-content');
-                
-                // Agregar entradas
-                groupedEntries[date].forEach(entry => {
-                    const entryEl = document.createElement('div');
-                    entryEl.className = 'entry-item';
+            // Update interface elements
+            document.querySelectorAll('[id]').forEach(el => {
+                const id = el.id;
+                if (id.endsWith('-label') || id.endsWith('-title') || id.endsWith('-text') || 
+                    id.endsWith('-header') || id.endsWith('-hint') || id.endsWith('-desc')) {
+                    const baseId = id.replace(/-label$/, '').replace(/-title$/, '')
+                                     .replace(/-text$/, '').replace(/-header$/, '')
+                                     .replace(/-hint$/, '').replace(/-desc$/, '');
+                    const key = baseId.split('-').map((word, i) => 
+                        i === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
+                    ).join('');
                     
-                    // Calcular horas trabajadas
-                    const hours = calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime).toFixed(1);
-                    
-                    entryEl.innerHTML = `
-                        <div class="entry-details">
-                            <div class="entry-project">${entry.project.name}${entry.project.code ? ` (${entry.project.code})` : ''}</div>
-                            <div class="entry-time">${entry.startTime} - ${entry.endTime} (${hours} ${t.hours})</div>
-                            ${entry.notes ? `<div><small>${entry.notes}</small></div>` : ''}
-                        </div>
-                        <div class="entry-actions">
-                            <button class="action-btn edit edit-entry" data-id="${entry.id}">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn delete delete-entry" data-id="${entry.id}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    `;
-                    
-                    content.appendChild(entryEl);
-                });
-                
-                // Evento para colapsar/expandir
-                group.querySelector('.group-header').addEventListener('click', () => {
-                    group.classList.toggle('collapsed');
-                });
-                
-                container.appendChild(group);
-            });
-            
-            // Agregar eventos a los botones de editar/eliminar
-            document.querySelectorAll('.edit-entry').forEach(btn => {
-                btn.addEventListener('click', () => editTimeEntry(btn.dataset.id));
-            });
-            
-            document.querySelectorAll('.delete-entry').forEach(btn => {
-                btn.addEventListener('click', () => deleteTimeEntry(btn.dataset.id));
-            });
-        }
-
-        // Editar entrada de tiempo
-        function editTimeEntry(entryId) {
-            const entry = state.timeEntries.find(e => e.id === entryId);
-            if (!entry) return;
-            
-            // Prellenar formulario con datos existentes
-            document.getElementById('entry-date').value = entry.date;
-            document.getElementById('project').value = entry.project.id;
-            document.getElementById('start-time').value = entry.startTime;
-            document.getElementById('end-time').value = entry.endTime;
-            document.getElementById('break-time').value = entry.breakTime;
-            document.getElementById('notes').value = entry.notes || '';
-            document.getElementById('coworkers').value = entry.coworkers ? entry.coworkers.join(', ') : '';
-            
-            // Establecer que estamos editando
-            state.editingEntryId = entryId;
-            
-            // Desplazar hacia el formulario
-            document.getElementById('time-entry-form').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Eliminar entrada de tiempo
-        function deleteTimeEntry(entryId) {
-            const t = translations[state.currentLanguage];
-            if (!confirm(t.deleteConfirm)) return;
-            
-            // Eliminar de Firebase
-            database.ref(`${dbPaths.timeEntries}/${entryId}`).remove()
-                .then(() => {
-                    showAlert(t.entryDeleted, 'success');
-                })
-                .catch(error => {
-                    showAlert(`Error: ${error.message}`, 'error');
-                });
-        }
-
-        // Actualizar estadísticas
-        function updateStatistics() {
-            const t = translations[state.currentLanguage];
-            // Calcular total de horas
-            let totalHours = 0;
-            state.timeEntries.forEach(entry => {
-                totalHours += calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime);
-            });
-            
-            // Calcular días trabajados
-            const uniqueDays = new Set(state.timeEntries.map(entry => entry.date)).size;
-            
-            // Calcular horas esta semana
-            const now = new Date();
-            const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
-            startOfWeek.setHours(0, 0, 0, 0);
-            
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6);
-            
-            let weekHours = 0;
-            state.timeEntries.forEach(entry => {
-                const entryDate = new Date(entry.date);
-                if (entryDate >= startOfWeek && entryDate <= endOfWeek) {
-                    weekHours += calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime);
-                }
-            });
-            
-            // Calcular horas este mes
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            
-            let monthHours = 0;
-            state.timeEntries.forEach(entry => {
-                const entryDate = new Date(entry.date);
-                if (entryDate >= startOfMonth && entryDate <= endOfMonth) {
-                    monthHours += calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime);
-                }
-            });
-            
-            // Actualizar UI
-            document.getElementById('total-hours').textContent = totalHours.toFixed(1);
-            document.getElementById('total-days').textContent = uniqueDays;
-            document.getElementById('week-hours').textContent = weekHours.toFixed(1);
-            document.getElementById('month-hours').textContent = monthHours.toFixed(1);
-        }
-
-        // Función para calcular las horas trabajadas
-        function calculateWorkedHours(start, end, breakTime) {
-            const [startHours, startMinutes] = start.split(':').map(Number);
-            const [endHours, endMinutes] = end.split(':').map(Number);
-            
-            let totalMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
-            if (totalMinutes < 0) totalMinutes += 24 * 60;
-            
-            return (totalMinutes / 60) - parseFloat(breakTime);
-        }
-
-        // Función para obtener el número de semana
-        function getWeekNumber(dateString) {
-            const date = new Date(dateString);
-            date.setHours(0, 0, 0, 0);
-            date.setDate(date.getDate() + 4 - (date.getDay() || 7));
-            const yearStart = new Date(date.getFullYear(), 0, 1);
-            const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
-            return weekNo;
-        }
-
-        // Actualizar resumen de horas
-        function updateHoursSummary() {
-            const tbody = document.querySelector('#resumenHoras tbody');
-            const tfoot = document.querySelector('#resumenHoras tfoot');
-            const t = translations[state.currentLanguage];
-            
-            // Agrupar por fecha
-            const groupedByDate = {};
-            state.timeEntries.forEach(entry => {
-                if (!groupedByDate[entry.date]) {
-                    groupedByDate[entry.date] = [];
-                }
-                groupedByDate[entry.date].push(entry);
-            });
-            
-            tbody.innerHTML = '';
-            let totalPeriod = 0;
-            
-            Object.keys(groupedByDate).sort().forEach(date => {
-                const dayEntries = groupedByDate[date];
-                const totalDay = dayEntries.reduce((sum, entry) => {
-                    return sum + calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime);
-                }, 0);
-                
-                totalPeriod += totalDay;
-                
-                const weekNumber = getWeekNumber(date);
-                const firstProject = dayEntries[0].project.name;
-                const breakTime = dayEntries[0].breakTime;
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${date}</td>
-                    <td>${weekNumber}</td>
-                    <td>${firstProject}</td>
-                    <td>${totalDay.toFixed(1)}</td>
-                    <td>${breakTime}</td>
-                `;
-                tbody.appendChild(row);
-            });
-            
-            document.getElementById('total-mes').textContent = totalPeriod.toFixed(1);
-            document.getElementById('resumenHoras').style.display = 'table';
-        }
-
-        // Inicializar gráficos
-        function initCharts() {
-            // Crear instancias de gráficos
-            const weeklyCtx = document.getElementById('weekly-chart').getContext('2d');
-            const projectCtx = document.getElementById('project-chart').getContext('2d');
-            
-            state.weeklyChart = new Chart(weeklyCtx, {
-                type: 'bar',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Horas trabajadas',
-                        data: [],
-                        backgroundColor: '#3498db',
-                        borderColor: '#2980b9',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Horas'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Semanas'
-                            }
-                        }
+                    if (t[key]) {
+                        el.textContent = t[key];
                     }
                 }
             });
             
-            state.projectChart = new Chart(projectCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        data: [],
-                        backgroundColor: [
-                            '#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6',
-                            '#1abc9c', '#d35400', '#c0392b', '#7f8c8d', '#34495e'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right'
-                        }
-                    }
+            // Update placeholders
+            const placeholders = [
+                { id: 'notes', key: 'notesPlaceholder' },
+                { id: 'coworkers', key: 'coworkersPlaceholder' },
+                { id: 'new-project-name', key: 'projectNamePlaceholder' },
+                { id: 'new-project-code', key: 'projectCodePlaceholder' },
+                { id: 'first-name', key: 'namePlaceholder' },
+                { id: 'last-name', key: 'lastNamePlaceholder' },
+                { id: 'phone', key: 'phonePlaceholder' },
+                { id: 'id-number', key: 'idNumberPlaceholder' },
+                { id: 'login-email', key: 'emailPlaceholder' },
+                { id: 'login-password', key: 'passwordPlaceholder' },
+                { id: 'register-name', key: 'registerNamePlaceholder' },
+                { id: 'register-email', key: 'emailPlaceholder' },
+                { id: 'register-password', key: 'passwordPlaceholder' },
+                { id: 'register-confirm-password', key: 'confirmPasswordPlaceholder' }
+            ];
+            
+            placeholders.forEach(item => {
+                const element = document.getElementById(item.id);
+                if (element && t[item.key]) {
+                    element.placeholder = t[item.key];
                 }
             });
             
-            // Actualizar datos de los gráficos
-            updateCharts();
+            document.getElementById('app-title').textContent = t.title;
+            document.getElementById('no-records-message').textContent = t.noRecords;
+            document.getElementById('logout-btn').querySelector('span').textContent = t.logout;
         }
 
-        // Actualizar datos de los gráficos
-        function updateCharts() {
-            if (!state.weeklyChart || !state.projectChart) return;
-            
-            // Actualizar gráfico de horas por semana
-            const weeklyData = getWeeklyHoursData();
-            state.weeklyChart.data.labels = weeklyData.labels;
-            state.weeklyChart.data.datasets[0].data = weeklyData.data;
-            state.weeklyChart.update();
-            
-            // Actualizar gráfico de distribución por proyecto
-            const projectData = getProjectDistributionData();
-            state.projectChart.data.labels = projectData.labels;
-            state.projectChart.data.datasets[0].data = projectData.data;
-            state.projectChart.update();
-        }
-
-        // Obtener datos de horas por semana
-        function getWeeklyHoursData() {
-            const now = new Date();
-            const weeks = 12; // Mostrar 12 semanas
-            const data = [];
-            const labels = [];
-            
-            // Determinar fecha de inicio según el periodo seleccionado
-            let startDate = new Date(now);
-            if (state.chartPeriod === 'month') {
-                startDate.setDate(startDate.getDate() - 28); // 4 semanas
-            } else {
-                startDate.setDate(startDate.getDate() - 84); // 12 semanas
-            }
-            
-            // Calcular horas por semana
-            for (let i = 0; i < weeks; i++) {
-                const weekStart = new Date(startDate);
-                weekStart.setDate(weekStart.getDate() + (i * 7));
-                
-                const weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekEnd.getDate() + 6);
-                
-                const weekNumber = getWeekNumber(weekStart);
-                
-                let weekHours = 0;
-                state.timeEntries.forEach(entry => {
-                    const entryDate = new Date(entry.date);
-                    if (entryDate >= weekStart && entryDate <= weekEnd) {
-                        weekHours += calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime);
-                    }
-                });
-                
-                data.push(weekHours);
-                labels.push(`Sem ${weekNumber}`);
-            }
-            
-            return { labels, data };
-        }
-
-        // Obtener datos de distribución por proyecto
-        function getProjectDistributionData() {
-            const projectHours = {};
-            
-            // Calcular horas totales por proyecto
-            state.timeEntries.forEach(entry => {
-                const projectName = entry.project.name;
-                const hours = calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime);
-                
-                if (!projectHours[projectName]) {
-                    projectHours[projectName] = 0;
-                }
-                projectHours[projectName] += hours;
-            });
-            
-            // Convertir a arrays para el gráfico
-            const labels = Object.keys(projectHours);
-            const data = Object.values(projectHours);
-            
-            return { labels, data };
-        }
-
-        // Exportar a PDF
-        function exportToPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
-            const t = translations[state.currentLanguage];
-            
-            // Encabezado profesional
-            doc.setFillColor(44, 62, 80);
-            doc.rect(0, 0, 210, 30, 'F');
-            doc.setFontSize(24);
-            doc.setTextColor(255, 255, 255);
-            const userTitle = `${state.user.firstName} ${state.user.lastName} - ${state.user.idNumber}`;
-            doc.text(userTitle, 105, 14, 'center');
-            
-            // Información del usuario
-            doc.setFontSize(12);
-            doc.setTextColor(200, 200, 200);
-            doc.text(`${t.name}: ${state.user.firstName} ${state.user.lastName}`, 20, 40);
-            doc.text(`${t.phone}: ${state.user.phone}`, 20, 46);
-            doc.text(`${t.idNumber}: ${state.user.idNumber}`, 20, 52);
-            
-            // Fecha de exportación
-            const exportDate = new Date().toLocaleDateString(state.currentLanguage, {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            doc.text(`${t.date}: ${exportDate}`, 20, 58);
-            
-            // Tabla de registros
-            doc.setFontSize(14);
-            doc.setTextColor(44, 62, 80);
-            doc.text(t.history, 20, 70);
-            
-            const headers = [[t.date, t.project, t.schedule, t.hours, t.breakTime, t.notes]];
-            const data = state.timeEntries.map(entry => {
-                const hours = calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime).toFixed(1);
-                return [
-                    entry.date,
-                    entry.project.name + (entry.project.code ? ` (${entry.project.code})` : ''),
-                    `${entry.startTime} - ${entry.endTime}`,
-                    hours,
-                    entry.breakTime,
-                    entry.notes || ''
-                ];
-            });
-
-            doc.autoTable({
-                head: headers,
-                body: data,
-                startY: 75,
-                theme: 'grid',
-                styles: { 
-                    fontSize: 10, 
-                    cellPadding: 3,
-                    textColor: [60, 60, 60]
-                },
-                headStyles: { 
-                    fillColor: [52, 152, 219],
-                    textColor: 255,
-                    fontStyle: 'bold'
-                },
-                alternateRowStyles: { 
-                    fillColor: [245, 245, 245]
-                },
-                margin: { top: 75 }
-            });
-
-            // Resumen de horas
-            const summaryY = doc.lastAutoTable.finalY + 15;
-            doc.setFontSize(14);
-            doc.setTextColor(44, 62, 80);
-            doc.text(t.summaryTitle, 20, summaryY);
-            
-            const groupedByDate = {};
-            state.timeEntries.forEach(entry => {
-                if (!groupedByDate[entry.date]) groupedByDate[entry.date] = [];
-                groupedByDate[entry.date].push(entry);
-            });
-
-            const summaryData = Object.entries(groupedByDate).map(([date, entries]) => {
-                const weekNumber = getWeekNumber(date);
-                const totalDay = entries.reduce((sum, entry) =>
-                    sum + calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime), 0);
-
-                // Sumamos todos los tiempos de descanso si se espera como número (por ejemplo, en horas o minutos)
-                let totalBreak = entries.reduce((sum, entry) => {
-                    const parsedBreak = parseFloat(entry.breakTime) || 0;
-                    return sum + parsedBreak;
-                }, 0);
-
-                // Mostrar proyectos únicos del día
-                const projectNames = [...new Set(entries.map(e => e.project.name))].join(', ');
-
-                return [
-                    date,
-                    weekNumber,
-                    projectNames,
-                    totalDay.toFixed(1),
-                    totalBreak.toFixed(1)
-                ];
-            });
-
-            doc.autoTable({
-                head: [[t.date, t.week, t.project, t.hours, t.breakTime]],
-                body: summaryData,
-                startY: summaryY + 5,
-                theme: 'grid',
-                styles: { 
-                    fontSize: 10, 
-                    cellPadding: 3,
-                    textColor: [60, 60, 60]
-                },
-                headStyles: { 
-                    fillColor: [26, 188, 156],
-                    textColor: 255,
-                    fontStyle: 'bold'
-                },
-                alternateRowStyles: { 
-                    fillColor: [245, 245, 245]
-                }
-            });
-
-            // Total general
-            const totalPeriod = state.timeEntries.reduce((sum, entry) =>
-                sum + calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime), 0);
-            
-            const totalY = doc.lastAutoTable.finalY + 5;
-            doc.autoTable({
-                body: [[t.totalPeriod, '', '', totalPeriod.toFixed(1), '']],
-                startY: totalY,
-                theme: 'grid',
-                styles: { 
-                    fontSize: 11, 
-                    cellPadding: 4,
-                    fontStyle: 'bold'
-                },
-                bodyStyles: { 
-                    fillColor: [39, 174, 96],
-                    textColor: 255
-                }
-            });
-
-            // Pie de página
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.setFontSize(10);
-                doc.setTextColor(100);
-                doc.text(`Página ${i} de ${pageCount}`, 105, 285, 'center');
-                doc.text(`© ${new Date().getFullYear()} TimeBook`, 105, 290, 'center');
-            }
-
-            // Guardar PDF
-            doc.save(`TimeBook_${state.user.firstName}_${state.user.lastName}.pdf`);
-            showAlert(t.exportSuccess, 'success');
-        }
-
-        // Exportar a JSON
-        function exportToJSON() {
-            const data = {
-                user: state.user,
-                projects: state.projects,
-                entries: state.timeEntries
-            };
-            
-            const dataStr = JSON.stringify(data, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            
-            const exportFileDefaultName = `timebook-${state.user.firstName}-${state.user.lastName}.json`;
-            
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
-            
-            showAlert(translations[state.currentLanguage].exportSuccess, 'success');
-        }
-
-        // Importar desde JSON
-        function importFromJSON(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                try {
-                    const data = JSON.parse(event.target.result);
-                    
-                    // Validar estructura básica
-                    if (!data.user || !data.projects || !data.entries) {
-                        throw new Error('Formato de archivo inválido');
-                    }
-                    
-                    // Guardar datos en Firebase
-                    const savePromises = [
-                        saveToFirebase(dbPaths.user, data.user),
-                        saveToFirebase(dbPaths.projects, data.projects),
-                        saveToFirebase(dbPaths.timeEntries, data.entries)
-                    ];
-                    
-                    Promise.all(savePromises)
-                        .then(() => {
-                            showAlert(translations[state.currentLanguage].importSuccess, 'success');
-                        })
-                        .catch(error => {
-                            showAlert(`Error: ${error.message}`, 'error');
-                        });
-                } catch (error) {
-                    showAlert(`Error: ${error.message}`, 'error');
-                }
-            };
-            reader.readAsText(file);
-            
-            // Resetear input para permitir importar el mismo archivo nuevamente
-            e.target.value = '';
-        }
-
-        // Mostrar alerta
+        // Show alert message
         function showAlert(message, type) {
-            // Eliminar alertas anteriores
-            const existingAlerts = document.querySelectorAll('.alert');
-            existingAlerts.forEach(alert => alert.remove());
-            
-            const alert = document.createElement('div');
+            const alert = document.getElementById('auth-message');
+            alert.textContent = message;
             alert.className = `alert alert-${type}`;
-            alert.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-                <span>${message}</span>
-            `;
+            alert.classList.remove('hidden');
             
-            document.querySelector('.container').insertBefore(alert, document.querySelector('.container').firstChild);
-            
-            // Eliminar alerta después de 3 segundos
+            // Remove alert after 3 seconds
             setTimeout(() => {
-                alert.remove();
+                alert.classList.add('hidden');
             }, 3000);
         }
 
-        // Inicializar la aplicación cuando el DOM esté cargado
+        // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
