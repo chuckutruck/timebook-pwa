@@ -839,7 +839,7 @@
                 <i class="fas fa-clock"></i>
                 <h1 id="app-title">TimeBook</h1>
             </div>
-            <div class="controls" id="app-controls">
+            <div class="controls">
                 <select id="language" class="language-selector">
                     <option value="sv" selected>Svenska</option>                
                     <option value="es">Spanska</option>
@@ -860,85 +860,19 @@
                     <input type="file" id="import-file" accept=".json" style="display: none;">
                 </div>
             </div>
-            <div class="user-section" id="user-section">
+            <div class="user-section">
                 <div class="user-avatar" id="user-avatar">A</div>
                 <span id="user-name">Användare</span>
-                <button id="logout-btn" class="logout-btn hidden">
-                    <i class="fas fa-sign-out-alt"></i> <span>Logga ut</span>
-                </button>
             </div>
         </div>
     </header>
 
     <div class="container">
-        <!-- Authentication Container -->
-        <div id="auth-container" class="auth-container">
-            <div class="logo" style="justify-content: center; margin-bottom: 25px;">
-                <i class="fas fa-clock" style="font-size: 48px; color: var(--secondary);"></i>
-                <h1>TimeBook</h1>
-            </div>
-            
-            <div class="auth-tabs">
-                <div class="auth-tab active" id="login-tab">Logga in</div>
-                <div class="auth-tab" id="register-tab">Registrera</div>
-            </div>
-            
-            <!-- Login Form -->
-            <form id="login-form" class="auth-form">
-                <div class="form-group">
-                    <label for="login-email">E-post</label>
-                    <input type="email" id="login-email" required placeholder="Ange din e-post">
-                </div>
-                
-                <div class="form-group">
-                    <label for="login-password">Lösenord</label>
-                    <input type="password" id="login-password" required placeholder="Ange ditt lösenord">
-                </div>
-                
-                <div class="form-group">
-                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 15px;">
-                        <i class="fas fa-sign-in-alt"></i> Logga in
-                    </button>
-                </div>
-            </form>
-            
-            <!-- Register Form -->
-            <form id="register-form" class="auth-form hidden">
-                <div class="form-group">
-                    <label for="register-name">Namn</label>
-                    <input type="text" id="register-name" required placeholder="Ange ditt fullständiga namn">
-                </div>
-                
-                <div class="form-group">
-                    <label for="register-email">E-post</label>
-                    <input type="email" id="register-email" required placeholder="Ange din e-post">
-                </div>
-                
-                <div class="form-group">
-                    <label for="register-password">Lösenord (minst 6 tecken)</label>
-                    <input type="password" id="register-password" required placeholder="Skapa ett lösenord">
-                </div>
-                
-                <div class="form-group">
-                    <label for="register-confirm-password">Bekräfta lösenord</label>
-                    <input type="password" id="register-confirm-password" required placeholder="Bekräfta ditt lösenord">
-                </div>
-                
-                <div class="form-group">
-                    <button type="submit" class="btn btn-success" style="width: 100%; padding: 15px;">
-                        <i class="fas fa-user-plus"></i> Registrera konto
-                    </button>
-                </div>
-            </form>
-            
-            <div id="auth-message" class="alert hidden"></div>
-        </div>
-
-        <!-- User Profile Form -->
-        <div id="user-form" class="user-form-container hidden">
+        <!-- Användarformulär (initialt) -->
+        <div id="user-form" class="user-form-container">
             <div style="text-align: center; margin-bottom: 30px;">
                 <i class="fas fa-user-cog" style="font-size: 48px; color: var(--secondary);"></i>
-                <h2 id="initial-setup-title">Komplettera din profil</h2>
+                <h2 id="initial-setup-title" style="margin: 15px 0;">Initial Konfiguration</h2>
                 <p id="initial-setup-desc" style="color: #7f8c8d;">Fyll i dina personuppgifter för att komma igång</p>
             </div>
 
@@ -983,7 +917,6 @@
             </form>
         </div>
 
-        <!-- Main Application -->
         <div id="main-app" class="hidden">
             <div class="main-content">
                 <div>
