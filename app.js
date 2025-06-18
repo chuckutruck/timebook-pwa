@@ -1,4 +1,5 @@
-// Configuración Firebase (tu configuración)
+
+// Configuración Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
   authDomain: "tidbok-df555.firebaseapp.com",
@@ -33,7 +34,12 @@ const btnLogout = document.getElementById('btn-logout');
 const timeEntryInput = document.getElementById('time-entry-input');
 const btnAddEntry = document.getElementById('btn-add-entry');
 
-// Registrar usuario
+// Estado global
+const state = {
+  uid: null,
+  user: null
+};
+
 btnRegister.addEventListener('click', () => {
   const email = regEmailInput.value.trim();
   const password = regPasswordInput.value.trim();
@@ -48,7 +54,6 @@ btnRegister.addEventListener('click', () => {
     .catch(error => alert('Error: ' + error.message));
 });
 
-// Login usuario
 btnLogin.addEventListener('click', () => {
   const email = loginEmailInput.value.trim();
   const password = loginPasswordInput.value.trim();
@@ -60,50 +65,45 @@ btnLogin.addEventListener('click', () => {
     .catch(error => alert('Error: ' + error.message));
 });
 
-// Logout
 btnLogout.addEventListener('click', () => {
   auth.signOut();
 });
 
-// Escuchar estado de autenticación
 auth.onAuthStateChanged(user => {
-    if (user) {
-        state.uid = user.uid;
-        state.user = {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName || user.email
-        };
+  if (user) {
+    state.uid = user.uid;
+    state.user = {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName || user.email
+    };
 
-        document.getElementById('auth-container').classList.add('hidden');
-        updateUserInfo();
+    document.getElementById('auth-container').classList.add('hidden');
+    updateUserInfo();
 
-        // Verifica si ya hizo el setup inicial
-        database.ref(users/${user.uid}/initialSetupComplete).once('value').then(snapshot => {
-            const setupComplete = snapshot.val();
-            if (!setupComplete) {
-                document.getElementById('initial-setup-form').classList.remove('hidden');
-                document.getElementById('main-app').classList.add('hidden');
-            } else {
-                document.getElementById('initial-setup-form').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                loadUserData();
-            }
-        });
-    } else {
-        state.uid = null;
-        state.user = null;
-        document.getElementById('auth-container').classList.remove('hidden');
+    database.ref(`users/${user.uid}/initialSetupComplete`).once('value').then(snapshot => {
+      const setupComplete = snapshot.val();
+      if (!setupComplete) {
+        document.getElementById('initial-setup-form').classList.remove('hidden');
         document.getElementById('main-app').classList.add('hidden');
+      } else {
         document.getElementById('initial-setup-form').classList.add('hidden');
-    }
+        document.getElementById('main-app').classList.remove('hidden');
+        loadUserData();
+      }
+    });
+  } else {
+    state.uid = null;
+    state.user = null;
+    document.getElementById('auth-container').classList.remove('hidden');
+    document.getElementById('main-app').classList.add('hidden');
+    document.getElementById('initial-setup-form').classList.add('hidden');
+  }
 });
 
-// Escuchar entradas en Realtime Database
 function listenTimeEntries(uid) {
-  const ref = database.ref(timeEntries/${uid});
-  ref.off(); // Quitar listeners previos para evitar duplicados
-
+  const ref = database.ref(`timeEntries/${uid}`);
+  ref.off();
   ref.on('value', snapshot => {
     const data = snapshot.val();
     entriesList.innerHTML = '';
@@ -119,7 +119,6 @@ function listenTimeEntries(uid) {
   });
 }
 
-// Guardar nueva entrada
 btnAddEntry.addEventListener('click', () => {
   const description = timeEntryInput.value.trim();
   if (!description) {
@@ -131,10 +130,37 @@ btnAddEntry.addEventListener('click', () => {
     alert('No autenticado');
     return;
   }
-  const ref = database.ref(timeEntries/${user.uid});
+  const ref = database.ref(`timeEntries/${user.uid}`);
   ref.push({ description, timestamp: Date.now() })
     .then(() => {
       timeEntryInput.value = '';
     })
     .catch(error => alert('Error: ' + error.message));
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById('setup-user-form');
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const fullName = document.getElementById('full-name').value;
+      const phone = document.getElementById('phone').value;
+      const idNumber = document.getElementById('id-number').value;
+
+      if (!state.uid) return;
+
+      database.ref(`users/${state.uid}/profile`).set({
+        name: fullName,
+        phone: phone,
+        id: idNumber
+      });
+
+      database.ref(`users/${state.uid}/initialSetupComplete`).set(true).then(() => {
+        document.getElementById('initial-setup-form').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        updateUserInfo();
+        loadUserData();
+      });
+    });
+  }
 });
