@@ -1750,7 +1750,7 @@
                     showAlert('Fel vid sparning: ' + error.message, 'error');
                 });
         }
-
+        
         // Edit project
         function editProject(projectId) {
             const project = state.projects.find(p => p.id === projectId);
@@ -1761,7 +1761,6 @@
             
             const newCode = prompt('Ange ny projektkod (valfritt):', project.code || '');
             
-            // Update in Firebase
             database.ref(`projects/${projectId}`).update({
                 name: newName.trim(),
                 code: newCode ? newCode.trim() : null
@@ -1773,19 +1772,17 @@
                     showAlert('Fel vid uppdatering: ' + error.message, 'error');
                 });
         }
-
+        
         // Delete project
         function deleteProject(projectId) {
             if (!confirm('Är du säker på att du vill radera detta projekt?')) return;
             
-            // Check if project has time entries
             const hasEntries = state.timeEntries.some(entry => entry.project.id === projectId);
             if (hasEntries) {
                 showAlert('Det går inte att radera ett projekt med tidsregistreringar', 'error');
                 return;
             }
             
-            // Delete from Firebase
             database.ref(`projects/${projectId}`).remove()
                 .then(() => {
                     showAlert('Projekt raderat', 'success');
@@ -1794,7 +1791,7 @@
                     showAlert('Fel vid radering: ' + error.message, 'error');
                 });
         }
-
+        
         // Update entries display
         function updateEntriesDisplay() {
             const entriesContainer = document.getElementById('entries-container');
@@ -1805,6 +1802,17 @@
                 entriesContainer.innerHTML = '';
                 return;
             }
+            
+            noRecordsMessage.classList.add('hidden');
+            entriesContainer.innerHTML = '';
+            
+            state.timeEntries.forEach(entry => {
+                // Aquí deberías poner la lógica para mostrar cada entrada, ejemplo:
+                const entryDiv = document.createElement('div');
+                entryDiv.textContent = `${entry.project.name}: ${entry.duration} timmar`;
+                entriesContainer.appendChild(entryDiv);
+            });
+        }
             
             noRecordsMessage.classList.add('hidden');
             
