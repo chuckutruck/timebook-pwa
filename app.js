@@ -139,30 +139,3 @@ btnAddEntry.addEventListener('click', () => {
     .catch(error => alert('Error: ' + error.message));
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById('setup-user-form');
-    if (form) {
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            const fullName = document.getElementById('full-name').value;
-            const phone = document.getElementById('phone').value;
-            const idNumber = document.getElementById('id-number').value;
-
-            if (!state.uid) return;
-
-            database.ref(`users/${state.uid}/profile`).set({
-                name: fullName,
-                phone: phone,
-                id: idNumber
-            });
-
-            database.ref(`users/${state.uid}/initialSetupComplete`).set(true).then(() => {
-                document.getElementById('initial-setup-form').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                updateUserInfo();
-                loadUserData();
-            });
-        });
-    }
-});
-
