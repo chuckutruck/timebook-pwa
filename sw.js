@@ -1,13 +1,15 @@
 const CACHE_NAME = "timebook-cache-v1";
+const BASE_URL = "/timebook-pwa";
 const urlsToCache = [
-  "/",
-  "/index.html",
-  "/manifest.json",
-  "/sw.js",
-  "/app.js",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png"
+  `${BASE_URL}/`,
+  `${BASE_URL}/index.html`,
+  `${BASE_URL}/manifest.json`,
+  `${BASE_URL}/sw.js`,
+  `${BASE_URL}/app.js`,
+  `${BASE_URL}/icons/icon-192.png`,
+  `${BASE_URL}/icons/icon-512.png`
 ];
+
 
 self.addEventListener("install", event => {
   event.waitUntil(
