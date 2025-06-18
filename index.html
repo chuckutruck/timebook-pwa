@@ -1189,27 +1189,27 @@
                         <div class="card-title">
                             <span><i class="fas fa-tasks"></i> <span>Projekt­hantering</span></span>
                         </div>
-                        
+                    
                         <div class="tab-container">
                             <div class="tabs">
                                 <div class="tab active" data-tab="projects">Projekt</div>
                                 <div class="tab" data-tab="add-project">Lägg Till</div>
                             </div>
-                            
+                    
                             <div class="tab-content active" id="projects-content">
                                 <ul class="project-list" id="projects-list">
                                     <!-- Projekt genereras dynamiskt här -->
                                 </ul>
                             </div>
-                            
+                    
                             <div class="tab-content" id="add-project-content">
                                 <div class="form-group">
                                     <label for="new-project-name">Projektnamn</label>
-                                    <input type="text" id="new-project-name" placeholder="Projektnamn">
+                                    <input type="text" id="new-project-name" name="new-project-name" autocomplete="off" placeholder="Projektnamn" required>
                                 </div>
                                 <div class="form-group">
                                     <label for="new-project-code">Kod (valfri)</label>
-                                    <input type="text" id="new-project-name" autocomplete="off" placeholder="Projektnamn">
+                                    <input type="text" id="new-project-code" name="new-project-code" autocomplete="off" placeholder="Projektkod">
                                 </div>
                                 <div class="form-group" style="margin-top: 20px;">
                                     <button id="add-project-btn" class="btn btn-primary" style="width: 100%; padding: 12px;">
@@ -1219,11 +1219,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
+
     <script>
         // Firebase configuration
         const firebaseConfig = {
