@@ -138,6 +138,7 @@ btnAddEntry.addEventListener('click', () => {
     })
     .catch(error => alert('Error: ' + error.message));
 });
+
 document.addEventListener("DOMContentLoaded", function () {
     const form = document.getElementById('setup-user-form');
     if (form) {
