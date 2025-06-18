@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TimeBook - Professional Time Tracker</title>
+    <link rel="icon" href="data:,">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -12,7 +13,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-   <script src="app.js"></script>
     
     <style>
         :root {
@@ -1189,27 +1189,27 @@
                         <div class="card-title">
                             <span><i class="fas fa-tasks"></i> <span>Projekt­hantering</span></span>
                         </div>
-                        
+                    
                         <div class="tab-container">
                             <div class="tabs">
                                 <div class="tab active" data-tab="projects">Projekt</div>
                                 <div class="tab" data-tab="add-project">Lägg Till</div>
                             </div>
-                            
+                    
                             <div class="tab-content active" id="projects-content">
                                 <ul class="project-list" id="projects-list">
                                     <!-- Projekt genereras dynamiskt här -->
                                 </ul>
                             </div>
-                            
+                    
                             <div class="tab-content" id="add-project-content">
                                 <div class="form-group">
                                     <label for="new-project-name">Projektnamn</label>
-                                    <input type="text" id="new-project-name" placeholder="Projektnamn">
+                                    <input type="text" id="new-project-name" name="new-project-name" autocomplete="off" placeholder="Projektnamn" required>
                                 </div>
                                 <div class="form-group">
                                     <label for="new-project-code">Kod (valfri)</label>
-                                    <input type="text" id="new-project-code" placeholder="Projektkod">
+                                    <input type="text" id="new-project-code" name="new-project-code" autocomplete="off" placeholder="Projektkod">
                                 </div>
                                 <div class="form-group" style="margin-top: 20px;">
                                     <button id="add-project-btn" class="btn btn-primary" style="width: 100%; padding: 12px;">
@@ -1223,159 +1223,19 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         // Firebase configuration
-
-        // Configuración corregida de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
             authDomain: "tidbok-df555.firebaseapp.com",
             databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "tidbok-df555",
-            storageBucket: "tidbok-df555.appspot.com", // Corregido aquí
+            storageBucket: "tidbok-df555.appspot.com",
             messagingSenderId: "467331966400",
             appId: "1:467331966400:web:abb6949a76918f2eb8d425"
         };
 
-// Función mejorada para guardar entradas de tiempo
-// Configuración corregida de Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
-    authDomain: "tidbok-df555.firebaseapp.com",
-    databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "tidbok-df555",
-    storageBucket: "tidbok-df555.appspot.com", // Corregido aquí
-    messagingSenderId: "467331966400",
-    appId: "1:467331966400:web:abb6949a76918f2eb8d425"
-};
-
-// Función mejorada para guardar entradas de tiempo
-function saveTimeEntry(e) {
-    e.preventDefault();
-    
-    // Validación de proyecto
-    const projectId = document.getElementById('project').value;
-    const project = state.projects.find(p => p.id === projectId);
-    
-    if (!project) {
-        showAlert('Välj ett giltigt projekt', 'error');
-        return;
-    }
-    
-    // Validación de tiempos
-    const startTime = document.getElementById('start-time').value;
-    const endTime = document.getElementById('end-time').value;
-    const breakTime = parseFloat(document.getElementById('break-time').value);
-    
-    if (startTime >= endTime) {
-        showAlert('Starttiden måste vara före sluttiden', 'error');
-        return;
-    }
-    
-    // Cálculo de horas trabajadas
-    const start = new Date(`1970-01-01T${startTime}:00`);
-    const end = new Date(`1970-01-01T${endTime}:00`);
-    const diff = (end - start) / (1000 * 60 * 60); // horas
-    const workedHours = (diff - breakTime).toFixed(2);
-    
-    // Estructura de datos mejorada
-    const entry = {
-        date: document.getElementById('entry-date').value,
-        project: {
-            id: project.id,
-            name: project.name,
-            code: project.code || ''
-        },
-        startTime: startTime,
-        endTime: endTime,
-        breakTime: breakTime,
-        workedHours: workedHours,
-        notes: document.getElementById('notes').value || null, // Guardar null si está vacío
-        coworkers: document.getElementById('coworkers').value 
-                 ? document.getElementById('coworkers').value.split(',').map(c => c.trim()).filter(c => c)
-                 : null,
-        userId: state.currentUser.uid,
-        createdAt: firebase.database.ServerValue.TIMESTAMP // Marca de tiempo del servidor
-    };
-    
-    // Operación de guardado con manejo de errores mejorado
-    const saveOperation = state.editingEntryId 
-        ? database.ref(`timeEntries/${state.editingEntryId}`).set(entry)
-        : database.ref('timeEntries').push(entry);
-    
-    saveOperation
-        .then(() => {
-            showAlert(state.editingEntryId 
-                ? 'Tidpost uppdaterad' 
-                : 'Tidpost sparad', 'success');
-            resetForm();
-            state.editingEntryId = null;
-        })
-        .catch(error => {
-            console.error('Save error:', error);
-            showAlert('Fel vid sparning: ' + error.message, 'error');
-        });
-}
-
-// Función mejorada para guardar proyectos
-function addProject() {
-    const name = document.getElementById('new-project-name').value.trim();
-    const code = document.getElementById('new-project-code').value.trim();
-    
-    if (!name) {
-        showAlert('Ange ett projektnamn', 'error');
-        return;
-    }
-    
-    const newProject = {
-        name: name,
-        code: code || null,
-        ownerId: state.currentUser.uid,
-        createdAt: firebase.database.ServerValue.TIMESTAMP
-    };
-    
-    database.ref('projects').push(newProject)
-        .then(() => {
-            document.getElementById('new-project-name').value = '';
-            document.getElementById('new-project-code').value = '';
-            showAlert('Projekt tillagt', 'success');
-        })
-        .catch(error => {
-            console.error('Project save error:', error);
-            showAlert('Fel vid sparning: ' + error.message, 'error');
-        });
-}
-
-// Función mejorada para guardar información de usuario
-function saveUserInfo(e) {
-    e.preventDefault();
-    
-    const userData = {
-        firstName: document.getElementById('first-name').value.trim(),
-        lastName: document.getElementById('last-name').value.trim(),
-        phone: document.getElementById('phone').value.trim(),
-        idNumber: document.getElementById('id-number').value.trim(),
-        updatedAt: firebase.database.ServerValue.TIMESTAMP
-    };
-    
-    // Validación básica
-    if (!userData.firstName || !userData.lastName) {
-        showAlert('Förnamn och efternamn är obligatoriska', 'error');
-        return;
-    }
-    
-    database.ref(`users/${state.currentUser.uid}`).set(userData)
-        .then(() => {
-            showAlert('Profil sparad', 'success');
-            loadUserProfile(state.currentUser.uid);
-        })
-        .catch(error => {
-            console.error('User save error:', error);
-            showAlert('Fel vid sparning: ' + error.message, 'error');
-        });
-}
-        
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
@@ -1642,7 +1502,7 @@ function saveUserInfo(e) {
             // Language selector
             document.getElementById('language').addEventListener('change', function() {
                 state.currentLanguage = this.value;
-                updateTranslations();
+                // updateTranslations(); // Implementar si se requiere internacionalización
                 updateEntriesDisplay();
                 updateHoursSummary();
                 updateCharts();
@@ -1758,7 +1618,8 @@ function saveUserInfo(e) {
                 workedHours: workedHours,
                 notes: document.getElementById('notes').value,
                 coworkers: document.getElementById('coworkers').value.split(',').map(c => c.trim()).filter(c => c),
-                userId: state.currentUser.uid
+                userId: state.currentUser.uid,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
             };
             
             if (state.editingEntryId) {
@@ -1872,9 +1733,10 @@ function saveUserInfo(e) {
             }
             
             const newProject = {
-                name: name,
-                code: code || null,
-                ownerId: state.currentUser.uid
+              name: name,
+              code: code || null,
+              ownerId: state.currentUser.uid,
+              createdAt: firebase.database.ServerValue.TIMESTAMP
             };
             
             // Save to Firebase
@@ -2382,7 +2244,28 @@ function saveUserInfo(e) {
         // Show alert message
         function showAlert(message, type) {
             const alert = document.getElementById('auth-message');
-            alert.textContent = message;
+            const alertContainer = document.getElementById('auth-container');
+            
+            // Create a new alert if in main app
+            if (!alert) {
+                const newAlert = document.createElement('div');
+                newAlert.className = `alert alert-${type}`;
+                newAlert.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                    <span>${message}</span>
+                `;
+                document.querySelector('.container').prepend(newAlert);
+                
+                setTimeout(() => {
+                    newAlert.remove();
+                }, 3000);
+                return;
+            }
+            
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                <span>${message}</span>
+            `;
             alert.className = `alert alert-${type}`;
             alert.classList.remove('hidden');
             
