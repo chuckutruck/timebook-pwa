@@ -1,4 +1,3 @@
-
 // Configuración Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
@@ -15,12 +14,12 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const database = firebase.database();
 
-const authSection = document.getElementById('auth-section');
-const appSection = document.getElementById('app-section');
+const state = {
+  uid: null,
+  user: null
+};
 
-const userEmailSpan = document.getElementById('user-email');
-const entriesList = document.getElementById('entries-list');
-
+// Referencias a elementos del DOM
 const regEmailInput = document.getElementById('reg-email');
 const regPasswordInput = document.getElementById('reg-password');
 const btnRegister = document.getElementById('btn-register');
@@ -34,12 +33,9 @@ const btnLogout = document.getElementById('btn-logout');
 const timeEntryInput = document.getElementById('time-entry-input');
 const btnAddEntry = document.getElementById('btn-add-entry');
 
-// Estado global
-const state = {
-  uid: null,
-  user: null
-};
+const entriesList = document.getElementById('entries-list');
 
+// Registrar usuario
 btnRegister.addEventListener('click', () => {
   const email = regEmailInput.value.trim();
   const password = regPasswordInput.value.trim();
@@ -54,6 +50,7 @@ btnRegister.addEventListener('click', () => {
     .catch(error => alert('Error: ' + error.message));
 });
 
+// Login
 btnLogin.addEventListener('click', () => {
   const email = loginEmailInput.value.trim();
   const password = loginPasswordInput.value.trim();
@@ -65,10 +62,12 @@ btnLogin.addEventListener('click', () => {
     .catch(error => alert('Error: ' + error.message));
 });
 
+// Logout
 btnLogout.addEventListener('click', () => {
   auth.signOut();
 });
 
+// Estado de autenticación
 auth.onAuthStateChanged(user => {
   if (user) {
     state.uid = user.uid;
@@ -90,6 +89,7 @@ auth.onAuthStateChanged(user => {
         document.getElementById('initial-setup-form').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
         loadUserData();
+        listenTimeEntries(user.uid);
       }
     });
   } else {
@@ -101,43 +101,7 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-function listenTimeEntries(uid) {
-  const ref = database.ref(`timeEntries/${uid}`);
-  ref.off();
-  ref.on('value', snapshot => {
-    const data = snapshot.val();
-    entriesList.innerHTML = '';
-    if (data) {
-      Object.entries(data).forEach(([key, entry]) => {
-        const li = document.createElement('li');
-        li.textContent = entry.description || JSON.stringify(entry);
-        entriesList.appendChild(li);
-      });
-    } else {
-      entriesList.innerHTML = '<li>No hay entradas</li>';
-    }
-  });
-}
-
-btnAddEntry.addEventListener('click', () => {
-  const description = timeEntryInput.value.trim();
-  if (!description) {
-    alert('Escribe una descripción');
-    return;
-  }
-  const user = auth.currentUser;
-  if (!user) {
-    alert('No autenticado');
-    return;
-  }
-  const ref = database.ref(`timeEntries/${user.uid}`);
-  ref.push({ description, timestamp: Date.now() })
-    .then(() => {
-      timeEntryInput.value = '';
-    })
-    .catch(error => alert('Error: ' + error.message));
-});
-
+// Guardar datos del formulario inicial
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById('setup-user-form');
   if (form) {
@@ -160,7 +124,69 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('main-app').classList.remove('hidden');
         updateUserInfo();
         loadUserData();
+        listenTimeEntries(state.uid);
       });
     });
   }
+});
+
+// Mostrar la información del usuario
+function loadUserData() {
+  if (!state.uid) return;
+  database.ref(`users/${state.uid}/profile`).once('value').then(snapshot => {
+    const data = snapshot.val();
+    if (data) {
+      document.getElementById('info-name').textContent = data.name || '';
+      document.getElementById('info-phone').textContent = data.phone || '';
+      document.getElementById('info-id').textContent = data.id || '';
+    }
+  });
+}
+
+// Mostrar el correo del usuario
+function updateUserInfo() {
+  if (state.user) {
+    const userEmailSpan = document.getElementById('user-email');
+    if (userEmailSpan) userEmailSpan.textContent = state.user.email;
+  }
+}
+
+// Escuchar y mostrar entradas de tiempo
+function listenTimeEntries(uid) {
+  const ref = database.ref(`timeEntries/${uid}`);
+  ref.off(); // eliminar listeners previos
+
+  ref.on('value', snapshot => {
+    const data = snapshot.val();
+    entriesList.innerHTML = '';
+    if (data) {
+      Object.entries(data).forEach(([key, entry]) => {
+        const li = document.createElement('li');
+        li.textContent = entry.description || JSON.stringify(entry);
+        entriesList.appendChild(li);
+      });
+    } else {
+      entriesList.innerHTML = '<li>No hay entradas</li>';
+    }
+  });
+}
+
+// Agregar nueva entrada
+btnAddEntry.addEventListener('click', () => {
+  const description = timeEntryInput.value.trim();
+  if (!description) {
+    alert('Escribe una descripción');
+    return;
+  }
+  const user = auth.currentUser;
+  if (!user) {
+    alert('No autenticado');
+    return;
+  }
+  const ref = database.ref(`timeEntries/${user.uid}`);
+  ref.push({ description, timestamp: Date.now() })
+    .then(() => {
+      timeEntryInput.value = '';
+    })
+    .catch(error => alert('Error: ' + error.message));
 });
