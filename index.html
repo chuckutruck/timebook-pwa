@@ -1733,21 +1733,20 @@
             }
             
             const newProject = {
-              name: name,
-              code: code || null,
-              ownerId: state.currentUser.uid,
-              createdAt: firebase.database.ServerValue.TIMESTAMP
+                name: name,
+                code: code || null,
+                ownerId: state.currentUser.uid,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
             };
             
-            // Save to Firebase
             database.ref('projects').push(newProject)
                 .then(() => {
-                    // Reset form
                     document.getElementById('new-project-name').value = '';
                     document.getElementById('new-project-code').value = '';
                     showAlert('Projekt tillagt', 'success');
                 })
                 .catch(error => {
+                    console.error('Project save error:', error);
                     showAlert('Fel vid sparning: ' + error.message, 'error');
                 });
         }
