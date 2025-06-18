@@ -1762,45 +1762,67 @@
             document.getElementById('break-time').value = '1.0';
         }
 
-        // Actualizar lista de proyectos en el dropdown
-        function updateProjectDropdown() {
-            const select = document.getElementById('project');
-            select.innerHTML = '';
-            
-            state.projects.forEach(project => {
-                const option = document.createElement('option');
-                option.value = project.id;
-                option.textContent = project.name + (project.code ? ` (${project.code})` : '');
-                select.appendChild(option);
-            });
-        }
+        //// Actualizar lista de proyectos en el dropdown del formulario principal
+	function updateProjectDropdown() {
+	    const select = document.getElementById('project');
+	    if (!select) return;
+	
+	    // Limpiar opciones actuales
+	    select.innerHTML = '';
+	
+	    // Agregar una opción por defecto
+	    const defaultOption = document.createElement('option');
+	    defaultOption.value = '';
+	    defaultOption.disabled = true;
+	    defaultOption.selected = true;
+	    defaultOption.textContent = translations[state.currentLanguage]?.selectProject || 'Seleccione un proyecto';
+	    select.appendChild(defaultOption);
+	
+	    // Agregar opciones de proyectos
+	    state.projects.forEach(project => {
+	        const option = document.createElement('option');
+	        option.value = project.id;
+	        option.textContent = `${project.name}${project.code ? ` (${project.code})` : ''}`;
+	        select.appendChild(option);
+	    });
+	}
+	
+	// Actualizar lista de proyectos en la sección de gestión de proyectos
+	function updateProjectsList() {
+	    const list = document.getElementById('projects-list');
+	    if (!list) return;
+	
+	    // Limpiar lista
+	    list.innerHTML = '';
+	
+	    // Generar cada ítem de proyecto
+	    state.projects.forEach(project => {
+	        const li = document.createElement('li');
+	        li.className = 'project-item';
+	
+	        const codeLabel = translations[state.currentLanguage]?.code || 'Código';
+	
+	        li.innerHTML = `
+	            <div>
+	                <strong>${project.name}</strong>
+	                ${project.code ? `<div><small>${codeLabel}: ${project.code}</small></div>` : ''}
+	            </div>
+	            <div class="project-actions">
+	                <button class="action-btn edit edit-project" data-id="${project.id}">
+	                    <i class="fas fa-edit"></i>
+	                </button>
+	                <button class="action-btn delete delete-project" data-id="${project.id}">
+	                    <i class="fas fa-trash"></i>
+	                </button>
+	            </div>
+	        `;
+	
+	        list.appendChild(li);
+	    });
+	
+	    // Aquí puedes volver a enlazar los eventos si son necesarios (edit, delete)
+	}
 
-        // Actualizar lista de proyectos en la UI
-        function updateProjectsList() {
-            const list = document.getElementById('projects-list');
-            list.innerHTML = '';
-            
-            state.projects.forEach(project => {
-                const li = document.createElement('li');
-                li.className = 'project-item';
-                
-                li.innerHTML = `
-                    <div>
-                        <strong>${project.name}</strong>
-                        ${project.code ? `<div><small>${translations[state.currentLanguage].code}: ${project.code}</small></div>` : ''}
-                    </div>
-                    <div class="project-actions">
-                        <button class="action-btn edit edit-project" data-id="${project.id}">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="action-btn delete delete-project" data-id="${project.id}">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-                
-                list.appendChild(li);
-            });
             
             // Agregar eventos a los botones
             document.querySelectorAll('.edit-project').forEach(btn => {
