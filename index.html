@@ -761,8 +761,6 @@
                 text-align: center;
             }
         }
-<script src="js/licencia.js"></script>
-		
     </style>
 </head>
 <body>
@@ -796,16 +794,20 @@
             <div class="user-section">
                 <div class="user-avatar" id="user-avatar">A</div>
                 <span id="user-name">Användare</span>
+                <!-- Botón de cerrar sesión añadido -->
+                <button id="logout-btn" class="btn btn-danger" style="padding: 8px 15px;">
+                    <i class="fas fa-sign-out-alt"></i> <span id="logout-text">Cerrar sesión</span>
+                </button>
             </div>
         </div>
     </header>
 
     <div class="container">
         <!-- Användarformulär (initialt) -->
-        <div id="user-form" class="user-form-container">
+        <div id="initial-setup" class="user-form-container">
             <div style="text-align: center; margin-bottom: 30px;">
                 <i class="fas fa-user-cog" style="font-size: 48px; color: var(--secondary);"></i>
-                <h2 id="initial-setup-title" style="margin: 15px 0;">Initial Konfiguration</h2>
+                <h2 id="initial-setup-title">Initial Konfiguration</h2>
                 <p id="initial-setup-desc" style="color: #7f8c8d;">Fyll i dina personuppgifter för att komma igång</p>
             </div>
 
@@ -1090,8 +1092,7 @@
             </div>
         </div>
     </div>
-	
-	<script src="js/licencia.js"></script>
+    
     <script>
         // Traducciones para la aplicación
         const translations = {
@@ -1164,7 +1165,8 @@
                 projectDistTitle: "Distribución por Proyecto",
                 chartsTitle: "Estadísticas Visuales",
                 chartMonth: "Mes",
-                chartQuarter: "Trimestre"
+                chartQuarter: "Trimestre",
+                logout: "Cerrar sesión"
             },
             en: {
                 title: "TimeBook - Professional Hours Tracker",
@@ -1235,7 +1237,8 @@
                 projectDistTitle: "Project Distribution",
                 chartsTitle: "Visual Statistics",
                 chartMonth: "Month",
-                chartQuarter: "Quarter"
+                chartQuarter: "Quarter",
+                logout: "Logout"
             },
             sv: {
                 title: "TimeBook - Professionell Timregistrering",
@@ -1306,7 +1309,8 @@
                 projectDistTitle: "Projektfördelningsdiagram",
                 chartsTitle: "Visuell Statistik",
                 chartMonth: "Månad",
-                chartQuarter: "Kvartal"
+                chartQuarter: "Kvartal",
+                logout: "Logga ut"
             },
             ru: {
                 title: "TimeBook - Профессиональный учет времени",
@@ -1377,7 +1381,8 @@
                 projectDistTitle: "Распределение по проектам",
                 chartsTitle: "Визуальная статистика",
                 chartMonth: "Месяц",
-                chartQuarter: "Квартал"
+                chartQuarter: "Квартал",
+                logout: "Выйти"
             },
             pl: {
                 title: "TimeBook - Profesjonalny Rejestr Czasu",
@@ -1448,7 +1453,8 @@
                 projectDistTitle: "Rozkład według projektu",
                 chartsTitle: "Statystyki wizualne",
                 chartMonth: "Miesiąc",
-                chartQuarter: "Kwartał"
+                chartQuarter: "Kwartał",
+                logout: "Wyloguj"
             }
         };
 
@@ -1476,8 +1482,6 @@
             
             // Verificar si el usuario ya está configurado
             if (state.user) {
-                document.getElementById('user-form').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
                 updateUserInfo();
             }
             
@@ -1501,6 +1505,25 @@
             
             // Inicializar gráficos
             initCharts();
+            
+            // Verificar configuración inicial
+            checkInitialSetup();
+        }
+
+        // Comprobar la configuración inicial
+        function checkInitialSetup() {
+            const initialSetup = document.getElementById('initial-setup');
+            const mainApp = document.getElementById('main-app');
+            
+            if (!initialSetup) return;
+            
+            if (state.projects && state.projects.length > 0) {
+                initialSetup.classList.add('hidden');
+                mainApp.classList.remove('hidden');
+            } else {
+                initialSetup.classList.remove('hidden');
+                mainApp.classList.add('hidden');
+            }
         }
 
         // Actualizar traducciones
@@ -1548,6 +1571,7 @@
             document.getElementById('app-title').textContent = t.title;
             document.getElementById('no-records-message').textContent = t.noRecords;
             document.querySelector('#import-file').setAttribute('accept', '.json');
+            document.getElementById('logout-text').textContent = t.logout;
         }
 
         // Cargar datos del localStorage
@@ -1613,7 +1637,7 @@
             
             // Editar usuario
             document.getElementById('edit-user-btn').addEventListener('click', () => {
-                document.getElementById('user-form').classList.remove('hidden');
+                document.getElementById('initial-setup').classList.remove('hidden');
                 document.getElementById('main-app').classList.add('hidden');
                 
                 // Prellenar datos del usuario
@@ -1644,6 +1668,23 @@
                     state.chartPeriod = btn.dataset.period;
                     updateCharts();
                 });
+            });
+            
+            // Botón de cerrar sesión
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                // Limpiar datos de usuario
+                state.user = null;
+                saveToLocalStorage();
+                
+                // Restablecer la aplicación
+                document.getElementById('initial-setup').classList.remove('hidden');
+                document.getElementById('main-app').classList.add('hidden');
+                
+                // Restablecer formulario
+                document.getElementById('user-form-data').reset();
+                
+                // Mostrar mensaje
+                showAlert('Sesión cerrada con éxito', 'success');
             });
         }
 
@@ -1679,14 +1720,11 @@
             saveToLocalStorage();
             updateUserInfo();
             
-            document.getElementById('user-form').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            
             // Crear alerta de éxito
             showAlert(translations[state.currentLanguage].entrySaved, 'success');
             
-            // Inicializar gráficos después de mostrar la aplicación principal
-            initCharts();
+            // Verificar configuración inicial
+            checkInitialSetup();
         }
 
         // Actualizar información del usuario en la UI
@@ -1846,6 +1884,9 @@
             
             // Mostrar notificación
             showAlert(translations[state.currentLanguage].projectAdded, 'success');
+            
+            // Verificar configuración inicial
+            checkInitialSetup();
         }
 
         // Editar proyecto
@@ -1883,6 +1924,9 @@
             updateCharts();
             
             showAlert(t.projectDeleted, 'success');
+            
+            // Verificar configuración inicial
+            checkInitialSetup();
         }
 
         // Generar opciones de años para el filtro
@@ -2361,8 +2405,8 @@
             doc.rect(0, 0, 210, 30, 'F');
             doc.setFontSize(24);
             doc.setTextColor(255, 255, 255);
-			const userTitle = `${state.user.firstName} ${state.user.lastName} - ${state.user.idNumber}`;
-			doc.text(userTitle, 105, 14, 'center');
+            const userTitle = `${state.user.firstName} ${state.user.lastName} - ${state.user.idNumber}`;
+            doc.text(userTitle, 105, 14, 'center');
             
             // Información del usuario
             doc.setFontSize(12);
@@ -2430,28 +2474,28 @@
                 groupedByDate[entry.date].push(entry);
             });
 
-			const summaryData = Object.entries(groupedByDate).map(([date, entries]) => {
-				const weekNumber = getWeekNumber(date);
-				const totalDay = entries.reduce((sum, entry) =>
-					sum + calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime), 0);
+            const summaryData = Object.entries(groupedByDate).map(([date, entries]) => {
+                const weekNumber = getWeekNumber(date);
+                const totalDay = entries.reduce((sum, entry) =>
+                    sum + calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime), 0);
 
-				// Sumamos todos los tiempos de descanso si se espera como número (por ejemplo, en horas o minutos)
-				let totalBreak = entries.reduce((sum, entry) => {
-					const parsedBreak = parseFloat(entry.breakTime) || 0;
-					return sum + parsedBreak;
-				}, 0);
+                // Sumamos todos los tiempos de descanso si se espera como número (por ejemplo, en horas o minutos)
+                let totalBreak = entries.reduce((sum, entry) => {
+                    const parsedBreak = parseFloat(entry.breakTime) || 0;
+                    return sum + parsedBreak;
+                }, 0);
 
-				// Mostrar proyectos únicos del día
-				const projectNames = [...new Set(entries.map(e => e.project.name))].join(', ');
+                // Mostrar proyectos únicos del día
+                const projectNames = [...new Set(entries.map(e => e.project.name))].join(', ');
 
-				return [
-					date,
-					weekNumber,
-					projectNames,
-					totalDay.toFixed(1),
-					totalBreak.toFixed(1)
-				];
-			});
+                return [
+                    date,
+                    weekNumber,
+                    projectNames,
+                    totalDay.toFixed(1),
+                    totalBreak.toFixed(1)
+                ];
+            });
 
 
             doc.autoTable({
@@ -2554,8 +2598,6 @@
                     saveToLocalStorage();
                     
                     // Actualizar UI
-                    document.getElementById('user-form').classList.add('hidden');
-                    document.getElementById('main-app').classList.remove('hidden');
                     updateUserInfo();
                     updateProjectsList();
                     updateProjectDropdown();
@@ -2566,6 +2608,9 @@
                     initCharts();
                     
                     showAlert(translations[state.currentLanguage].importSuccess, 'success');
+                    
+                    // Verificar configuración inicial
+                    checkInitialSetup();
                 } catch (error) {
                     showAlert(`Error: ${error.message}`, 'error');
                 }
@@ -2600,107 +2645,5 @@
         // Inicializar la aplicación cuando el DOM esté cargado
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
-    <script src="js/licencia.js"></script>	
-
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js')
-    .then(() => console.log("✅ Service Worker registrado"))
-    .catch(err => console.error("❌ Error al registrar:", err));
-}
-</script>
-
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
-    authDomain: "tidbok-df555.firebaseapp.com",
-    databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "tidbok-df555",
-    storageBucket: "tidbok-df555.appspot.com",
-    messagingSenderId: "467331966400",
-    appId: "1:467331966400:web:abb6949a76918f2eb8d425"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const loginForm = document.getElementById("login-form");
-    const registerForm = document.getElementById("register-form");
-    const authContainer = document.getElementById("auth-container");
-    const mainApp = document.getElementById("main-app");
-    const userForm = document.getElementById("user-form");
-
-    // Toggle between login and register views
-    document.getElementById("show-register").onclick = () => {
-      loginForm.classList.add("hidden");
-      registerForm.classList.remove("hidden");
-    };
-    document.getElementById("show-login").onclick = () => {
-      loginForm.classList.remove("hidden");
-      registerForm.classList.add("hidden");
-    };
-
-    // Login user
-    loginForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const email = document.getElementById("login-email").value;
-      const password = document.getElementById("login-password").value;
-      auth.signInWithEmailAndPassword(email, password).catch(error => {
-        alert("Login error: " + error.message);
-      });
-    });
-
-    // Register user
-    registerForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const email = document.getElementById("register-email").value;
-      const password = document.getElementById("register-password").value;
-      const confirm = document.getElementById("register-confirm").value;
-      if (password !== confirm) return alert("Passwords do not match");
-      auth.createUserWithEmailAndPassword(email, password).catch(error => {
-        alert("Registration error: " + error.message);
-      });
-    });
-
-    // Auth state observer
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        authContainer.classList.add("hidden");
-        userForm.classList.remove("hidden");
-      } else {
-        authContainer.classList.remove("hidden");
-        userForm.classList.add("hidden");
-        mainApp.classList.add("hidden");
-      }
-    });
-  });
-</script>
-
-<!-- Authentication UI -->
-<div id="auth-container" style="max-width: 500px; margin: 40px auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 0 15px rgba(0,0,0,0.1);">
-  <form id="login-form">
-    <h2>Iniciar Sesión</h2>
-    <input type="email" id="login-email" placeholder="Correo electrónico" required style="margin-bottom: 10px; width: 100%; padding: 10px;">
-    <input type="password" id="login-password" placeholder="Contraseña" required style="margin-bottom: 10px; width: 100%; padding: 10px;">
-    <button type="submit" style="padding: 10px 20px;">Entrar</button>
-    <p style="margin-top: 10px;">¿No tienes cuenta? <a href="#" id="show-register">Regístrate</a></p>
-  </form>
-  <form id="register-form" class="hidden">
-    <h2>Registro</h2>
-    <input type="email" id="register-email" placeholder="Correo electrónico" required style="margin-bottom: 10px; width: 100%; padding: 10px;">
-    <input type="password" id="register-password" placeholder="Contraseña" required style="margin-bottom: 10px; width: 100%; padding: 10px;">
-    <input type="password" id="register-confirm" placeholder="Confirmar contraseña" required style="margin-bottom: 10px; width: 100%; padding: 10px;">
-    <button type="submit" style="padding: 10px 20px;">Registrar</button>
-    <p style="margin-top: 10px;">¿Ya tienes cuenta? <a href="#" id="show-login">Inicia sesión</a></p>
-  </form>
-</div>
-
 </body>
 </html>
