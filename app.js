@@ -67,24 +67,41 @@ btnLogout.addEventListener('click', () => {
 
 // Escuchar estado de autenticación
 auth.onAuthStateChanged(user => {
-  if (user) {
-    // Usuario conectado
-    authSection.style.display = 'none';
-    appSection.style.display = 'block';
-    userEmailSpan.textContent = user.email;
+    if (user) {
+        state.uid = user.uid;
+        state.user = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || user.email
+        };
 
-    listenTimeEntries(user.uid);
-  } else {
-    // Usuario desconectado
-    authSection.style.display = 'block';
-    appSection.style.display = 'none';
-    entriesList.innerHTML = '';
-  }
+        document.getElementById('auth-container').classList.add('hidden');
+        updateUserInfo();
+
+        // Verifica si ya hizo el setup inicial
+        database.ref(users/${user.uid}/initialSetupComplete).once('value').then(snapshot => {
+            const setupComplete = snapshot.val();
+            if (!setupComplete) {
+                document.getElementById('initial-setup-form').classList.remove('hidden');
+                document.getElementById('main-app').classList.add('hidden');
+            } else {
+                document.getElementById('initial-setup-form').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                loadUserData();
+            }
+        });
+    } else {
+        state.uid = null;
+        state.user = null;
+        document.getElementById('auth-container').classList.remove('hidden');
+        document.getElementById('main-app').classList.add('hidden');
+        document.getElementById('initial-setup-form').classList.add('hidden');
+    }
 });
 
 // Escuchar entradas en Realtime Database
 function listenTimeEntries(uid) {
-  const ref = database.ref(`timeEntries/${uid}`);
+  const ref = database.ref(timeEntries/${uid});
   ref.off(); // Quitar listeners previos para evitar duplicados
 
   ref.on('value', snapshot => {
@@ -114,7 +131,7 @@ btnAddEntry.addEventListener('click', () => {
     alert('No autenticado');
     return;
   }
-  const ref = database.ref(`timeEntries/${user.uid}`);
+  const ref = database.ref(timeEntries/${user.uid});
   ref.push({ description, timestamp: Date.now() })
     .then(() => {
       timeEntryInput.value = '';
