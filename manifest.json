@@ -1,7 +1,7 @@
 {
   "name": "TimeBook",
   "short_name": "TimeBook",
-  "start_url": "index.html",
+  "start_url": "/timebook-pwa/"
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3498db",
