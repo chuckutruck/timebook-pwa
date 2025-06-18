@@ -1729,10 +1729,10 @@
             }
             
             const newProject = {
-                name: name,
-                code: code || null,
-                ownerId: state.currentUser.uid,
-                createdAt: firebase.database.ServerValue.TIMESTAMP
+              name: name,
+              code: code || null,
+              ownerId: state.currentUser.uid,
+              createdAt: firebase.database.ServerValue.TIMESTAMP
             };
             
             // Save to Firebase
