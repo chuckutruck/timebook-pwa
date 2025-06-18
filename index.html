@@ -1219,6 +1219,10 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Firebase configuration
@@ -2258,7 +2262,10 @@
                 return;
             }
             
-            alert.textContent = message;
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                <span>${message}</span>
+            `;
             alert.className = `alert alert-${type}`;
             alert.classList.remove('hidden');
             
