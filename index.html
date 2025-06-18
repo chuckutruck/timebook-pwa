@@ -11,6 +11,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    
     <style>
         :root {
             --primary: #2c3e50;
@@ -700,6 +706,78 @@
             color: white;
         }
         
+        /* Auth styles */
+        #auth-container {
+            max-width: 500px;
+            margin: 50px auto;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+        
+        .auth-tabs {
+            display: flex;
+            background-color: var(--light);
+        }
+        
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+        
+        .auth-tab.active {
+            background: white;
+            color: var(--secondary);
+            border-bottom: 3px solid var(--secondary);
+        }
+        
+        .auth-form {
+            padding: 30px;
+        }
+        
+        .auth-form.hidden {
+            display: none;
+        }
+        
+        .auth-form input {
+            margin-bottom: 15px;
+        }
+        
+        .auth-form button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        
+        .auth-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .logout-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .logout-btn:hover {
+            opacity: 0.9;
+        }
+        
         @media (max-width: 992px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -761,8 +839,6 @@
                 text-align: center;
             }
         }
-<script src="js/licencia.js"></script>
-		
     </style>
 </head>
 <body>
@@ -772,7 +848,7 @@
                 <i class="fas fa-clock"></i>
                 <h1 id="app-title">TimeBook</h1>
             </div>
-            <div class="controls">
+            <div class="controls" id="app-controls">
                 <select id="language" class="language-selector">
                     <option value="sv" selected>Svenska</option>				
                     <option value="es">Spanska</option>
@@ -793,60 +869,63 @@
                     <input type="file" id="import-file" accept=".json" style="display: none;">
                 </div>
             </div>
-            <div class="user-section">
+            <div class="user-section" id="user-section">
                 <div class="user-avatar" id="user-avatar">A</div>
                 <span id="user-name">Användare</span>
+                <button class="logout-btn" id="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span id="logout-text">Logga ut</span>
+                </button>
             </div>
         </div>
     </header>
 
     <div class="container">
-        <!-- Användarformulär (initialt) -->
-        <div id="user-form" class="user-form-container">
-            <div style="text-align: center; margin-bottom: 30px;">
-                <i class="fas fa-user-cog" style="font-size: 48px; color: var(--secondary);"></i>
-                <h2 id="initial-setup-title" style="margin: 15px 0;">Initial Konfiguration</h2>
-                <p id="initial-setup-desc" style="color: #7f8c8d;">Fyll i dina personuppgifter för att komma igång</p>
+        <!-- Authentication Container -->
+        <div id="auth-container">
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="login-tab">Logga in</div>
+                <div class="auth-tab" id="register-tab">Registrera</div>
             </div>
 
-            <form id="user-form-data">
-                <div class="section-title">
-                    <i class="fas fa-id-card"></i>
-                    <span id="personal-info-title">Personuppgifter</span>
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="login-email">E-post</label>
+                    <input type="email" id="login-email" required placeholder="Ange din e-post">
                 </div>
+                <div class="form-group">
+                    <label for="login-password">Lösenord</label>
+                    <input type="password" id="login-password" required placeholder="Ange ditt lösenord">
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> <span id="login-text">Logga in</span>
+                </button>
+                <div id="login-error" class="alert alert-error hidden" style="margin-top: 15px;"></div>
+            </form>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="first-name" id="first-name-label">Förnamn</label>
-                        <input type="text" id="first-name" required placeholder="Ange ditt förnamn">
-                    </div>
-                    <div class="form-group">
-                        <label for="last-name" id="last-name-label">Efternamn</label>
-                        <input type="text" id="last-name" required placeholder="Ange ditt efternamn">
-                    </div>
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form hidden">
+                <div class="form-group">
+                    <label for="register-name">Namn</label>
+                    <input type="text" id="register-name" required placeholder="Ange ditt fullständiga namn">
                 </div>
-
-                <div class="section-title">
-                    <i class="fas fa-address-book"></i>
-                    <span id="contact-info-title">Kontaktinformation</span>
+                <div class="form-group">
+                    <label for="register-email">E-post</label>
+                    <input type="email" id="register-email" required placeholder="Ange din e-post">
                 </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="phone" id="phone-label">Telefon</label>
-                        <input type="tel" id="phone" required placeholder="Ange ditt telefonnummer">
-                    </div>
-                    <div class="form-group">
-                        <label for="id-number" id="id-number-label">ID-nummer</label>
-                        <input type="text" id="id-number" required placeholder="Ange ditt ID">
-                    </div>
+                <div class="form-group">
+                    <label for="register-password">Lösenord</label>
+                    <input type="password" id="register-password" required placeholder="Skapa ett lösenord">
                 </div>
-
-                <div class="form-group" style="text-align: center; margin-top: 30px;">
-                    <button type="submit" class="btn btn-primary" style="padding: 12px 40px; font-size: 18px;" id="save-continue-btn">
-                        <i class="fas fa-check-circle"></i> <span>Spara och fortsätt</span>
-                    </button>
+                <div class="form-group">
+                    <label for="register-confirm-password">Bekräfta lösenord</label>
+                    <input type="password" id="register-confirm-password" required placeholder="Bekräfta lösenord">
                 </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-user-plus"></i> <span id="register-text">Skapa konto</span>
+                </button>
+                <div id="register-error" class="alert alert-error hidden" style="margin-top: 15px;"></div>
             </form>
         </div>
 
@@ -1013,8 +1092,7 @@
                         
                         <div class="user-info">
                             <p><strong id="info-name-label">Namn:</strong> <span id="info-name"></span></p>
-                            <p><strong id="info-phone-label">Telefon:</strong> <span id="info-phone"></span></p>
-                            <p><strong id="info-id-label">ID:</strong> <span id="info-id"></span></p>
+                            <p><strong id="info-email-label">E-post:</strong> <span id="info-email"></span></p>
                             <div style="margin-top: 20px;">
                                 <button id="edit-user-btn" class="btn btn-warning" style="width: 100%; padding: 12px;">
                                     <i class="fas fa-edit"></i> <span id="edit-info-text">Redigera Information</span>
@@ -1090,9 +1168,24 @@
             </div>
         </div>
     </div>
-	
-	<script src="js/licencia.js"></script>
+    
     <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
+            authDomain: "tidbok-df555.firebaseapp.com",
+            databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "tidbok-df555",
+            storageBucket: "tidbok-df555.appspot.com",
+            messagingSenderId: "467331966400",
+            appId: "1:467331966400:web:abb6949a76918f2eb8d425"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
         // Traducciones para la aplicación
         const translations = {
             es: {
@@ -1164,7 +1257,16 @@
                 projectDistTitle: "Distribución por Proyecto",
                 chartsTitle: "Estadísticas Visuales",
                 chartMonth: "Mes",
-                chartQuarter: "Trimestre"
+                chartQuarter: "Trimestre",
+                login: "Iniciar sesión",
+                register: "Registrarse",
+                logout: "Cerrar sesión",
+                email: "Correo electrónico",
+                password: "Contraseña",
+                confirmPassword: "Confirmar contraseña",
+                loginError: "Error al iniciar sesión",
+                registerError: "Error al registrarse",
+                passwordsNotMatch: "Las contraseñas no coinciden"
             },
             en: {
                 title: "TimeBook - Professional Hours Tracker",
@@ -1235,7 +1337,16 @@
                 projectDistTitle: "Project Distribution",
                 chartsTitle: "Visual Statistics",
                 chartMonth: "Month",
-                chartQuarter: "Quarter"
+                chartQuarter: "Quarter",
+                login: "Login",
+                register: "Register",
+                logout: "Logout",
+                email: "Email",
+                password: "Password",
+                confirmPassword: "Confirm Password",
+                loginError: "Login error",
+                registerError: "Registration error",
+                passwordsNotMatch: "Passwords do not match"
             },
             sv: {
                 title: "TimeBook - Professionell Timregistrering",
@@ -1306,7 +1417,16 @@
                 projectDistTitle: "Projektfördelningsdiagram",
                 chartsTitle: "Visuell Statistik",
                 chartMonth: "Månad",
-                chartQuarter: "Kvartal"
+                chartQuarter: "Kvartal",
+                login: "Logga in",
+                register: "Registrera",
+                logout: "Logga ut",
+                email: "E-post",
+                password: "Lösenord",
+                confirmPassword: "Bekräfta lösenord",
+                loginError: "Inloggningsfel",
+                registerError: "Registreringsfel",
+                passwordsNotMatch: "Lösenorden matchar inte"
             },
             ru: {
                 title: "TimeBook - Профессиональный учет времени",
@@ -1377,7 +1497,16 @@
                 projectDistTitle: "Распределение по проектам",
                 chartsTitle: "Визуальная статистика",
                 chartMonth: "Месяц",
-                chartQuarter: "Квартал"
+                chartQuarter: "Квартал",
+                login: "Войти",
+                register: "Регистрация",
+                logout: "Выйти",
+                email: "Электронная почта",
+                password: "Пароль",
+                confirmPassword: "Подтвердите пароль",
+                loginError: "Ошибка входа",
+                registerError: "Ошибка регистрации",
+                passwordsNotMatch: "Пароли не совпадают"
             },
             pl: {
                 title: "TimeBook - Profesjonalny Rejestr Czasu",
@@ -1448,65 +1577,75 @@
                 projectDistTitle: "Rozkład według projektu",
                 chartsTitle: "Statystyki wizualne",
                 chartMonth: "Miesiąc",
-                chartQuarter: "Kwartał"
+                chartQuarter: "Kwartał",
+                login: "Zaloguj",
+                register: "Zarejestruj",
+                logout: "Wyloguj",
+                email: "Email",
+                password: "Hasło",
+                confirmPassword: "Potwierdź hasło",
+                loginError: "Błąd logowania",
+                registerError: "Błąd rejestracji",
+                passwordsNotMatch: "Hasła nie pasują"
             }
         };
 
         // Datos de la aplicación
         const state = {
             user: null,
-            projects: [
-                { id: 1, name: 'DP 5 Utemiljö', code: 'DP5' },
-                { id: 2, name: 'DP 1 Hus A', code: 'DP1' },
-                { id: 3, name: 'DP 2 Hus B', code: 'DP2' },
-                { id: 4, name: 'DP 4 Hus D', code: 'DP4' }
-            ],
+            projects: [],
             timeEntries: [],
-            currentLanguage: 'es',
-            chartPeriod: 'month'
+            currentLanguage: 'sv',
+            chartPeriod: 'month',
+            uid: null
         };
 
         // Inicializar la aplicación
         function initApp() {
-            // Cargar datos del localStorage
-            loadFromLocalStorage();
-            
             // Configurar eventos
             setupEventListeners();
-            
-            // Verificar si el usuario ya está configurado
-            if (state.user) {
-                document.getElementById('user-form').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                updateUserInfo();
-            }
-            
-            // Configurar fecha actual por defecto
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('entry-date').value = today;
-            
-            // Establecer hora por defecto según día de la semana
-            setDefaultWorkHours();
             
             // Establecer idioma
             updateTranslations();
             
-            // Actualizar listas
-            updateProjectsList();
-            updateProjectDropdown();
-            generateYearOptions();
-            updateEntriesDisplay();
-            updateStatistics();
-            updateHoursSummary();
+            // Configurar fecha actual por defecto
+            const today = new Date().toISOString().split('T')[0];
+            if (document.getElementById('entry-date')) {
+                document.getElementById('entry-date').value = today;
+            }
             
-            // Inicializar gráficos
-            initCharts();
+            // Observar cambios de autenticación
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // Usuario ha iniciado sesión
+                    state.uid = user.uid;
+                    state.user = {
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: user.displayName || user.email
+                    };
+                    
+                    // Actualizar UI con información del usuario
+                    document.getElementById('auth-container').classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+                    updateUserInfo();
+                    
+                    // Cargar datos del usuario desde Firebase
+                    loadUserData();
+                } else {
+                    // Usuario no ha iniciado sesión
+                    state.uid = null;
+                    state.user = null;
+                    document.getElementById('auth-container').classList.remove('hidden');
+                    document.getElementById('main-app').classList.add('hidden');
+                }
+            });
         }
 
         // Actualizar traducciones
         function updateTranslations() {
             const lang = state.currentLanguage;
-            const t = translations[lang] || translations.es;
+            const t = translations[lang] || translations.sv;
             
             // Actualizar elementos de la interfaz
             document.querySelectorAll('[id]').forEach(el => {
@@ -1532,10 +1671,12 @@
                 { id: 'coworkers', key: 'coworkersPlaceholder' },
                 { id: 'new-project-name', key: 'projectNamePlaceholder' },
                 { id: 'new-project-code', key: 'projectCodePlaceholder' },
-                { id: 'first-name', key: 'namePlaceholder' },
-                { id: 'last-name', key: 'lastNamePlaceholder' },
-                { id: 'phone', key: 'phonePlaceholder' },
-                { id: 'id-number', key: 'idNumberPlaceholder' }
+                { id: 'login-email', key: 'email' },
+                { id: 'login-password', key: 'password' },
+                { id: 'register-name', key: 'name' },
+                { id: 'register-email', key: 'email' },
+                { id: 'register-password', key: 'password' },
+                { id: 'register-confirm-password', key: 'confirmPassword' }
             ];
             
             placeholders.forEach(item => {
@@ -1545,106 +1686,175 @@
                 }
             });
             
-            document.getElementById('app-title').textContent = t.title;
-            document.getElementById('no-records-message').textContent = t.noRecords;
-            document.querySelector('#import-file').setAttribute('accept', '.json');
-        }
-
-        // Cargar datos del localStorage
-        function loadFromLocalStorage() {
-            const user = localStorage.getItem('timeBookUser');
-            const projects = localStorage.getItem('timeBookProjects');
-            const entries = localStorage.getItem('timeBookEntries');
-            const lang = localStorage.getItem('timeBookLanguage');
-            
-            if (user) state.user = JSON.parse(user);
-            if (projects) state.projects = JSON.parse(projects);
-            if (entries) state.timeEntries = JSON.parse(entries);
-            if (lang) {
-                state.currentLanguage = lang;
-                document.getElementById('language').value = lang;
+            if (document.getElementById('app-title')) {
+                document.getElementById('app-title').textContent = t.title;
             }
+            if (document.getElementById('no-records-message')) {
+                document.getElementById('no-records-message').textContent = t.noRecords;
+            }
+            if (document.getElementById('import-file')) {
+                document.getElementById('import-file').setAttribute('accept', '.json');
+            }
+            
+            // Actualizar textos de autenticación
+            document.getElementById('login-tab').textContent = t.login;
+            document.getElementById('register-tab').textContent = t.register;
+            document.getElementById('login-text').textContent = t.login;
+            document.getElementById('register-text').textContent = t.register;
+            document.getElementById('logout-text').textContent = t.logout;
         }
 
-        // Guardar datos en localStorage
-        function saveToLocalStorage() {
-            localStorage.setItem('timeBookUser', JSON.stringify(state.user));
-            localStorage.setItem('timeBookProjects', JSON.stringify(state.projects));
-            localStorage.setItem('timeBookEntries', JSON.stringify(state.timeEntries));
-            localStorage.setItem('timeBookLanguage', state.currentLanguage);
+        // Cargar datos del usuario desde Firebase
+        function loadUserData() {
+            if (!state.uid) return;
+            
+            // Cargar proyectos
+            database.ref(`users/${state.uid}/projects`).once('value')
+                .then(snapshot => {
+                    const projects = snapshot.val();
+                    if (projects) {
+                        state.projects = projects;
+                        updateProjectsList();
+                        updateProjectDropdown();
+                    }
+                });
+            
+            // Cargar entradas de tiempo
+            database.ref(`users/${state.uid}/timeEntries`).once('value')
+                .then(snapshot => {
+                    const entries = snapshot.val();
+                    if (entries) {
+                        state.timeEntries = entries;
+                        updateEntriesDisplay();
+                        updateStatistics();
+                        updateHoursSummary();
+                        updateCharts();
+                    }
+                });
+            
+            // Generar opciones de filtro
+            generateYearOptions();
+        }
+
+        // Guardar datos del usuario en Firebase
+        function saveUserData() {
+            if (!state.uid) return;
+            
+            // Guardar proyectos
+            database.ref(`users/${state.uid}/projects`).set(state.projects);
+            
+            // Guardar entradas de tiempo
+            database.ref(`users/${state.uid}/timeEntries`).set(state.timeEntries);
         }
 
         // Configurar eventos
         function setupEventListeners() {
-            // Formulario de usuario
-            document.getElementById('user-form-data').addEventListener('submit', saveUserInfo);
+            // Formulario de inicio de sesión
+            document.getElementById('login-form').addEventListener('submit', loginUser);
+            
+            // Formulario de registro
+            document.getElementById('register-form').addEventListener('submit', registerUser);
+            
+            // Cambiar entre pestañas de autenticación
+            document.getElementById('login-tab').addEventListener('click', () => {
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('register-form').classList.add('hidden');
+                document.getElementById('login-tab').classList.add('active');
+                document.getElementById('register-tab').classList.remove('active');
+            });
+            
+            document.getElementById('register-tab').addEventListener('click', () => {
+                document.getElementById('register-form').classList.remove('hidden');
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('register-tab').classList.add('active');
+                document.getElementById('login-tab').classList.remove('active');
+            });
             
             // Formulario de registro de tiempo
-            document.getElementById('time-entry-form').addEventListener('submit', saveTimeEntry);
-            document.getElementById('reset-form').addEventListener('click', resetForm);
+            if (document.getElementById('time-entry-form')) {
+                document.getElementById('time-entry-form').addEventListener('submit', saveTimeEntry);
+                document.getElementById('reset-form').addEventListener('click', resetForm);
+            }
             
             // Gestión de proyectos
-            document.getElementById('add-project-btn').addEventListener('click', addProject);
-            document.getElementById('manage-projects').addEventListener('click', showProjectManagement);
+            if (document.getElementById('add-project-btn')) {
+                document.getElementById('add-project-btn').addEventListener('click', addProject);
+                document.getElementById('manage-projects').addEventListener('click', showProjectManagement);
+            }
             
             // Filtros
-            document.getElementById('year-filter').addEventListener('change', updateEntriesDisplay);
-            document.getElementById('month-filter').addEventListener('change', updateEntriesDisplay);
-            document.getElementById('week-filter').addEventListener('change', updateEntriesDisplay);
+            if (document.getElementById('year-filter')) {
+                document.getElementById('year-filter').addEventListener('change', updateEntriesDisplay);
+                document.getElementById('month-filter').addEventListener('change', updateEntriesDisplay);
+                document.getElementById('week-filter').addEventListener('change', updateEntriesDisplay);
+            }
             
             // Exportación
-            document.getElementById('export-pdf').addEventListener('click', exportToPDF);
-            document.getElementById('export-json').addEventListener('click', exportToJSON);
-            document.getElementById('import-json').addEventListener('click', () => {
-                document.getElementById('import-file').click();
-            });
-            document.getElementById('import-file').addEventListener('change', importFromJSON);
+            if (document.getElementById('export-pdf')) {
+                document.getElementById('export-pdf').addEventListener('click', exportToPDF);
+                document.getElementById('export-json').addEventListener('click', exportToJSON);
+                document.getElementById('import-json').addEventListener('click', () => {
+                    document.getElementById('import-file').click();
+                });
+                document.getElementById('import-file').addEventListener('change', importFromJSON);
+            }
             
             // Tabs
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                    
-                    tab.classList.add('active');
-                    document.getElementById(`${tab.dataset.tab}-content`).classList.add('active');
+            if (document.querySelectorAll('.tab')) {
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                        
+                        tab.classList.add('active');
+                        document.getElementById(`${tab.dataset.tab}-content`).classList.add('active');
+                    });
                 });
-            });
+            }
             
             // Editar usuario
-            document.getElementById('edit-user-btn').addEventListener('click', () => {
-                document.getElementById('user-form').classList.remove('hidden');
-                document.getElementById('main-app').classList.add('hidden');
-                
-                // Prellenar datos del usuario
-                document.getElementById('first-name').value = state.user.firstName;
-                document.getElementById('last-name').value = state.user.lastName;
-                document.getElementById('phone').value = state.user.phone;
-                document.getElementById('id-number').value = state.user.idNumber;
-            });
+            if (document.getElementById('edit-user-btn')) {
+                document.getElementById('edit-user-btn').addEventListener('click', () => {
+                    document.getElementById('auth-container').classList.remove('hidden');
+                    document.getElementById('main-app').classList.add('hidden');
+                    document.getElementById('register-tab').click();
+                });
+            }
             
             // Cambio de idioma
-            document.getElementById('language').addEventListener('change', function() {
-                state.currentLanguage = this.value;
-                saveToLocalStorage();
-                updateTranslations();
-                updateEntriesDisplay();
-                updateHoursSummary();
-                updateCharts();
-            });
+            if (document.getElementById('language')) {
+                document.getElementById('language').addEventListener('change', function() {
+                    state.currentLanguage = this.value;
+                    updateTranslations();
+                    updateEntriesDisplay();
+                    updateHoursSummary();
+                    if (state.weeklyChart && state.projectChart) {
+                        updateCharts();
+                    }
+                });
+            }
             
             // Cambio de fecha para establecer horario predeterminado
-            document.getElementById('entry-date').addEventListener('change', setDefaultWorkHours);
+            if (document.getElementById('entry-date')) {
+                document.getElementById('entry-date').addEventListener('change', setDefaultWorkHours);
+            }
             
             // Botones de gráficos
-            document.querySelectorAll('.chart-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    state.chartPeriod = btn.dataset.period;
-                    updateCharts();
+            if (document.querySelectorAll('.chart-btn')) {
+                document.querySelectorAll('.chart-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        state.chartPeriod = btn.dataset.period;
+                        updateCharts();
+                    });
                 });
-            });
+            }
+            
+            // Botón de cierre de sesión
+            if (document.getElementById('logout-btn')) {
+                document.getElementById('logout-btn').addEventListener('click', logoutUser);
+            }
         }
 
         // Establecer horas de trabajo por defecto según día de la semana
@@ -1665,43 +1875,70 @@
             }
         }
 
-        // Guardar información del usuario
-        function saveUserInfo(e) {
+        // Iniciar sesión
+        function loginUser(e) {
             e.preventDefault();
             
-            state.user = {
-                firstName: document.getElementById('first-name').value,
-                lastName: document.getElementById('last-name').value,
-                phone: document.getElementById('phone').value,
-                idNumber: document.getElementById('id-number').value
-            };
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorElement = document.getElementById('login-error');
             
-            saveToLocalStorage();
-            updateUserInfo();
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => {
+                    const t = translations[state.currentLanguage];
+                    errorElement.textContent = `${t.loginError}: ${error.message}`;
+                    errorElement.classList.remove('hidden');
+                });
+        }
+
+        // Registrar usuario
+        function registerUser(e) {
+            e.preventDefault();
             
-            document.getElementById('user-form').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            const errorElement = document.getElementById('register-error');
             
-            // Crear alerta de éxito
-            showAlert(translations[state.currentLanguage].entrySaved, 'success');
+            const t = translations[state.currentLanguage];
             
-            // Inicializar gráficos después de mostrar la aplicación principal
-            initCharts();
+            if (password !== confirmPassword) {
+                errorElement.textContent = t.passwordsNotMatch;
+                errorElement.classList.remove('hidden');
+                return;
+            }
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    return userCredential.user.updateProfile({ displayName: name });
+                })
+                .catch(error => {
+                    errorElement.textContent = `${t.registerError}: ${error.message}`;
+                    errorElement.classList.remove('hidden');
+                });
+        }
+
+        // Cerrar sesión
+        function logoutUser() {
+            auth.signOut()
+                .catch(error => {
+                    const t = translations[state.currentLanguage];
+                    showAlert(`${t.logoutError}: ${error.message}`, 'error');
+                });
         }
 
         // Actualizar información del usuario en la UI
         function updateUserInfo() {
             if (!state.user) return;
             
-            document.getElementById('user-avatar').textContent = 
-                state.user.firstName.charAt(0) + state.user.lastName.charAt(0);
-            document.getElementById('user-name').textContent = 
-                `${state.user.firstName} ${state.user.lastName}`;
+            const name = state.user.displayName || state.user.email.split('@')[0];
+            const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
             
-            document.getElementById('info-name').textContent = 
-                `${state.user.firstName} ${state.user.lastName}`;
-            document.getElementById('info-phone').textContent = state.user.phone;
-            document.getElementById('info-id').textContent = state.user.idNumber;
+            document.getElementById('user-avatar').textContent = initials;
+            document.getElementById('user-name').textContent = name;
+            document.getElementById('info-name').textContent = name;
+            document.getElementById('info-email').textContent = state.user.email;
         }
 
         // Guardar registro de tiempo
@@ -1742,16 +1979,19 @@
             };
             
             state.timeEntries.push(entry);
-            saveToLocalStorage();
+            saveUserData();
             
             resetForm();
             updateEntriesDisplay();
             updateStatistics();
             updateHoursSummary();
-            updateCharts();
+            if (state.weeklyChart && state.projectChart) {
+                updateCharts();
+            }
             
             // Mostrar notificación
-            showAlert(translations[state.currentLanguage].entrySaved, 'success');
+            const t = translations[state.currentLanguage];
+            showAlert(t.entrySaved, 'success');
         }
 
         // Resetear formulario
@@ -1834,18 +2074,21 @@
             };
             
             state.projects.push(newProject);
-            saveToLocalStorage();
+            saveUserData();
             
             updateProjectsList();
             updateProjectDropdown();
-            updateCharts();
+            if (state.weeklyChart && state.projectChart) {
+                updateCharts();
+            }
             
             // Resetear formulario
             document.getElementById('new-project-name').value = '';
             document.getElementById('new-project-code').value = '';
             
             // Mostrar notificación
-            showAlert(translations[state.currentLanguage].projectAdded, 'success');
+            const t = translations[state.currentLanguage];
+            showAlert(t.projectAdded, 'success');
         }
 
         // Editar proyecto
@@ -1862,10 +2105,12 @@
             project.name = newName.trim();
             project.code = newCode ? newCode.trim() : null;
             
-            saveToLocalStorage();
+            saveUserData();
             updateProjectsList();
             updateProjectDropdown();
-            updateCharts();
+            if (state.weeklyChart && state.projectChart) {
+                updateCharts();
+            }
             
             showAlert(t.projectUpdated, 'success');
         }
@@ -1876,11 +2121,13 @@
             if (!confirm(t.projectDeleteConfirm)) return;
             
             state.projects = state.projects.filter(p => p.id !== projectId);
-            saveToLocalStorage();
+            saveUserData();
             
             updateProjectsList();
             updateProjectDropdown();
-            updateCharts();
+            if (state.weeklyChart && state.projectChart) {
+                updateCharts();
+            }
             
             showAlert(t.projectDeleted, 'success');
         }
@@ -2067,11 +2314,13 @@
             
             // Eliminar entrada original
             state.timeEntries = state.timeEntries.filter(e => e.id !== entryId);
-            saveToLocalStorage();
+            saveUserData();
             updateEntriesDisplay();
             updateStatistics();
             updateHoursSummary();
-            updateCharts();
+            if (state.weeklyChart && state.projectChart) {
+                updateCharts();
+            }
         }
 
         // Eliminar entrada de tiempo
@@ -2080,12 +2329,14 @@
             if (!confirm(t.deleteConfirm)) return;
             
             state.timeEntries = state.timeEntries.filter(entry => entry.id !== entryId);
-            saveToLocalStorage();
+            saveUserData();
             
             updateEntriesDisplay();
             updateStatistics();
             updateHoursSummary();
-            updateCharts();
+            if (state.weeklyChart && state.projectChart) {
+                updateCharts();
+            }
             
             showAlert(t.entryDeleted, 'success');
         }
@@ -2361,15 +2612,14 @@
             doc.rect(0, 0, 210, 30, 'F');
             doc.setFontSize(24);
             doc.setTextColor(255, 255, 255);
-			const userTitle = `${state.user.firstName} ${state.user.lastName} - ${state.user.idNumber}`;
-			doc.text(userTitle, 105, 14, 'center');
+            const userTitle = `${state.user.displayName} - ${state.user.email}`;
+            doc.text(userTitle, 105, 14, 'center');
             
             // Información del usuario
             doc.setFontSize(12);
             doc.setTextColor(200, 200, 200);
-            doc.text(`${t.name}: ${state.user.firstName} ${state.user.lastName}`, 20, 40);
-            doc.text(`${t.phone}: ${state.user.phone}`, 20, 46);
-            doc.text(`${t.idNumber}: ${state.user.idNumber}`, 20, 52);
+            doc.text(`${t.name}: ${state.user.displayName}`, 20, 40);
+            doc.text(`${t.email}: ${state.user.email}`, 20, 46);
             
             // Fecha de exportación
             const exportDate = new Date().toLocaleDateString(state.currentLanguage, {
@@ -2377,7 +2627,7 @@
                 month: 'long',
                 day: 'numeric'
             });
-            doc.text(`${t.date}: ${exportDate}`, 20, 58);
+            doc.text(`${t.date}: ${exportDate}`, 20, 52);
             
             // Tabla de registros
             doc.setFontSize(14);
@@ -2430,29 +2680,28 @@
                 groupedByDate[entry.date].push(entry);
             });
 
-			const summaryData = Object.entries(groupedByDate).map(([date, entries]) => {
-				const weekNumber = getWeekNumber(date);
-				const totalDay = entries.reduce((sum, entry) =>
-					sum + calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime), 0);
+            const summaryData = Object.entries(groupedByDate).map(([date, entries]) => {
+                const weekNumber = getWeekNumber(date);
+                const totalDay = entries.reduce((sum, entry) =>
+                    sum + calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime), 0);
 
-				// Sumamos todos los tiempos de descanso si se espera como número (por ejemplo, en horas o minutos)
-				let totalBreak = entries.reduce((sum, entry) => {
-					const parsedBreak = parseFloat(entry.breakTime) || 0;
-					return sum + parsedBreak;
-				}, 0);
+                // Sumamos todos los tiempos de descanso si se espera como número (por ejemplo, en horas o minutos)
+                let totalBreak = entries.reduce((sum, entry) => {
+                    const parsedBreak = parseFloat(entry.breakTime) || 0;
+                    return sum + parsedBreak;
+                }, 0);
 
-				// Mostrar proyectos únicos del día
-				const projectNames = [...new Set(entries.map(e => e.project.name))].join(', ');
+                // Mostrar proyectos únicos del día
+                const projectNames = [...new Set(entries.map(e => e.project.name))].join(', ');
 
-				return [
-					date,
-					weekNumber,
-					projectNames,
-					totalDay.toFixed(1),
-					totalBreak.toFixed(1)
-				];
-			});
-
+                return [
+                    date,
+                    weekNumber,
+                    projectNames,
+                    totalDay.toFixed(1),
+                    totalBreak.toFixed(1)
+                ];
+            });
 
             doc.autoTable({
                 head: [[t.date, t.week, t.project, t.hours, t.breakTime]],
@@ -2505,7 +2754,7 @@
             }
 
             // Guardar PDF
-            doc.save(`TimeBook_${state.user.firstName}_${state.user.lastName}.pdf`);
+            doc.save(`TimeBook_${state.user.displayName.replace(/\s+/g, '_')}.pdf`);
             showAlert(t.exportSuccess, 'success');
         }
 
@@ -2520,14 +2769,15 @@
             const dataStr = JSON.stringify(data, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
             
-            const exportFileDefaultName = `timebook-${state.user.firstName}-${state.user.lastName}.json`;
+            const exportFileDefaultName = `timebook-${state.user.displayName.replace(/\s+/g, '_')}.json`;
             
             const linkElement = document.createElement('a');
             linkElement.setAttribute('href', dataUri);
             linkElement.setAttribute('download', exportFileDefaultName);
             linkElement.click();
             
-            showAlert(translations[state.currentLanguage].exportSuccess, 'success');
+            const t = translations[state.currentLanguage];
+            showAlert(t.exportSuccess, 'success');
         }
 
         // Importar desde JSON
@@ -2541,31 +2791,30 @@
                     const data = JSON.parse(event.target.result);
                     
                     // Validar estructura básica
-                    if (!data.user || !data.projects || !data.entries) {
+                    if (!data.projects || !data.entries) {
                         throw new Error('Formato de archivo inválido');
                     }
                     
                     // Actualizar estado
-                    state.user = data.user;
                     state.projects = data.projects;
                     state.timeEntries = data.entries;
                     
-                    // Guardar en localStorage
-                    saveToLocalStorage();
+                    // Guardar en Firebase
+                    saveUserData();
                     
                     // Actualizar UI
-                    document.getElementById('user-form').classList.add('hidden');
-                    document.getElementById('main-app').classList.remove('hidden');
-                    updateUserInfo();
                     updateProjectsList();
                     updateProjectDropdown();
                     generateYearOptions();
                     updateEntriesDisplay();
                     updateStatistics();
                     updateHoursSummary();
-                    initCharts();
+                    if (state.weeklyChart && state.projectChart) {
+                        updateCharts();
+                    }
                     
-                    showAlert(translations[state.currentLanguage].importSuccess, 'success');
+                    const t = translations[state.currentLanguage];
+                    showAlert(t.importSuccess, 'success');
                 } catch (error) {
                     showAlert(`Error: ${error.message}`, 'error');
                 }
@@ -2600,107 +2849,13 @@
         // Inicializar la aplicación cuando el DOM esté cargado
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
-    <script src="js/licencia.js"></script>	
-
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js')
-    .then(() => console.log("✅ Service Worker registrado"))
-    .catch(err => console.error("❌ Error al registrar:", err));
-}
-</script>
-
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
-    authDomain: "tidbok-df555.firebaseapp.com",
-    databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "tidbok-df555",
-    storageBucket: "tidbok-df555.appspot.com",
-    messagingSenderId: "467331966400",
-    appId: "1:467331966400:web:abb6949a76918f2eb8d425"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const loginForm = document.getElementById("login-form");
-    const registerForm = document.getElementById("register-form");
-    const authContainer = document.getElementById("auth-container");
-    const mainApp = document.getElementById("main-app");
-    const userForm = document.getElementById("user-form");
-
-    // Toggle between login and register views
-    document.getElementById("show-register").onclick = () => {
-      loginForm.classList.add("hidden");
-      registerForm.classList.remove("hidden");
-    };
-    document.getElementById("show-login").onclick = () => {
-      loginForm.classList.remove("hidden");
-      registerForm.classList.add("hidden");
-    };
-
-    // Login user
-    loginForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const email = document.getElementById("login-email").value;
-      const password = document.getElementById("login-password").value;
-      auth.signInWithEmailAndPassword(email, password).catch(error => {
-        alert("Login error: " + error.message);
-      });
-    });
-
-    // Register user
-    registerForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const email = document.getElementById("register-email").value;
-      const password = document.getElementById("register-password").value;
-      const confirm = document.getElementById("register-confirm").value;
-      if (password !== confirm) return alert("Passwords do not match");
-      auth.createUserWithEmailAndPassword(email, password).catch(error => {
-        alert("Registration error: " + error.message);
-      });
-    });
-
-    // Auth state observer
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        authContainer.classList.add("hidden");
-        userForm.classList.remove("hidden");
-      } else {
-        authContainer.classList.remove("hidden");
-        userForm.classList.add("hidden");
-        mainApp.classList.add("hidden");
-      }
-    });
-  });
-</script>
-
-<!-- Authentication UI -->
-<div id="auth-container" style="max-width: 500px; margin: 40px auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 0 15px rgba(0,0,0,0.1);">
-  <form id="login-form">
-    <h2>Iniciar Sesión</h2>
-    <input type="email" id="login-email" placeholder="Correo electrónico" required style="margin-bottom: 10px; width: 100%; padding: 10px;">
-    <input type="password" id="login-password" placeholder="Contraseña" required style="margin-bottom: 10px; width: 100%; padding: 10px;">
-    <button type="submit" style="padding: 10px 20px;">Entrar</button>
-    <p style="margin-top: 10px;">¿No tienes cuenta? <a href="#" id="show-register">Regístrate</a></p>
-  </form>
-  <form id="register-form" class="hidden">
-    <h2>Registro</h2>
-    <input type="email" id="register-email" placeholder="Correo electrónico" required style="margin-bottom: 10px; width: 100%; padding: 10px;">
-    <input type="password" id="register-password" placeholder="Contraseña" required style="margin-bottom: 10px; width: 100%; padding: 10px;">
-    <input type="password" id="register-confirm" placeholder="Confirmar contraseña" required style="margin-bottom: 10px; width: 100%; padding: 10px;">
-    <button type="submit" style="padding: 10px 20px;">Registrar</button>
-    <p style="margin-top: 10px;">¿Ya tienes cuenta? <a href="#" id="show-login">Inicia sesión</a></p>
-  </form>
-</div>
-
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log("✅ Service Worker registrado"))
+                .catch(err => console.error("❌ Error al registrar:", err));
+        }
+    </script>
 </body>
 </html>
