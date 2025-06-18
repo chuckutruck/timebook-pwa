@@ -12,7 +12,2288 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    a<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeBook - Professional Time Tracker</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --info: #1abc9c;
+            --border-radius: 12px;
+            --box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), #1a2536);
+            color: white;
+            padding: 15px 0;
+            box-shadow: var(--box-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 3px solid var(--secondary);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo i {
+            font-size: 32px;
+            color: var(--secondary);
+            background: rgba(255, 255, 255, 0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .logo h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary), #2980b9);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #219653);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--accent), #c0392b);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), #e67e22);
+            color: white;
+        }
+        
+        .btn-info {
+            background: linear-gradient(135deg, var(--info), #16a085);
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+        
+        .language-selector {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 120px;
+        }
+        
+        .language-selector:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary), #2980b9);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 550px;
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .card-title {
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .card-title i {
+            color: var(--secondary);
+            background: rgba(52, 152, 219, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #dce1e6;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            background-color: #f8fafc;
+            transition: var(--transition);
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .time-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff, #f8fafc);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--secondary);
+            margin: 15px 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-label {
+            font-size: 15px;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 160px;
+        }
+        
+        .entries-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            background: white;
+        }
+        
+        .entry-group {
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            background: white;
+        }
+        
+        .group-header {
+            background: linear-gradient(135deg, var(--light), #dbe4ee);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .group-content {
+            padding: 15px;
+            background-color: white;
+        }
+        
+        .entry-item {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+        
+        .entry-item:hover {
+            background-color: #f8fafc;
+        }
+        
+        .entry-item:last-child {
+            border-bottom: none;
+        }
+        
+        .entry-details {
+            flex: 1;
+        }
+        
+        .entry-project {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 17px;
+        }
+        
+        .entry-time {
+            font-size: 15px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .entry-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background-color: var(--light);
+            color: var(--dark);
+            border: none;
+            transition: var(--transition);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .action-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .action-btn.edit {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--secondary);
+        }
+        
+        .action-btn.delete {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--accent);
+        }
+        
+        .collapse-icon {
+            transition: var(--transition);
+        }
+        
+        .collapsed .collapse-icon {
+            transform: rotate(-90deg);
+        }
+        
+        .collapsed .group-content {
+            display: none;
+        }
+        
+        .project-list {
+            list-style: none;
+            margin-top: 10px;
+        }
+        
+        .project-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .project-item:last-child {
+            border-bottom: none;
+        }
+        
+        .project-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .tab-container {
+            margin-top: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 12px 25px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+        
+        .tab:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--secondary);
+            color: var(--secondary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .user-form-container {
+            max-width: 700px;
+            margin: 50px auto;
+            padding: 40px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .section-title {
+            font-size: 20px;
+            color: var(--primary);
+            margin: 25px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            color: var(--secondary);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .resumen-container {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-top: 15px;
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .resumen-container table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+        
+        .resumen-container th, .resumen-container td {
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        
+        .resumen-container th {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .resumen-container tfoot th {
+            background-color: var(--info);
+        }
+        
+        .no-records {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            font-style: italic;
+            font-size: 18px;
+        }
+        
+        .summary-title {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .summary-title i {
+            color: var(--secondary);
+        }
+        
+        .week-number {
+            background-color: var(--info);
+            color: white;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-left: 10px;
+            font-weight: 600;
+        }
+        
+        .hint-text {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .date-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .total-hours {
+            font-weight: bold;
+            color: var(--success);
+            font-size: 18px;
+        }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .alert-success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+        
+        .alert-error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
+        }
+        
+        .alert i {
+            font-size: 22px;
+        }
+        
+        .chart-container {
+            margin-top: 25px;
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .chart-title {
+            font-size: 20px;
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-top: 25px;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--box-shadow);
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .chart-header h3 {
+            font-size: 18px;
+            color: var(--primary);
+        }
+        
+        .chart-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chart-btn {
+            padding: 8px 15px;
+            border-radius: 20px;
+            background: var(--light);
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .chart-btn.active {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .auth-container {
+            max-width: 500px;
+            margin: 80px auto;
+            padding: 40px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+        }
+        
+        .auth-switch {
+            margin-top: 20px;
+            font-size: 15px;
+        }
+        
+        .auth-switch a {
+            color: var(--secondary);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+        
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .auth-tab {
+            flex: 1;
+            padding: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            border-bottom: 3px solid transparent;
+        }
+        
+        .auth-tab.active {
+            border-bottom-color: var(--secondary);
+            color: var(--secondary);
+        }
+        
+        .logout-btn {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .controls {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .form-row, .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                flex-direction: column;
+            }
+            
+            .user-form-container, .auth-container {
+                padding: 25px;
+                margin: 25px auto;
+            }
+            
+            .chart-container {
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .btn {
+                flex: 1;
+                min-width: 130px;
+                font-size: 14px;
+                padding: 10px 12px;
+            }
+            
+            .time-inputs {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .auth-tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-clock"></i>
+                <h1 id="app-title">TimeBook</h1>
+            </div>
+            <div class="controls" id="app-controls">
+                <select id="language" class="language-selector">
+                    <option value="sv" selected>Svenska</option>                
+                    <option value="es">Spanska</option>
+                    <option value="en">Engelska</option>
+                    <option value="ru">Ryska</option>
+                    <option value="pl">Polska</option>
+                </select>
+                <button class="btn btn-warning" id="export-pdf">
+                    <i class="fas fa-file-pdf"></i> <span id="export-pdf-text">Exportera PDF</span>
+                </button>
+                <button class="btn btn-success" id="export-json">
+                    <i class="fas fa-file-code"></i> <span id="export-json-text">Exportera JSON</span>
+                </button>
+                <div class="file-input-wrapper">
+                    <button class="btn btn-primary" id="import-json">
+                        <i class="fas fa-file-import"></i> <span id="import-json-text">Importera JSON</span>
+                    </button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                </div>
+            </div>
+            <div class="user-section">
+                <div class="user-avatar" id="user-avatar">A</div>
+                <span id="user-name">Användare</span>
+                <button id="logout-btn" class="logout-btn hidden">
+                    <i class="fas fa-sign-out-alt"></i> <span>Logga ut</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Authentication Container -->
+        <div id="auth-container" class="auth-container hidden">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <i class="fas fa-user-clock" style="font-size: 48px; color: var(--secondary);"></i>
+                <h2 id="auth-title">Logga in på TimeBook</h2>
+            </div>
+            
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="login-tab">Logga in</div>
+                <div class="auth-tab" id="register-tab">Registrera</div>
+            </div>
+            
+            <div id="login-form">
+                <form id="login-form-data">
+                    <div class="form-group">
+                        <label for="login-email">E-post</label>
+                        <input type="email" id="login-email" required placeholder="Din e-postadress">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Lösenord</label>
+                        <input type="password" id="login-password" required placeholder="Ditt lösenord">
+                    </div>
+                    <div class="form-group" style="margin-top: 25px;">
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 17px;">
+                            <i class="fas fa-sign-in-alt"></i> <span>Logga in</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div id="register-form" class="hidden">
+                <form id="register-form-data">
+                    <div class="form-group">
+                        <label for="register-name">Namn</label>
+                        <input type="text" id="register-name" required placeholder="Ditt fullständiga namn">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">E-post</label>
+                        <input type="email" id="register-email" required placeholder="Din e-postadress">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Lösenord</label>
+                        <input type="password" id="register-password" required placeholder="Minst 6 tecken">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-confirm-password">Bekräfta lösenord</label>
+                        <input type="password" id="register-confirm-password" required placeholder="Bekräfta lösenordet">
+                    </div>
+                    <div class="form-group" style="margin-top: 25px;">
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 17px;">
+                            <i class="fas fa-user-plus"></i> <span>Skapa konto</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div id="auth-message" class="alert hidden">
+                <i class="fas fa-info-circle"></i>
+                <span>Meddelande</span>
+            </div>
+        </div>
+
+        <!-- User Form (Initial Setup) -->
+        <div id="user-form" class="user-form-container hidden">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <i class="fas fa-user-cog" style="font-size: 48px; color: var(--secondary);"></i>
+                <h2 id="initial-setup-title">Initial Konfiguration</h2>
+                <p id="initial-setup-desc">Fyll i dina personuppgifter för att komma igång</p>
+            </div>
+
+            <form id="user-form-data">
+                <div class="section-title">
+                    <i class="fas fa-id-card"></i>
+                    <span id="personal-info-title">Personuppgifter</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first-name">Förnamn</label>
+                        <input type="text" id="first-name" required placeholder="Ange ditt förnamn">
+                    </div>
+                    <div class="form-group">
+                        <label for="last-name">Efternamn</label>
+                        <input type="text" id="last-name" required placeholder="Ange ditt efternamn">
+                    </div>
+                </div>
+
+                <div class="section-title">
+                    <i class="fas fa-address-book"></i>
+                    <span id="contact-info-title">Kontaktinformation</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="phone">Telefon</label>
+                        <input type="tel" id="phone" required placeholder="Ange ditt telefonnummer">
+                    </div>
+                    <div class="form-group">
+                        <label for="id-number">ID-nummer</label>
+                        <input type="text" id="id-number" required placeholder="Ange ditt ID">
+                    </div>
+                </div>
+
+                <div class="form-group" style="text-align: center; margin-top: 30px;">
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 40px; font-size: 18px;">
+                        <i class="fas fa-check-circle"></i> <span>Spara och fortsätt</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Main Application -->
+        <div id="main-app" class="hidden">
+            <div class="main-content">
+                <div>
+                    <div class="card">
+                        <div class="card-title">
+                            <span><i class="fas fa-calendar-plus"></i> <span id="register-title">Registrera Tid</span></span>
+                        </div>
+                        <form id="time-entry-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="entry-date">Datum</label>
+                                    <input type="date" id="entry-date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="project">Projekt</label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <select id="project" required style="flex: 1;"></select>
+                                        <button type="button" id="manage-projects" class="btn btn-warning" style="padding: 12px;">
+                                            <i class="fas fa-cog"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Tidsplan</label>
+                                    <div class="time-inputs">
+                                        <input type="time" id="start-time" required>
+                                        <input type="time" id="end-time" required>
+                                    </div>
+                                    <div class="hint-text">Arbetstimmar</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="break-time">Rast</label>
+                                    <select id="break-time" required>
+                                        <option value="0.5">0.5 timmar</option>
+                                        <option value="1.0" selected>1.0 timmar</option>
+                                        <option value="1.5">1.5 timmar</option>
+                                        <option value="2.0">2.0 timmar</option>
+                                    </select>
+                                    <div class="hint-text">Rast under arbetsdagen</div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="notes">Anteckningar</label>
+                                <textarea id="notes" placeholder="Detaljer om utfört arbete..."></textarea>
+                                <div class="hint-text">Detaljer om arbetsuppgifterna</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="coworkers">Kollegor (valfritt)</label>
+                                <input type="text" id="coworkers" placeholder="Namn separerade med kommatecken">
+                                <div class="hint-text">Vem arbetade med dig</div>
+                            </div>
+
+                            <div class="form-group" style="display: flex; gap: 15px; margin-top: 25px;">
+                                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 15px; font-size: 17px;">
+                                    <i class="fas fa-save"></i> <span>Spara Post</span>
+                                </button>
+                                <button type="button" id="reset-form" class="btn btn-danger" style="flex: 0.5; padding: 15px;">
+                                    <i class="fas fa-times"></i> <span>Avbryt</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-title">
+                            <span><i class="fas fa-history"></i> <span id="history-title">Registerhistorik</span></span>
+                        </div>
+                        
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label for="year-filter">År</label>
+                                <select id="year-filter" class="form-control">
+                                    <option value="all">Alla</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="month-filter">Månad</label>
+                                <select id="month-filter" class="form-control">
+                                    <option value="all">Alla</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="week-filter">Vecka</label>
+                                <select id="week-filter" class="form-control">
+                                    <option value="all">Alla</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="entries-container" id="entries-container">
+                            <div class="no-records" id="no-records-message">Inga poster ännu. Börja med att lägga till en ny post.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-title">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Visuell Statistik</span>
+                        </div>
+                        
+                        <div class="chart-row">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3>Timmar per Vecka</h3>
+                                    <div class="chart-actions">
+                                        <button class="chart-btn active" data-period="month">Månad</button>
+                                        <button class="chart-btn" data-period="quarter">Kvartal</button>
+                                    </div>
+                                </div>
+                                <canvas id="weekly-chart"></canvas>
+                            </div>
+                            
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3>Projektfördelning</h3>
+                                </div>
+                                <canvas id="project-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="card">
+                        <div class="card-title">
+                            <span><i class="fas fa-chart-line"></i> <span>Statistik</span></span>
+                        </div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <i class="fas fa-clock fa-2x"></i>
+                                <div class="stat-value" id="total-hours">0</div>
+                                <div class="stat-label">Totala Timmar</div>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-calendar-day fa-2x"></i>
+                                <div class="stat-value" id="total-days">0</div>
+                                <div class="stat-label">Arbetsdagar</div>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-calendar-week fa-2x"></i>
+                                <div class="stat-value" id="week-hours">0</div>
+                                <div class="stat-label">Denna Veckas Timmar</div>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-calendar-alt fa-2x"></i>
+                                <div class="stat-value" id="month-hours">0</div>
+                                <div class="stat-label">Denna Månads Timmar</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-title">
+                            <span><i class="fas fa-user-cog"></i> <span>Användarinformation</span></span>
+                        </div>
+                        
+                        <div class="user-info">
+                            <p><strong>Namn:</strong> <span id="info-name"></span></p>
+                            <p><strong>Telefon:</strong> <span id="info-phone"></span></p>
+                            <p><strong>ID:</strong> <span id="info-id"></span></p>
+                            <div style="margin-top: 20px;">
+                                <button id="edit-user-btn" class="btn btn-warning" style="width: 100%; padding: 12px;">
+                                    <i class="fas fa-edit"></i> <span>Redigera Information</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-title">
+                            <span><i class="fas fa-list-alt"></i> <span>Sammanfattning av Timmar</span></span>
+                        </div>
+                        <div class="resumen-container">
+                            <div id="summary-content">
+                                <table id="resumenHoras">
+                                    <thead>
+                                        <tr>
+                                            <th>Datum</th>
+                                            <th>Vecka</th>
+                                            <th>Projekt</th>
+                                            <th>Arbetade Timmar</th>
+                                            <th>Raster</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <th colspan="3">Summa för perioden</th>
+                                            <th id="total-mes">0</th>
+                                            <th></th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-title">
+                            <span><i class="fas fa-tasks"></i> <span>Projekt­hantering</span></span>
+                        </div>
+                    
+                        <div class="tab-container">
+                            <div class="tabs">
+                                <div class="tab active" data-tab="projects">Projekt</div>
+                                <div class="tab" data-tab="add-project">Lägg Till</div>
+                            </div>
+                    
+                            <div class="tab-content active" id="projects-content">
+                                <ul class="project-list" id="projects-list">
+                                    <!-- Projekt genereras dynamiskt här -->
+                                </ul>
+                            </div>
+                    
+                            <div class="tab-content" id="add-project-content">
+                                <div class="form-group">
+                                    <label for="new-project-name">Projektnamn</label>
+                                    <input type="text" id="new-project-name" name="new-project-name" autocomplete="off" placeholder="Projektnamn" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="new-project-code">Kod (valfri)</label>
+                                    <input type="text" id="new-project-code" name="new-project-code" autocomplete="off" placeholder="Projektkod">
+                                </div>
+                                <div class="form-group" style="margin-top: 20px;">
+                                    <button id="add-project-btn" class="btn btn-primary" style="width: 100%; padding: 12px;">
+                                        <i class="fas fa-plus"></i> <span>Lägg Till Projekt</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
+            authDomain: "tidbok-df555.firebaseapp.com",
+            databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "tidbok-df555",
+            storageBucket: "tidbok-df555.appspot.com",
+            messagingSenderId: "467331966400",
+            appId: "1:467331966400:web:abb6949a76918f2eb8d425"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        
+        // State management
+        const state = {
+            currentUser: null,
+            userProfile: null,
+            projects: [],
+            timeEntries: [],
+            currentLanguage: 'sv',
+            chartPeriod: 'month',
+            editingEntryId: null
+        };
+
+        // Initialize the application
+        function initApp() {
+            // Set up authentication state observer
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // User is signed in
+                    state.currentUser = user;
+                    document.getElementById('logout-btn').classList.remove('hidden');
+                    document.getElementById('user-name').textContent = user.displayName || user.email;
+                    
+                    // Load user profile and data
+                    loadUserProfile(user.uid);
+                } else {
+                    // User is signed out
+                    state.currentUser = null;
+                    document.getElementById('logout-btn').classList.add('hidden');
+                    
+                    // Show authentication form
+                    document.getElementById('auth-container').classList.remove('hidden');
+                    document.getElementById('user-form').classList.add('hidden');
+                    document.getElementById('main-app').classList.add('hidden');
+                }
+            });
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Set default date and time
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('entry-date').value = today;
+            setDefaultWorkHours();
+            
+            // Initialize year filter
+            initYearFilter();
+        }
+
+        // Set default work hours based on day of week
+        function setDefaultWorkHours() {
+            const dateInput = document.getElementById('entry-date').value;
+            const date = new Date(dateInput);
+            const day = date.getDay();
+            
+            if (day >= 1 && day <= 4) {
+                document.getElementById('start-time').value = '06:30';
+                document.getElementById('end-time').value = '16:00';
+            } else if (day === 5) {
+                document.getElementById('start-time').value = '06:30';
+                document.getElementById('end-time').value = '13:00';
+            } else {
+                document.getElementById('start-time').value = '08:00';
+                document.getElementById('end-time').value = '12:00';
+            }
+        }
+
+        // Initialize year filter dropdown
+        function initYearFilter() {
+            const yearFilter = document.getElementById('year-filter');
+            const currentYear = new Date().getFullYear();
+            
+            // Add years from 2020 to current year + 2
+            for (let year = 2020; year <= currentYear + 2; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                if (year === currentYear) {
+                    option.selected = true;
+                }
+                yearFilter.appendChild(option);
+            }
+        }
+
+        // Load user profile and data
+        function loadUserProfile(userId) {
+            // Load user profile
+            database.ref(`users/${userId}`).on('value', snapshot => {
+                state.userProfile = snapshot.val();
+                
+                if (state.userProfile) {
+                    // User profile exists, show main app
+                    document.getElementById('auth-container').classList.add('hidden');
+                    document.getElementById('user-form').classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+                    
+                    // Update UI with user info
+                    updateUserInfo();
+                    
+                    // Load projects and time entries
+                    loadProjects();
+                    loadTimeEntries();
+                } else {
+                    // No profile exists, show profile form
+                    document.getElementById('auth-container').classList.add('hidden');
+                    document.getElementById('user-form').classList.remove('hidden');
+                    document.getElementById('main-app').classList.add('hidden');
+                    
+                    // Set default values for profile form
+                    if (state.currentUser.displayName) {
+                        const names = state.currentUser.displayName.split(' ');
+                        document.getElementById('first-name').value = names[0] || '';
+                        document.getElementById('last-name').value = names.slice(1).join(' ') || '';
+                    }
+                    document.getElementById('phone').value = '';
+                    document.getElementById('id-number').value = '';
+                }
+            });
+        }
+
+        // Load projects from database
+        function loadProjects() {
+            const userId = state.currentUser.uid;
+            
+            database.ref('projects').orderByChild('ownerId').equalTo(userId).on('value', snapshot => {
+                const projectsData = snapshot.val();
+                state.projects = projectsData ? Object.entries(projectsData).map(([id, project]) => ({
+                    id,
+                    ...project
+                })) : [];
+                
+                updateProjectDropdown();
+                updateProjectsList();
+            });
+        }
+
+        // Load time entries from database
+        function loadTimeEntries() {
+            const userId = state.currentUser.uid;
+            
+            database.ref('timeEntries').orderByChild('userId').equalTo(userId).on('value', snapshot => {
+                const entriesData = snapshot.val();
+                state.timeEntries = entriesData ? Object.entries(entriesData).map(([id, entry]) => ({
+                    id,
+                    ...entry
+                })) : [];
+                
+                updateEntriesDisplay();
+                updateStatistics();
+                updateHoursSummary();
+                updateCharts();
+            });
+        }
+
+        // Update UI with user information
+        function updateUserInfo() {
+            if (!state.userProfile || !state.currentUser) return;
+            
+            const firstName = state.userProfile.firstName || '';
+            const lastName = state.userProfile.lastName || '';
+            const fullName = `${firstName} ${lastName}`;
+            
+            document.getElementById('user-avatar').textContent = 
+                (firstName.charAt(0) || '') + (lastName.charAt(0) || '');
+            document.getElementById('user-name').textContent = fullName || state.currentUser.email;
+            
+            document.getElementById('info-name').textContent = fullName;
+            document.getElementById('info-phone').textContent = state.userProfile.phone || '';
+            document.getElementById('info-id').textContent = state.userProfile.idNumber || '';
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Authentication
+            document.getElementById('login-tab').addEventListener('click', () => {
+                document.getElementById('login-tab').classList.add('active');
+                document.getElementById('register-tab').classList.remove('active');
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('register-form').classList.add('hidden');
+            });
+            
+            document.getElementById('register-tab').addEventListener('click', () => {
+                document.getElementById('register-tab').classList.add('active');
+                document.getElementById('login-tab').classList.remove('active');
+                document.getElementById('register-form').classList.remove('hidden');
+                document.getElementById('login-form').classList.add('hidden');
+            });
+            
+            document.getElementById('login-form-data').addEventListener('submit', e => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                loginUser(email, password);
+            });
+            
+            document.getElementById('register-form-data').addEventListener('submit', e => {
+                e.preventDefault();
+                const name = document.getElementById('register-name').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const confirmPassword = document.getElementById('register-confirm-password').value;
+                
+                if (password !== confirmPassword) {
+                    showAlert('Lösenorden matchar inte', 'error');
+                    return;
+                }
+                
+                registerUser(name, email, password);
+            });
+            
+            document.getElementById('logout-btn').addEventListener('click', logoutUser);
+            
+            // User profile form
+            document.getElementById('user-form-data').addEventListener('submit', saveUserInfo);
+            
+            // Time entry form
+            document.getElementById('time-entry-form').addEventListener('submit', saveTimeEntry);
+            document.getElementById('reset-form').addEventListener('click', resetForm);
+            document.getElementById('entry-date').addEventListener('change', setDefaultWorkHours);
+            
+            // Project management
+            document.getElementById('add-project-btn').addEventListener('click', addProject);
+            document.getElementById('manage-projects').addEventListener('click', showProjectManagement);
+            
+            // Filters
+            document.getElementById('year-filter').addEventListener('change', updateEntriesDisplay);
+            document.getElementById('month-filter').addEventListener('change', updateEntriesDisplay);
+            document.getElementById('week-filter').addEventListener('change', updateEntriesDisplay);
+            
+            // Export/import
+            document.getElementById('export-pdf').addEventListener('click', exportToPDF);
+            document.getElementById('export-json').addEventListener('click', exportToJSON);
+            document.getElementById('import-json').addEventListener('click', () => {
+                document.getElementById('import-file').click();
+            });
+            document.getElementById('import-file').addEventListener('change', importFromJSON);
+            
+            // Tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    document.getElementById(`${tab.dataset.tab}-content`).classList.add('active');
+                });
+            });
+            
+            // Edit user info
+            document.getElementById('edit-user-btn').addEventListener('click', () => {
+                document.getElementById('user-form').classList.remove('hidden');
+                document.getElementById('main-app').classList.add('hidden');
+                
+                // Pre-fill form with existing data
+                document.getElementById('first-name').value = state.userProfile.firstName || '';
+                document.getElementById('last-name').value = state.userProfile.lastName || '';
+                document.getElementById('phone').value = state.userProfile.phone || '';
+                document.getElementById('id-number').value = state.userProfile.idNumber || '';
+            });
+            
+            // Language selector
+            document.getElementById('language').addEventListener('change', function() {
+                state.currentLanguage = this.value;
+                // updateTranslations(); // Implementar si se requiere internacionalización
+                updateEntriesDisplay();
+                updateHoursSummary();
+                updateCharts();
+            });
+            
+            // Chart buttons
+            document.querySelectorAll('.chart-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.chartPeriod = btn.dataset.period;
+                    updateCharts();
+                });
+            });
+        }
+
+        // Authentication functions
+        function loginUser(email, password) {
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => {
+                    showAlert('Felaktig e-post eller lösenord', 'error');
+                    console.error('Login error:', error);
+                });
+        }
+
+        function registerUser(name, email, password) {
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    // Set display name
+                    return userCredential.user.updateProfile({
+                        displayName: name
+                    });
+                })
+                .then(() => {
+                    // User registered successfully
+                    showAlert('Konto skapat! Komplettera nu din profil.', 'success');
+                })
+                .catch(error => {
+                    showAlert('Registrering misslyckades: ' + error.message, 'error');
+                    console.error('Registration error:', error);
+                });
+        }
+
+        function logoutUser() {
+            auth.signOut()
+                .then(() => {
+                    showAlert('Du har loggat ut', 'success');
+                })
+                .catch(error => {
+                    showAlert('Utloggning misslyckades: ' + error.message, 'error');
+                });
+        }
+
+        // Save user profile information
+        function saveUserInfo(e) {
+            e.preventDefault();
+            
+            const userData = {
+                firstName: document.getElementById('first-name').value,
+                lastName: document.getElementById('last-name').value,
+                phone: document.getElementById('phone').value,
+                idNumber: document.getElementById('id-number').value
+            };
+            
+            // Save to Firebase
+            database.ref(`users/${state.currentUser.uid}`).set(userData)
+                .then(() => {
+                    showAlert('Profil sparad', 'success');
+                    loadUserProfile(state.currentUser.uid);
+                })
+                .catch(error => {
+                    showAlert('Fel vid sparning: ' + error.message, 'error');
+                });
+        }
+
+        // Save time entry
+        function saveTimeEntry(e) {
+            e.preventDefault();
+            
+            const projectId = document.getElementById('project').value;
+            const project = state.projects.find(p => p.id === projectId);
+            
+            if (!project) {
+                showAlert('Välj ett giltigt projekt', 'error');
+                return;
+            }
+            
+            const startTime = document.getElementById('start-time').value;
+            const endTime = document.getElementById('end-time').value;
+            const breakTime = parseFloat(document.getElementById('break-time').value);
+            
+            if (startTime >= endTime) {
+                showAlert('Starttiden måste vara före sluttiden', 'error');
+                return;
+            }
+            
+            // Calculate worked hours
+            const start = new Date(`1970-01-01T${startTime}:00`);
+            const end = new Date(`1970-01-01T${endTime}:00`);
+            const diff = (end - start) / (1000 * 60 * 60); // hours
+            const workedHours = (diff - breakTime).toFixed(2);
+            
+            const entry = {
+                date: document.getElementById('entry-date').value,
+                project: {
+                    id: project.id,
+                    name: project.name,
+                    code: project.code || ''
+                },
+                startTime: startTime,
+                endTime: endTime,
+                breakTime: breakTime,
+                workedHours: workedHours,
+                notes: document.getElementById('notes').value,
+                coworkers: document.getElementById('coworkers').value.split(',').map(c => c.trim()).filter(c => c),
+                userId: state.currentUser.uid,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            if (state.editingEntryId) {
+                // Update existing entry
+                database.ref(`timeEntries/${state.editingEntryId}`).set(entry)
+                    .then(() => {
+                        resetForm();
+                        state.editingEntryId = null;
+                        showAlert('Tidpost uppdaterad', 'success');
+                    })
+                    .catch(error => {
+                        showAlert('Fel vid uppdatering: ' + error.message, 'error');
+                    });
+            } else {
+                // Create new entry
+                database.ref('timeEntries').push(entry)
+                    .then(() => {
+                        resetForm();
+                        showAlert('Tidpost sparad', 'success');
+                    })
+                    .catch(error => {
+                        showAlert('Fel vid sparning: ' + error.message, 'error');
+                    });
+            }
+        }
+
+        // Reset time entry form
+        function resetForm() {
+            document.getElementById('time-entry-form').reset();
+            document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
+            setDefaultWorkHours();
+            document.getElementById('break-time').value = '1.0';
+            state.editingEntryId = null;
+        }
+
+        // Update project dropdown
+        function updateProjectDropdown() {
+            const select = document.getElementById('project');
+            select.innerHTML = '';
+            
+            state.projects.forEach(project => {
+                const option = document.createElement('option');
+                option.value = project.id;
+                option.textContent = project.name + (project.code ? ` (${project.code})` : '');
+                select.appendChild(option);
+            });
+            
+            if (state.projects.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'Inga projekt - skapa ett nytt';
+                select.appendChild(option);
+            }
+        }
+
+        // Update projects list
+        function updateProjectsList() {
+            const list = document.getElementById('projects-list');
+            list.innerHTML = '';
+            
+            if (state.projects.length === 0) {
+                list.innerHTML = '<li class="no-records">Inga projekt än. Skapa ditt första projekt.</li>';
+                return;
+            }
+            
+            state.projects.forEach(project => {
+                const li = document.createElement('li');
+                li.className = 'project-item';
+                
+                li.innerHTML = `
+                    <div>
+                        <strong>${project.name}</strong>
+                        ${project.code ? `<div><small>Kod: ${project.code}</small></div>` : ''}
+                    </div>
+                    <div class="project-actions">
+                        <button class="action-btn edit edit-project" data-id="${project.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete delete-project" data-id="${project.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                list.appendChild(li);
+            });
+            
+            // Add event listeners
+            document.querySelectorAll('.edit-project').forEach(btn => {
+                btn.addEventListener('click', () => editProject(btn.dataset.id));
+            });
+            
+            document.querySelectorAll('.delete-project').forEach(btn => {
+                btn.addEventListener('click', () => deleteProject(btn.dataset.id));
+            });
+        }
+
+        // Show project management tab
+        function showProjectManagement() {
+            document.querySelector('.tab[data-tab="projects"]').click();
+        }
+
+        // Add new project
+        function addProject() {
+            const name = document.getElementById('new-project-name').value.trim();
+            const code = document.getElementById('new-project-code').value.trim();
+            
+            if (!name) {
+                showAlert('Ange ett projektnamn', 'error');
+                return;
+            }
+            
+            const newProject = {
+              name: name,
+              code: code || null,
+              ownerId: state.currentUser.uid,
+              createdAt: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            // Save to Firebase
+            database.ref('projects').push(newProject)
+                .then(() => {
+                    // Reset form
+                    document.getElementById('new-project-name').value = '';
+                    document.getElementById('new-project-code').value = '';
+                    showAlert('Projekt tillagt', 'success');
+                })
+                .catch(error => {
+                    showAlert('Fel vid sparning: ' + error.message, 'error');
+                });
+        }
+
+        // Edit project
+        function editProject(projectId) {
+            const project = state.projects.find(p => p.id === projectId);
+            if (!project) return;
+            
+            const newName = prompt('Ange nytt projektnamn:', project.name);
+            if (newName === null || !newName.trim()) return;
+            
+            const newCode = prompt('Ange ny projektkod (valfritt):', project.code || '');
+            
+            // Update in Firebase
+            database.ref(`projects/${projectId}`).update({
+                name: newName.trim(),
+                code: newCode ? newCode.trim() : null
+            })
+                .then(() => {
+                    showAlert('Projekt uppdaterat', 'success');
+                })
+                .catch(error => {
+                    showAlert('Fel vid uppdatering: ' + error.message, 'error');
+                });
+        }
+
+        // Delete project
+        function deleteProject(projectId) {
+            if (!confirm('Är du säker på att du vill radera detta projekt?')) return;
+            
+            // Check if project has time entries
+            const hasEntries = state.timeEntries.some(entry => entry.project.id === projectId);
+            if (hasEntries) {
+                showAlert('Det går inte att radera ett projekt med tidsregistreringar', 'error');
+                return;
+            }
+            
+            // Delete from Firebase
+            database.ref(`projects/${projectId}`).remove()
+                .then(() => {
+                    showAlert('Projekt raderat', 'success');
+                })
+                .catch(error => {
+                    showAlert('Fel vid radering: ' + error.message, 'error');
+                });
+        }
+
+        // Update entries display
+        function updateEntriesDisplay() {
+            const entriesContainer = document.getElementById('entries-container');
+            const noRecordsMessage = document.getElementById('no-records-message');
+            
+            if (state.timeEntries.length === 0) {
+                noRecordsMessage.classList.remove('hidden');
+                entriesContainer.innerHTML = '';
+                return;
+            }
+            
+            noRecordsMessage.classList.add('hidden');
+            
+            // Group entries by date
+            const groupedEntries = {};
+            state.timeEntries.forEach(entry => {
+                if (!groupedEntries[entry.date]) {
+                    groupedEntries[entry.date] = [];
+                }
+                groupedEntries[entry.date].push(entry);
+            });
+            
+            // Sort dates descending
+            const sortedDates = Object.keys(groupedEntries).sort((a, b) => 
+                new Date(b) - new Date(a)
+            );
+            
+            let entriesHTML = '';
+            
+            sortedDates.forEach(date => {
+                const dateObj = new Date(date);
+                const formattedDate = dateObj.toLocaleDateString('sv-SE', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                entriesHTML += `
+                    <div class="entry-group">
+                        <div class="group-header">
+                            <div class="date-header">
+                                <span>${formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)}</span>
+                                <span class="total-hours">Totalt: ${calculateTotalHours(groupedEntries[date])} timmar</span>
+                            </div>
+                            <i class="fas fa-chevron-down collapse-icon"></i>
+                        </div>
+                        <div class="group-content">
+                `;
+                
+                groupedEntries[date].forEach(entry => {
+                    const startTime = entry.startTime.substring(0, 5);
+                    const endTime = entry.endTime.substring(0, 5);
+                    
+                    entriesHTML += `
+                        <div class="entry-item" data-id="${entry.id}">
+                            <div class="entry-details">
+                                <div class="entry-project">${entry.project.name}</div>
+                                <div class="entry-time">${startTime} - ${endTime} (${entry.workedHours} timmar)</div>
+                                ${entry.notes ? `<div class="entry-notes">${entry.notes}</div>` : ''}
+                            </div>
+                            <div class="entry-actions">
+                                <button class="action-btn edit edit-entry">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn delete delete-entry">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                entriesHTML += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            entriesContainer.innerHTML = entriesHTML;
+            
+            // Add event listeners for entry actions
+            document.querySelectorAll('.group-header').forEach(header => {
+                header.addEventListener('click', function() {
+                    this.parentElement.classList.toggle('collapsed');
+                });
+            });
+            
+            document.querySelectorAll('.edit-entry').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const entryId = this.closest('.entry-item').dataset.id;
+                    editTimeEntry(entryId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-entry').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const entryId = this.closest('.entry-item').dataset.id;
+                    deleteTimeEntry(entryId);
+                });
+            });
+        }
+
+        // Calculate total hours for a date
+        function calculateTotalHours(entries) {
+            return entries.reduce((sum, entry) => sum + parseFloat(entry.workedHours), 0).toFixed(1);
+        }
+
+        // Edit time entry
+        function editTimeEntry(entryId) {
+            const entry = state.timeEntries.find(e => e.id === entryId);
+            if (!entry) return;
+            
+            // Fill form with entry data
+            document.getElementById('entry-date').value = entry.date;
+            document.getElementById('project').value = entry.project.id;
+            document.getElementById('start-time').value = entry.startTime;
+            document.getElementById('end-time').value = entry.endTime;
+            document.getElementById('break-time').value = entry.breakTime.toString();
+            document.getElementById('notes').value = entry.notes || '';
+            document.getElementById('coworkers').value = entry.coworkers?.join(', ') || '';
+            
+            state.editingEntryId = entryId;
+            
+            // Scroll to form
+            document.getElementById('time-entry-form').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Delete time entry
+        function deleteTimeEntry(entryId) {
+            if (!confirm('Är du säker på att du vill radera denna tidpost?')) return;
+            
+            database.ref(`timeEntries/${entryId}`).remove()
+                .then(() => {
+                    showAlert('Tidpost raderad', 'success');
+                })
+                .catch(error => {
+                    showAlert('Fel vid radering: ' + error.message, 'error');
+                });
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            // Total hours
+            const totalHours = state.timeEntries.reduce((sum, entry) => 
+                sum + parseFloat(entry.workedHours), 0);
+            document.getElementById('total-hours').textContent = totalHours.toFixed(1);
+            
+            // Total days
+            const uniqueDates = [...new Set(state.timeEntries.map(entry => entry.date))];
+            document.getElementById('total-days').textContent = uniqueDates.length;
+            
+            // Current week hours
+            const today = new Date();
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay() + 1);
+            const endOfWeek = new Date(today);
+            endOfWeek.setDate(today.getDate() - today.getDay() + 7);
+            
+            const weekEntries = state.timeEntries.filter(entry => {
+                const entryDate = new Date(entry.date);
+                return entryDate >= startOfWeek && entryDate <= endOfWeek;
+            });
+            
+            const weekHours = weekEntries.reduce((sum, entry) => 
+                sum + parseFloat(entry.workedHours), 0);
+            document.getElementById('week-hours').textContent = weekHours.toFixed(1);
+            
+            // Current month hours
+            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            
+            const monthEntries = state.timeEntries.filter(entry => {
+                const entryDate = new Date(entry.date);
+                return entryDate >= startOfMonth && entryDate <= endOfMonth;
+            });
+            
+            const monthHours = monthEntries.reduce((sum, entry) => 
+                sum + parseFloat(entry.workedHours), 0);
+            document.getElementById('month-hours').textContent = monthHours.toFixed(1);
+        }
+
+        // Update hours summary
+        function updateHoursSummary() {
+            const summaryTable = document.querySelector('#resumenHoras tbody');
+            summaryTable.innerHTML = '';
+            
+            if (state.timeEntries.length === 0) {
+                document.getElementById('total-mes').textContent = '0';
+                return;
+            }
+            
+            let totalHours = 0;
+            
+            // Sort entries by date
+            const sortedEntries = [...state.timeEntries].sort((a, b) => 
+                new Date(a.date) - new Date(b.date)
+            );
+            
+            sortedEntries.forEach(entry => {
+                const date = new Date(entry.date);
+                const weekNumber = getWeekNumber(date);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${date.toLocaleDateString('sv-SE')}</td>
+                    <td>${weekNumber}</td>
+                    <td>${entry.project.name}</td>
+                    <td>${entry.workedHours}</td>
+                    <td>${entry.breakTime}</td>
+                `;
+                summaryTable.appendChild(row);
+                
+                totalHours += parseFloat(entry.workedHours);
+            });
+            
+            document.getElementById('total-mes').textContent = totalHours.toFixed(1);
+        }
+
+        // Get ISO week number
+        function getWeekNumber(date) {
+            const d = new Date(date);
+            d.setHours(0, 0, 0, 0);
+            d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+            const yearStart = new Date(d.getFullYear(), 0, 1);
+            const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+            return weekNo;
+        }
+
+        // Update charts
+        function updateCharts() {
+            // Weekly chart data
+            const weeklyData = calculateWeeklyData();
+            updateWeeklyChart(weeklyData);
+            
+            // Project distribution chart
+            const projectData = calculateProjectDistribution();
+            updateProjectChart(projectData);
+        }
+
+        // Calculate weekly data for chart
+        function calculateWeeklyData() {
+            // For simplicity, we'll show data for the last 8 weeks
+            const weeks = [];
+            const today = new Date();
+            
+            for (let i = 7; i >= 0; i--) {
+                const weekStart = new Date(today);
+                weekStart.setDate(today.getDate() - today.getDay() - i * 7);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                
+                const weekEntries = state.timeEntries.filter(entry => {
+                    const entryDate = new Date(entry.date);
+                    return entryDate >= weekStart && entryDate <= weekEnd;
+                });
+                
+                const weekHours = weekEntries.reduce((sum, entry) => 
+                    sum + parseFloat(entry.workedHours), 0);
+                
+                weeks.push({
+                    label: `V${getWeekNumber(weekStart)}`,
+                    hours: weekHours
+                });
+            }
+            
+            return weeks;
+        }
+
+        // Calculate project distribution
+        function calculateProjectDistribution() {
+            const projectMap = {};
+            
+            state.timeEntries.forEach(entry => {
+                const projectId = entry.project.id;
+                if (!projectMap[projectId]) {
+                    projectMap[projectId] = {
+                        name: entry.project.name,
+                        hours: 0,
+                        color: getRandomColor()
+                    };
+                }
+                projectMap[projectId].hours += parseFloat(entry.workedHours);
+            });
+            
+            return Object.values(projectMap).sort((a, b) => b.hours - a.hours);
+        }
+
+        // Generate random color for charts
+        function getRandomColor() {
+            return `#${Math.floor(Math.random()*16777215).toString(16)}`;
+        }
+
+        // Update weekly chart
+        function updateWeeklyChart(data) {
+            const ctx = document.getElementById('weekly-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (window.weeklyChart) {
+                window.weeklyChart.destroy();
+            }
+            
+            window.weeklyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.label),
+                    datasets: [{
+                        label: 'Timmar per vecka',
+                        data: data.map(item => item.hours),
+                        backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Timmar'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update project chart
+        function updateProjectChart(data) {
+            const ctx = document.getElementById('project-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (window.projectChart) {
+                window.projectChart.destroy();
+            }
+            
+            window.projectChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(item => item.name),
+                    datasets: [{
+                        data: data.map(item => item.hours),
+                        backgroundColor: data.map(item => item.color),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Export to PDF
+        function exportToPDF() {
+            showAlert('PDF export funktionalitet kommer snart!', 'info');
+        }
+
+        // Export to JSON
+        function exportToJSON() {
+            const data = {
+                user: state.userProfile,
+                projects: state.projects,
+                timeEntries: state.timeEntries
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `timebook_${new Date().toISOString().split('T')[0]}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showAlert('Data exporterad som JSON', 'success');
+        }
+
+        // Import from JSON
+        function importFromJSON(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    
+                    // Validate data structure
+                    if (!data.user || !data.projects || !data.timeEntries) {
+                        throw new Error('Ogiltig filformat');
+                    }
+                    
+                    // Save to Firebase
+                    saveImportedData(data);
+                } catch (error) {
+                    showAlert('Fel vid import: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Save imported data to Firebase
+        function saveImportedData(data) {
+            const userId = state.currentUser.uid;
+            
+            // Save user profile
+            database.ref(`users/${userId}`).set(data.user)
+                .then(() => {
+                    // Save projects
+                    const projectsPromises = data.projects.map(project => {
+                        project.ownerId = userId;
+                        return database.ref('projects').push(project);
+                    });
+                    
+                    return Promise.all(projectsPromises);
+                })
+                .then(() => {
+                    // Save time entries
+                    const entriesPromises = data.timeEntries.map(entry => {
+                        entry.userId = userId;
+                        return database.ref('timeEntries').push(entry);
+                    });
+                    
+                    return Promise.all(entriesPromises);
+                })
+                .then(() => {
+                    showAlert('Data importerad framgångsrikt', 'success');
+                    // Reload data
+                    loadUserProfile(userId);
+                })
+                .catch(error => {
+                    showAlert('Fel vid import: ' + error.message, 'error');
+                });
+        }
+
+        // Show alert message
+        function showAlert(message, type) {
+            const alert = document.getElementById('auth-message');
+            const alertContainer = document.getElementById('auth-container');
+            
+            // Create a new alert if in main app
+            if (!alert) {
+                const newAlert = document.createElement('div');
+                newAlert.className = `alert alert-${type}`;
+                newAlert.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                    <span>${message}</span>
+                `;
+                document.querySelector('.container').prepend(newAlert);
+                
+                setTimeout(() => {
+                    newAlert.remove();
+                }, 3000);
+                return;
+            }
+            
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                <span>${message}</span>
+            `;
+            alert.className = `alert alert-${type}`;
+            alert.classList.remove('hidden');
+            
+            // Remove alert after 3 seconds
+            setTimeout(() => {
+                alert.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
     <style>
         :root {
             --primary: #2c3e50;
