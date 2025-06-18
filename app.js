@@ -67,19 +67,36 @@ btnLogout.addEventListener('click', () => {
 
 // Escuchar estado de autenticación
 auth.onAuthStateChanged(user => {
-  if (user) {
-    // Usuario conectado
-    authSection.style.display = 'none';
-    appSection.style.display = 'block';
-    userEmailSpan.textContent = user.email;
+    if (user) {
+        state.uid = user.uid;
+        state.user = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || user.email
+        };
 
-    listenTimeEntries(user.uid);
-  } else {
-    // Usuario desconectado
-    authSection.style.display = 'block';
-    appSection.style.display = 'none';
-    entriesList.innerHTML = '';
-  }
+        document.getElementById('auth-container').classList.add('hidden');
+        updateUserInfo();
+
+        // Verifica si ya hizo el setup inicial
+        database.ref(`users/${user.uid}/initialSetupComplete`).once('value').then(snapshot => {
+            const setupComplete = snapshot.val();
+            if (!setupComplete) {
+                document.getElementById('initial-setup-form').classList.remove('hidden');
+                document.getElementById('main-app').classList.add('hidden');
+            } else {
+                document.getElementById('initial-setup-form').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                loadUserData();
+            }
+        });
+    } else {
+        state.uid = null;
+        state.user = null;
+        document.getElementById('auth-container').classList.remove('hidden');
+        document.getElementById('main-app').classList.add('hidden');
+        document.getElementById('initial-setup-form').classList.add('hidden');
+    }
 });
 
 // Escuchar entradas en Realtime Database
@@ -121,3 +138,30 @@ btnAddEntry.addEventListener('click', () => {
     })
     .catch(error => alert('Error: ' + error.message));
 });
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById('setup-user-form');
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const fullName = document.getElementById('full-name').value;
+            const phone = document.getElementById('phone').value;
+            const idNumber = document.getElementById('id-number').value;
+
+            if (!state.uid) return;
+
+            database.ref(`users/${state.uid}/profile`).set({
+                name: fullName,
+                phone: phone,
+                id: idNumber
+            });
+
+            database.ref(`users/${state.uid}/initialSetupComplete`).set(true).then(() => {
+                document.getElementById('initial-setup-form').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                updateUserInfo();
+                loadUserData();
+            });
+        });
+    }
+});
+
