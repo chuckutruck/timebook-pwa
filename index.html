@@ -800,62 +800,55 @@
         </div>
     </header>
 
-    <div class="container">
-    <!-- Formulario de Configuración Inicial del Usuario -->
-    <div id="initial-setup" class="user-form-container">
-        <div style="text-align: center; margin-bottom: 30px;">
-            <i class="fas fa-user-cog" style="font-size: 48px; color: var(--secondary);"></i>
-            <h2 id="initial-setup-title" style="margin: 15px 0;">Initial Konfiguration</h2>
-            <p id="initial-setup-desc" style="color: #7f8c8d;">
-                Fyll i dina personuppgifter för att komma igång
-            </p>
+       <div class="container">
+        <!-- Användarformulär (initialt) -->
+        <div id="user-form" class="user-form-container">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <i class="fas fa-user-cog" style="font-size: 48px; color: var(--secondary);"></i>
+                <h2 id="initial-setup-title" style="margin: 15px 0;">Initial Konfiguration</h2>
+                <p id="initial-setup-desc" style="color: #7f8c8d;">Fyll i dina personuppgifter för att komma igång</p>
+            </div>
+
+            <form id="user-form-data">
+                <div class="section-title">
+                    <i class="fas fa-id-card"></i>
+                    <span id="personal-info-title">Personuppgifter</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first-name" id="first-name-label">Förnamn</label>
+                        <input type="text" id="first-name" required placeholder="Ange ditt förnamn">
+                    </div>
+                    <div class="form-group">
+                        <label for="last-name" id="last-name-label">Efternamn</label>
+                        <input type="text" id="last-name" required placeholder="Ange ditt efternamn">
+                    </div>
+                </div>
+
+                <div class="section-title">
+                    <i class="fas fa-address-book"></i>
+                    <span id="contact-info-title">Kontaktinformation</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="phone" id="phone-label">Telefon</label>
+                        <input type="tel" id="phone" required placeholder="Ange ditt telefonnummer">
+                    </div>
+                    <div class="form-group">
+                        <label for="id-number" id="id-number-label">ID-nummer</label>
+                        <input type="text" id="id-number" required placeholder="Ange ditt ID">
+                    </div>
+                </div>
+
+                <div class="form-group" style="text-align: center; margin-top: 30px;">
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 40px; font-size: 18px;" id="save-continue-btn">
+                        <i class="fas fa-check-circle"></i> <span>Spara och fortsätt</span>
+                    </button>
+                </div>
+            </form>
         </div>
-
-        <form id="user-form-data">
-            <!-- Sección de Datos Personales -->
-            <div class="section-title">
-                <i class="fas fa-id-card"></i>
-                <span id="personal-info-title">Personuppgifter</span>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="first-name" id="first-name-label">Förnamn</label>
-                    <input type="text" id="first-name" required placeholder="Ange ditt förnamn">
-                </div>
-                <div class="form-group">
-                    <label for="last-name" id="last-name-label">Efternamn</label>
-                    <input type="text" id="last-name" required placeholder="Ange ditt efternamn">
-                </div>
-            </div>
-
-            <!-- Sección de Información de Contacto -->
-            <div class="section-title">
-                <i class="fas fa-address-book"></i>
-                <span id="contact-info-title">Kontaktinformation</span>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="phone" id="phone-label">Telefon</label>
-                    <input type="tel" id="phone" required placeholder="Ange ditt telefonnummer">
-                </div>
-                <div class="form-group">
-                    <label for="id-number" id="id-number-label">ID-nummer</label>
-                    <input type="text" id="id-number" required placeholder="Ange ditt ID">
-                </div>
-            </div>
-
-            <!-- Botón de envío -->
-            <div class="form-group" style="text-align: center; margin-top: 30px;">
-                <button type="submit" class="btn btn-primary" style="padding: 12px 40px; font-size: 18px;" id="save-continue-btn">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Spara och fortsätt</span>
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
 
         <div id="main-app" class="hidden">
             <div class="main-content">
