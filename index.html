@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <link rel="manifest" href="/timebook-pwa/manifest.json">
-    <meta name="theme-color" content="#3498db">
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TimeBook - Registro Profesional de Horas</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #2c3e50;
@@ -146,7 +147,7 @@
         
         .language-selector {
             background-color: rgba(255, 255, 255, 0.2);
-            color: blue;
+            color: white;
             padding: 10px 15px;
             border-radius: var(--border-radius);
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -482,8 +483,8 @@
             display: block;
         }
         
-        .user-form-container {
-            max-width: 700px;
+        .auth-form-container {
+            max-width: 500px;
             margin: 50px auto;
             padding: 40px;
             background: white;
@@ -730,7 +731,7 @@
                 flex-direction: column;
             }
             
-            .user-form-container {
+            .auth-form-container {
                 padding: 25px;
                 margin: 25px auto;
             }
@@ -770,7 +771,7 @@
                 <i class="fas fa-clock"></i>
                 <h1 id="app-title">TimeBook</h1>
             </div>
-            <div class="controls">
+            <div class="controls" id="app-controls">
                 <select id="language" class="language-selector">
                     <option value="sv" selected>Svenska</option>				
                     <option value="es">Spanska</option>
@@ -791,10 +792,9 @@
                     <input type="file" id="import-file" accept=".json" style="display: none;">
                 </div>
             </div>
-            <div class="user-section">
+            <div class="user-section" id="user-section">
                 <div class="user-avatar" id="user-avatar">A</div>
                 <span id="user-name">Användare</span>
-                <!-- Botón de cerrar sesión añadido -->
                 <button id="logout-btn" class="btn btn-danger" style="padding: 8px 15px;">
                     <i class="fas fa-sign-out-alt"></i> <span id="logout-text">Cerrar sesión</span>
                 </button>
@@ -803,50 +803,86 @@
     </header>
 
     <div class="container">
-        <!-- Användarformulär (initialt) -->
-        <div id="initial-setup" class="user-form-container">
+        <!-- Formulario de autenticación -->
+        <div id="auth-container" class="auth-form-container">
             <div style="text-align: center; margin-bottom: 30px;">
-                <i class="fas fa-user-cog" style="font-size: 48px; color: var(--secondary);"></i>
-                <h2 id="initial-setup-title">Initial Konfiguration</h2>
-                <p id="initial-setup-desc" style="color: #7f8c8d;">Fyll i dina personuppgifter för att komma igång</p>
+                <i class="fas fa-user-lock" style="font-size: 48px; color: var(--secondary);"></i>
+                <h2 id="auth-title">Iniciar Sesión</h2>
+                <p id="auth-subtitle">Por favor, inicia sesión para acceder a TimeBook</p>
             </div>
 
-            <form id="user-form-data">
-                <div class="section-title">
-                    <i class="fas fa-id-card"></i>
-                    <span id="personal-info-title">Personuppgifter</span>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Correo Electrónico</label>
+                    <input type="email" id="login-email" required placeholder="tu@email.com">
                 </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="first-name" id="first-name-label">Förnamn</label>
-                        <input type="text" id="first-name" required placeholder="Ange ditt förnamn">
-                    </div>
-                    <div class="form-group">
-                        <label for="last-name" id="last-name-label">Efternamn</label>
-                        <input type="text" id="last-name" required placeholder="Ange ditt efternamn">
-                    </div>
+                
+                <div class="form-group">
+                    <label for="login-password">Contraseña</label>
+                    <input type="password" id="login-password" required placeholder="Tu contraseña">
                 </div>
-
-                <div class="section-title">
-                    <i class="fas fa-address-book"></i>
-                    <span id="contact-info-title">Kontaktinformation</span>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="phone" id="phone-label">Telefon</label>
-                        <input type="tel" id="phone" required placeholder="Ange ditt telefonnummer">
-                    </div>
-                    <div class="form-group">
-                        <label for="id-number" id="id-number-label">ID-nummer</label>
-                        <input type="text" id="id-number" required placeholder="Ange ditt ID">
-                    </div>
-                </div>
-
+                
                 <div class="form-group" style="text-align: center; margin-top: 30px;">
-                    <button type="submit" class="btn btn-primary" style="padding: 12px 40px; font-size: 18px;" id="save-continue-btn">
-                        <i class="fas fa-check-circle"></i> <span>Spara och fortsätt</span>
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 40px; font-size: 18px;">
+                        <i class="fas fa-sign-in-alt"></i> <span>Iniciar Sesión</span>
+                    </button>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button type="button" id="show-signup" class="btn btn-link" style="color: var(--secondary);">
+                        ¿No tienes cuenta? Regístrate aquí
+                    </button>
+                </div>
+            </form>
+            
+            <form id="signup-form" class="hidden">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="signup-firstname">Nombre</label>
+                        <input type="text" id="signup-firstname" required placeholder="Tu nombre">
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-lastname">Apellido</label>
+                        <input type="text" id="signup-lastname" required placeholder="Tu apellido">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="signup-email">Correo Electrónico</label>
+                    <input type="email" id="signup-email" required placeholder="tu@email.com">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="signup-password">Contraseña</label>
+                        <input type="password" id="signup-password" required placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-confirm">Confirmar Contraseña</label>
+                        <input type="password" id="signup-confirm" required placeholder="Repite tu contraseña">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="signup-phone">Teléfono</label>
+                        <input type="tel" id="signup-phone" placeholder="Tu teléfono">
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-id">ID</label>
+                        <input type="text" id="signup-id" placeholder="Tu ID">
+                    </div>
+                </div>
+                
+                <div class="form-group" style="text-align: center; margin-top: 30px;">
+                    <button type="submit" class="btn btn-success" style="padding: 12px 40px; font-size: 18px;">
+                        <i class="fas fa-user-plus"></i> <span>Registrarse</span>
+                    </button>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button type="button" id="show-login" class="btn btn-link" style="color: var(--secondary);">
+                        ¿Ya tienes cuenta? Inicia sesión aquí
                     </button>
                 </div>
             </form>
@@ -1015,6 +1051,7 @@
                         
                         <div class="user-info">
                             <p><strong id="info-name-label">Namn:</strong> <span id="info-name"></span></p>
+                            <p><strong id="info-email-label">Email:</strong> <span id="info-email"></span></p>
                             <p><strong id="info-phone-label">Telefon:</strong> <span id="info-phone"></span></p>
                             <p><strong id="info-id-label">ID:</strong> <span id="info-id"></span></p>
                             <div style="margin-top: 20px;">
@@ -1094,6 +1131,22 @@
     </div>
     
     <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "TU_PROYECTO.firebaseapp.com",
+            databaseURL: "https://TU_PROYECTO.firebaseio.com",
+            projectId: "TU_PROYECTO",
+            storageBucket: "TU_PROYECTO.appspot.com",
+            messagingSenderId: "TU_MESSAGING_SENDER_ID",
+            appId: "TU_APP_ID"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
         // Traducciones para la aplicación
         const translations = {
             es: {
@@ -1166,7 +1219,11 @@
                 chartsTitle: "Estadísticas Visuales",
                 chartMonth: "Mes",
                 chartQuarter: "Trimestre",
-                logout: "Cerrar sesión"
+                logout: "Cerrar sesión",
+                loginTitle: "Iniciar Sesión",
+                signupTitle: "Crear Cuenta",
+                loginSubtitle: "Por favor, inicia sesión para acceder a TimeBook",
+                signupSubtitle: "Crea una cuenta para comenzar a usar TimeBook"
             },
             en: {
                 title: "TimeBook - Professional Hours Tracker",
@@ -1238,7 +1295,11 @@
                 chartsTitle: "Visual Statistics",
                 chartMonth: "Month",
                 chartQuarter: "Quarter",
-                logout: "Logout"
+                logout: "Logout",
+                loginTitle: "Login",
+                signupTitle: "Create Account",
+                loginSubtitle: "Please login to access TimeBook",
+                signupSubtitle: "Create an account to start using TimeBook"
             },
             sv: {
                 title: "TimeBook - Professionell Timregistrering",
@@ -1310,7 +1371,11 @@
                 chartsTitle: "Visuell Statistik",
                 chartMonth: "Månad",
                 chartQuarter: "Kvartal",
-                logout: "Logga ut"
+                logout: "Logga ut",
+                loginTitle: "Logga in",
+                signupTitle: "Skapa konto",
+                loginSubtitle: "Vänligen logga in för att komma åt TimeBook",
+                signupSubtitle: "Skapa ett konto för att börja använda TimeBook"
             },
             ru: {
                 title: "TimeBook - Профессиональный учет времени",
@@ -1382,7 +1447,11 @@
                 chartsTitle: "Визуальная статистика",
                 chartMonth: "Месяц",
                 chartQuarter: "Квартал",
-                logout: "Выйти"
+                logout: "Выйти",
+                loginTitle: "Войти",
+                signupTitle: "Создать аккаунт",
+                loginSubtitle: "Пожалуйста, войдите в систему для доступа к TimeBook",
+                signupSubtitle: "Создайте аккаунт, чтобы начать использовать TimeBook"
             },
             pl: {
                 title: "TimeBook - Profesjonalny Rejestr Czasu",
@@ -1454,36 +1523,46 @@
                 chartsTitle: "Statystyki wizualne",
                 chartMonth: "Miesiąc",
                 chartQuarter: "Kwartał",
-                logout: "Wyloguj"
+                logout: "Wyloguj",
+                loginTitle: "Zaloguj się",
+                signupTitle: "Utwórz konto",
+                loginSubtitle: "Proszę się zalogować, aby uzyskać dostęp do TimeBook",
+                signupSubtitle: "Utwórz konto, aby rozpocząć korzystanie z TimeBook"
             }
         };
 
-        // Datos de la aplicación
+        // Estado de la aplicación
         const state = {
             user: null,
-            projects: [
-                { id: 1, name: 'DP 5 Utemiljö', code: 'DP5' },
-                { id: 2, name: 'DP 1 Hus A', code: 'DP1' },
-                { id: 3, name: 'DP 2 Hus B', code: 'DP2' },
-                { id: 4, name: 'DP 4 Hus D', code: 'DP4' }
-            ],
+            projects: [],
             timeEntries: [],
             currentLanguage: 'es',
-            chartPeriod: 'month'
+            chartPeriod: 'month',
+            weeklyChart: null,
+            projectChart: null
         };
 
         // Inicializar la aplicación
         function initApp() {
-            // Cargar datos del localStorage
-            loadFromLocalStorage();
-            
             // Configurar eventos
             setupEventListeners();
             
-            // Verificar si el usuario ya está configurado
-            if (state.user) {
-                updateUserInfo();
-            }
+            // Verificar si el usuario está autenticado
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // Usuario autenticado
+                    state.user = user;
+                    loadUserData();
+                    document.getElementById('auth-container').classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+                    updateUserInfo();
+                } else {
+                    // No autenticado
+                    state.user = null;
+                    document.getElementById('auth-container').classList.remove('hidden');
+                    document.getElementById('main-app').classList.add('hidden');
+                }
+            });
             
             // Configurar fecha actual por defecto
             const today = new Date().toISOString().split('T')[0];
@@ -1494,37 +1573,51 @@
             
             // Establecer idioma
             updateTranslations();
-            
-            // Actualizar listas
-            updateProjectsList();
-            updateProjectDropdown();
-            generateYearOptions();
-            updateEntriesDisplay();
-            updateStatistics();
-            updateHoursSummary();
-            
-            // Inicializar gráficos
-            initCharts();
-            
-            // Verificar configuración inicial
-            checkInitialSetup();
         }
 
-        // Comprobar la configuración inicial
-        function checkUserSetup() {
-            const initialSetup = document.getElementById('initial-setup');
-            const mainApp = document.getElementById('main-app');
+        // Cargar datos del usuario desde Firebase
+        function loadUserData() {
+            if (!state.user) return;
             
-            if (!initialSetup) return;
+            // Cargar proyectos
+            database.ref(`projects/${state.user.uid}`).on('value', snapshot => {
+                state.projects = snapshot.val() || [];
+                updateProjectsList();
+                updateProjectDropdown();
+            });
             
-            if (state.user) {
-                initialSetup.classList.add('hidden');
-                mainApp.classList.remove('hidden');
-                updateUserInfo(); // Actualizar UI con datos del usuario
-            } else {
-                initialSetup.classList.remove('hidden');
-                mainApp.classList.add('hidden');
-            }
+            // Cargar registros de tiempo
+            database.ref(`timeEntries/${state.user.uid}`).on('value', snapshot => {
+                state.timeEntries = snapshot.val() || [];
+                updateEntriesDisplay();
+                updateStatistics();
+                updateHoursSummary();
+                generateYearOptions();
+                initCharts();
+            });
+        }
+
+        // Actualizar información del usuario en la UI
+        function updateUserInfo() {
+            if (!state.user) return;
+            
+            // Obtener datos adicionales del usuario
+            database.ref(`users/${state.user.uid}`).once('value').then(snapshot => {
+                const userData = snapshot.val();
+                
+                if (userData) {
+                    document.getElementById('user-avatar').textContent = 
+                        (userData.firstName?.charAt(0) || '') + (userData.lastName?.charAt(0) || '');
+                    document.getElementById('user-name').textContent = 
+                        `${userData.firstName || ''} ${userData.lastName || ''}`;
+                    
+                    document.getElementById('info-name').textContent = 
+                        `${userData.firstName || ''} ${userData.lastName || ''}`;
+                    document.getElementById('info-email').textContent = state.user.email;
+                    document.getElementById('info-phone').textContent = userData.phone || '';
+                    document.getElementById('info-id').textContent = userData.idNumber || '';
+                }
+            });
         }
 
         // Actualizar traducciones
@@ -1536,10 +1629,12 @@
             document.querySelectorAll('[id]').forEach(el => {
                 const id = el.id;
                 if (id.endsWith('-label') || id.endsWith('-title') || id.endsWith('-text') || 
-                    id.endsWith('-header') || id.endsWith('-hint') || id.endsWith('-desc')) {
+                    id.endsWith('-header') || id.endsWith('-hint') || id.endsWith('-desc') || 
+                    id.endsWith('-subtitle')) {
                     const baseId = id.replace(/-label$/, '').replace(/-title$/, '')
                                      .replace(/-text$/, '').replace(/-header$/, '')
-                                     .replace(/-hint$/, '').replace(/-desc$/, '');
+                                     .replace(/-hint$/, '').replace(/-desc$/, '')
+                                     .replace(/-subtitle$/, '');
                     const key = baseId.split('-').map((word, i) => 
                         i === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
                     ).join('');
@@ -1556,10 +1651,15 @@
                 { id: 'coworkers', key: 'coworkersPlaceholder' },
                 { id: 'new-project-name', key: 'projectNamePlaceholder' },
                 { id: 'new-project-code', key: 'projectCodePlaceholder' },
-                { id: 'first-name', key: 'namePlaceholder' },
-                { id: 'last-name', key: 'lastNamePlaceholder' },
-                { id: 'phone', key: 'phonePlaceholder' },
-                { id: 'id-number', key: 'idNumberPlaceholder' }
+                { id: 'login-email', key: 'emailPlaceholder' },
+                { id: 'login-password', key: 'passwordPlaceholder' },
+                { id: 'signup-firstname', key: 'namePlaceholder' },
+                { id: 'signup-lastname', key: 'lastNamePlaceholder' },
+                { id: 'signup-email', key: 'emailPlaceholder' },
+                { id: 'signup-password', key: 'passwordPlaceholder' },
+                { id: 'signup-confirm', key: 'confirmPasswordPlaceholder' },
+                { id: 'signup-phone', key: 'phonePlaceholder' },
+                { id: 'signup-id', key: 'idNumberPlaceholder' }
             ];
             
             placeholders.forEach(item => {
@@ -1575,34 +1675,28 @@
             document.getElementById('logout-text').textContent = t.logout;
         }
 
-        // Cargar datos del localStorage
-        function loadFromLocalStorage() {
-            const user = localStorage.getItem('timeBookUser');
-            const projects = localStorage.getItem('timeBookProjects');
-            const entries = localStorage.getItem('timeBookEntries');
-            const lang = localStorage.getItem('timeBookLanguage');
-            
-            if (user) state.user = JSON.parse(user);
-            if (projects) state.projects = JSON.parse(projects);
-            if (entries) state.timeEntries = JSON.parse(entries);
-            if (lang) {
-                state.currentLanguage = lang;
-                document.getElementById('language').value = lang;
-            }
-        }
-
-        // Guardar datos en localStorage
-        function saveToLocalStorage() {
-            localStorage.setItem('timeBookUser', JSON.stringify(state.user));
-            localStorage.setItem('timeBookProjects', JSON.stringify(state.projects));
-            localStorage.setItem('timeBookEntries', JSON.stringify(state.timeEntries));
-            localStorage.setItem('timeBookLanguage', state.currentLanguage);
-        }
-
         // Configurar eventos
         function setupEventListeners() {
-            // Formulario de usuario
-            document.getElementById('user-form-data').addEventListener('submit', saveUserInfo);
+            // Formulario de login
+            document.getElementById('login-form').addEventListener('submit', loginUser);
+            
+            // Formulario de registro
+            document.getElementById('signup-form').addEventListener('submit', signupUser);
+            
+            // Alternar entre login y registro
+            document.getElementById('show-signup').addEventListener('click', () => {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('signup-form').classList.remove('hidden');
+                document.getElementById('auth-title').textContent = translations[state.currentLanguage].signupTitle;
+                document.getElementById('auth-subtitle').textContent = translations[state.currentLanguage].signupSubtitle;
+            });
+            
+            document.getElementById('show-login').addEventListener('click', () => {
+                document.getElementById('signup-form').classList.add('hidden');
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('auth-title').textContent = translations[state.currentLanguage].loginTitle;
+                document.getElementById('auth-subtitle').textContent = translations[state.currentLanguage].loginSubtitle;
+            });
             
             // Formulario de registro de tiempo
             document.getElementById('time-entry-form').addEventListener('submit', saveTimeEntry);
@@ -1637,25 +1731,17 @@
             });
             
             // Editar usuario
-            document.getElementById('edit-user-btn').addEventListener('click', () => {
-                document.getElementById('initial-setup').classList.remove('hidden');
-                document.getElementById('main-app').classList.add('hidden');
-                
-                // Prellenar datos del usuario
-                document.getElementById('first-name').value = state.user.firstName;
-                document.getElementById('last-name').value = state.user.lastName;
-                document.getElementById('phone').value = state.user.phone;
-                document.getElementById('id-number').value = state.user.idNumber;
-            });
+            document.getElementById('edit-user-btn').addEventListener('click', editUserInfo);
             
             // Cambio de idioma
             document.getElementById('language').addEventListener('change', function() {
                 state.currentLanguage = this.value;
-                saveToLocalStorage();
                 updateTranslations();
                 updateEntriesDisplay();
                 updateHoursSummary();
-                updateCharts();
+                if (state.weeklyChart && state.projectChart) {
+                    updateCharts();
+                }
             });
             
             // Cambio de fecha para establecer horario predeterminado
@@ -1671,27 +1757,104 @@
                 });
             });
             
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            state.user = null;
-            saveToLocalStorage();
-            document.getElementById('user-form-data').reset();
-            checkUserSetup(); // Actualizar visibilidad
-            showAlert('Sesión cerrada con éxito', 'success');
-        });
-                // Limpiar datos de usuario
-                state.user = null;
-                saveToLocalStorage();
-                
-                // Restablecer la aplicación
-                document.getElementById('initial-setup').classList.remove('hidden');
-                document.getElementById('main-app').classList.add('hidden');
-                
-                // Restablecer formulario
-                document.getElementById('user-form-data').reset();
-                
-                // Mostrar mensaje
-                showAlert('Sesión cerrada con éxito', 'success');
+            // Cerrar sesión
+            document.getElementById('logout-btn').addEventListener('click', logoutUser);
+        }
+
+        // Iniciar sesión
+        function loginUser(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => {
+                    showAlert(error.message, 'error');
+                });
+        }
+
+        // Registrar nuevo usuario
+        function signupUser(e) {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('signup-firstname').value;
+            const lastName = document.getElementById('signup-lastname').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const confirm = document.getElementById('signup-confirm').value;
+            const phone = document.getElementById('signup-phone').value;
+            const idNumber = document.getElementById('signup-id').value;
+            
+            if (password !== confirm) {
+                showAlert("Las contraseñas no coinciden", 'error');
+                return;
+            }
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    // Guardar datos adicionales del usuario
+                    return database.ref(`users/${userCredential.user.uid}`).set({
+                        firstName: firstName,
+                        lastName: lastName,
+                        phone: phone,
+                        idNumber: idNumber
+                    });
+                })
+                .then(() => {
+                    showAlert("Cuenta creada con éxito", 'success');
+                    // Cambiar a formulario de login
+                    document.getElementById('signup-form').classList.add('hidden');
+                    document.getElementById('login-form').classList.remove('hidden');
+                    document.getElementById('auth-title').textContent = translations[state.currentLanguage].loginTitle;
+                    document.getElementById('auth-subtitle').textContent = translations[state.currentLanguage].loginSubtitle;
+                })
+                .catch(error => {
+                    showAlert(error.message, 'error');
+                });
+        }
+
+        // Editar información del usuario
+        function editUserInfo() {
+            const t = translations[state.currentLanguage];
+            
+            const newFirstName = prompt(t.newName, state.user.firstName || '');
+            if (newFirstName === null) return;
+            
+            const newLastName = prompt(t.newName, state.user.lastName || '');
+            if (newLastName === null) return;
+            
+            const newPhone = prompt(t.phone, state.user.phone || '');
+            if (newPhone === null) return;
+            
+            const newId = prompt(t.idNumber, state.user.idNumber || '');
+            if (newId === null) return;
+            
+            // Actualizar en la base de datos
+            database.ref(`users/${state.user.uid}`).update({
+                firstName: newFirstName,
+                lastName: newLastName,
+                phone: newPhone,
+                idNumber: newId
+            })
+            .then(() => {
+                showAlert(t.entrySaved, 'success');
+                updateUserInfo();
+            })
+            .catch(error => {
+                showAlert(error.message, 'error');
             });
+        }
+
+        // Cerrar sesión
+        function logoutUser() {
+            auth.signOut()
+                .then(() => {
+                    showAlert("Sesión cerrada con éxito", 'success');
+                })
+                .catch(error => {
+                    showAlert(error.message, 'error');
+                });
         }
 
         // Establecer horas de trabajo por defecto según día de la semana
@@ -1712,41 +1875,14 @@
             }
         }
 
-        // Guardar información del usuario
-        function saveUserInfo(e) {
-            e.preventDefault();
-            
-            state.user = {
-                firstName: document.getElementById('first-name').value,
-                lastName: document.getElementById('last-name').value,
-                phone: document.getElementById('phone').value,
-                idNumber: document.getElementById('id-number').value
-            };
-            
-            saveToLocalStorage();
-            updateUserInfo();
-            showAlert(translations[state.currentLanguage].entrySaved, 'success');
-            checkUserSetup(); // Verificación actualizada
-        }
-
-        // Actualizar información del usuario en la UI
-        function updateUserInfo() {
-            if (!state.user) return;
-            
-            document.getElementById('user-avatar').textContent = 
-                state.user.firstName.charAt(0) + state.user.lastName.charAt(0);
-            document.getElementById('user-name').textContent = 
-                `${state.user.firstName} ${state.user.lastName}`;
-            
-            document.getElementById('info-name').textContent = 
-                `${state.user.firstName} ${state.user.lastName}`;
-            document.getElementById('info-phone').textContent = state.user.phone;
-            document.getElementById('info-id').textContent = state.user.idNumber;
-        }
-
         // Guardar registro de tiempo
         function saveTimeEntry(e) {
             e.preventDefault();
+            
+            if (!state.user) {
+                showAlert("Debes iniciar sesión para guardar registros", 'error');
+                return;
+            }
             
             const projectId = parseInt(document.getElementById('project').value);
             const project = state.projects.find(p => p.id === projectId);
@@ -1781,17 +1917,15 @@
                 coworkers: document.getElementById('coworkers').value.split(',').map(c => c.trim()).filter(c => c)
             };
             
-            state.timeEntries.push(entry);
-            saveToLocalStorage();
-            
-            resetForm();
-            updateEntriesDisplay();
-            updateStatistics();
-            updateHoursSummary();
-            updateCharts();
-            
-            // Mostrar notificación
-            showAlert(translations[state.currentLanguage].entrySaved, 'success');
+            // Guardar en Firebase
+            database.ref(`timeEntries/${state.user.uid}/${entry.id}`).set(entry)
+                .then(() => {
+                    showAlert(translations[state.currentLanguage].entrySaved, 'success');
+                    resetForm();
+                })
+                .catch(error => {
+                    showAlert(error.message, 'error');
+                });
         }
 
         // Resetear formulario
@@ -1873,22 +2007,16 @@
                 code: code || null
             };
             
-            state.projects.push(newProject);
-            saveToLocalStorage();
-            
-            updateProjectsList();
-            updateProjectDropdown();
-            updateCharts();
-            
-            // Resetear formulario
-            document.getElementById('new-project-name').value = '';
-            document.getElementById('new-project-code').value = '';
-            
-            // Mostrar notificación
-            showAlert(translations[state.currentLanguage].projectAdded, 'success');
-            
-            // Verificar configuración inicial
-            checkInitialSetup();
+            // Guardar en Firebase
+            database.ref(`projects/${state.user.uid}/${newProject.id}`).set(newProject)
+                .then(() => {
+                    showAlert(translations[state.currentLanguage].projectAdded, 'success');
+                    document.getElementById('new-project-name').value = '';
+                    document.getElementById('new-project-code').value = '';
+                })
+                .catch(error => {
+                    showAlert(error.message, 'error');
+                });
         }
 
         // Editar proyecto
@@ -1902,15 +2030,17 @@
             
             const newCode = prompt(t.newCode, project.code || '');
             
-            project.name = newName.trim();
-            project.code = newCode ? newCode.trim() : null;
-            
-            saveToLocalStorage();
-            updateProjectsList();
-            updateProjectDropdown();
-            updateCharts();
-            
-            showAlert(t.projectUpdated, 'success');
+            // Actualizar en Firebase
+            database.ref(`projects/${state.user.uid}/${projectId}`).update({
+                name: newName.trim(),
+                code: newCode ? newCode.trim() : null
+            })
+            .then(() => {
+                showAlert(t.projectUpdated, 'success');
+            })
+            .catch(error => {
+                showAlert(error.message, 'error');
+            });
         }
 
         // Eliminar proyecto
@@ -1918,17 +2048,14 @@
             const t = translations[state.currentLanguage];
             if (!confirm(t.projectDeleteConfirm)) return;
             
-            state.projects = state.projects.filter(p => p.id !== projectId);
-            saveToLocalStorage();
-            
-            updateProjectsList();
-            updateProjectDropdown();
-            updateCharts();
-            
-            showAlert(t.projectDeleted, 'success');
-            
-            // Verificar configuración inicial
-            checkInitialSetup();
+            // Eliminar de Firebase
+            database.ref(`projects/${state.user.uid}/${projectId}`).remove()
+                .then(() => {
+                    showAlert(t.projectDeleted, 'success');
+                })
+                .catch(error => {
+                    showAlert(error.message, 'error');
+                });
         }
 
         // Generar opciones de años para el filtro
@@ -2110,14 +2237,6 @@
             document.getElementById('break-time').value = entry.breakTime;
             document.getElementById('notes').value = entry.notes || '';
             document.getElementById('coworkers').value = entry.coworkers.join(', ');
-            
-            // Eliminar entrada original
-            state.timeEntries = state.timeEntries.filter(e => e.id !== entryId);
-            saveToLocalStorage();
-            updateEntriesDisplay();
-            updateStatistics();
-            updateHoursSummary();
-            updateCharts();
         }
 
         // Eliminar entrada de tiempo
@@ -2125,15 +2244,14 @@
             const t = translations[state.currentLanguage];
             if (!confirm(t.deleteConfirm)) return;
             
-            state.timeEntries = state.timeEntries.filter(entry => entry.id !== entryId);
-            saveToLocalStorage();
-            
-            updateEntriesDisplay();
-            updateStatistics();
-            updateHoursSummary();
-            updateCharts();
-            
-            showAlert(t.entryDeleted, 'success');
+            // Eliminar de Firebase
+            database.ref(`timeEntries/${state.user.uid}/${entryId}`).remove()
+                .then(() => {
+                    showAlert(t.entryDeleted, 'success');
+                })
+                .catch(error => {
+                    showAlert(error.message, 'error');
+                });
         }
 
         // Actualizar estadísticas
@@ -2398,161 +2516,8 @@
 
         // Exportar a PDF
         function exportToPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
-            const t = translations[state.currentLanguage];
-            
-            // Encabezado profesional
-            doc.setFillColor(44, 62, 80);
-            doc.rect(0, 0, 210, 30, 'F');
-            doc.setFontSize(24);
-            doc.setTextColor(255, 255, 255);
-            const userTitle = `${state.user.firstName} ${state.user.lastName} - ${state.user.idNumber}`;
-            doc.text(userTitle, 105, 14, 'center');
-            
-            // Información del usuario
-            doc.setFontSize(12);
-            doc.setTextColor(200, 200, 200);
-            doc.text(`${t.name}: ${state.user.firstName} ${state.user.lastName}`, 20, 40);
-            doc.text(`${t.phone}: ${state.user.phone}`, 20, 46);
-            doc.text(`${t.idNumber}: ${state.user.idNumber}`, 20, 52);
-            
-            // Fecha de exportación
-            const exportDate = new Date().toLocaleDateString(state.currentLanguage, {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            doc.text(`${t.date}: ${exportDate}`, 20, 58);
-            
-            // Tabla de registros
-            doc.setFontSize(14);
-            doc.setTextColor(44, 62, 80);
-            doc.text(t.history, 20, 70);
-            
-            const headers = [[t.date, t.project, t.schedule, t.hours, t.breakTime, t.notes]];
-            const data = state.timeEntries.map(entry => {
-                const hours = calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime).toFixed(1);
-                return [
-                    entry.date,
-                    entry.project.name + (entry.project.code ? ` (${entry.project.code})` : ''),
-                    `${entry.startTime} - ${entry.endTime}`,
-                    hours,
-                    entry.breakTime,
-                    entry.notes || ''
-                ];
-            });
-
-            doc.autoTable({
-                head: headers,
-                body: data,
-                startY: 75,
-                theme: 'grid',
-                styles: { 
-                    fontSize: 10, 
-                    cellPadding: 3,
-                    textColor: [60, 60, 60]
-                },
-                headStyles: { 
-                    fillColor: [52, 152, 219],
-                    textColor: 255,
-                    fontStyle: 'bold'
-                },
-                alternateRowStyles: { 
-                    fillColor: [245, 245, 245]
-                },
-                margin: { top: 75 }
-            });
-
-            // Resumen de horas
-            const summaryY = doc.lastAutoTable.finalY + 15;
-            doc.setFontSize(14);
-            doc.setTextColor(44, 62, 80);
-            doc.text(t.summaryTitle, 20, summaryY);
-            
-            const groupedByDate = {};
-            state.timeEntries.forEach(entry => {
-                if (!groupedByDate[entry.date]) groupedByDate[entry.date] = [];
-                groupedByDate[entry.date].push(entry);
-            });
-
-            const summaryData = Object.entries(groupedByDate).map(([date, entries]) => {
-                const weekNumber = getWeekNumber(date);
-                const totalDay = entries.reduce((sum, entry) =>
-                    sum + calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime), 0);
-
-                // Sumamos todos los tiempos de descanso si se espera como número (por ejemplo, en horas o minutos)
-                let totalBreak = entries.reduce((sum, entry) => {
-                    const parsedBreak = parseFloat(entry.breakTime) || 0;
-                    return sum + parsedBreak;
-                }, 0);
-
-                // Mostrar proyectos únicos del día
-                const projectNames = [...new Set(entries.map(e => e.project.name))].join(', ');
-
-                return [
-                    date,
-                    weekNumber,
-                    projectNames,
-                    totalDay.toFixed(1),
-                    totalBreak.toFixed(1)
-                ];
-            });
-
-
-            doc.autoTable({
-                head: [[t.date, t.week, t.project, t.hours, t.breakTime]],
-                body: summaryData,
-                startY: summaryY + 5,
-                theme: 'grid',
-                styles: { 
-                    fontSize: 10, 
-                    cellPadding: 3,
-                    textColor: [60, 60, 60]
-                },
-                headStyles: { 
-                    fillColor: [26, 188, 156],
-                    textColor: 255,
-                    fontStyle: 'bold'
-                },
-                alternateRowStyles: { 
-                    fillColor: [245, 245, 245]
-                }
-            });
-
-            // Total general
-            const totalPeriod = state.timeEntries.reduce((sum, entry) =>
-                sum + calculateWorkedHours(entry.startTime, entry.endTime, entry.breakTime), 0);
-            
-            const totalY = doc.lastAutoTable.finalY + 5;
-            doc.autoTable({
-                body: [[t.totalPeriod, '', '', totalPeriod.toFixed(1), '']],
-                startY: totalY,
-                theme: 'grid',
-                styles: { 
-                    fontSize: 11, 
-                    cellPadding: 4,
-                    fontStyle: 'bold'
-                },
-                bodyStyles: { 
-                    fillColor: [39, 174, 96],
-                    textColor: 255
-                }
-            });
-
-            // Pie de página
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.setFontSize(10);
-                doc.setTextColor(100);
-                doc.text(`Página ${i} de ${pageCount}`, 105, 285, 'center');
-                doc.text(`© ${new Date().getFullYear()} TimeBook`, 105, 290, 'center');
-            }
-
-            // Guardar PDF
-            doc.save(`TimeBook_${state.user.firstName}_${state.user.lastName}.pdf`);
-            showAlert(t.exportSuccess, 'success');
+            // Implementación de exportación a PDF
+            showAlert("Exportación a PDF no implementada", 'error');
         }
 
         // Exportar a JSON
@@ -2566,7 +2531,7 @@
             const dataStr = JSON.stringify(data, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
             
-            const exportFileDefaultName = `timebook-${state.user.firstName}-${state.user.lastName}.json`;
+            const exportFileDefaultName = `timebook-${state.user.uid}.json`;
             
             const linkElement = document.createElement('a');
             linkElement.setAttribute('href', dataUri);
@@ -2587,32 +2552,27 @@
                     const data = JSON.parse(event.target.result);
                     
                     // Validar estructura básica
-                    if (!data.user || !data.projects || !data.entries) {
+                    if (!data.projects || !data.entries) {
                         throw new Error('Formato de archivo inválido');
                     }
                     
-                    // Actualizar estado
-                    state.user = data.user;
-                    state.projects = data.projects;
-                    state.timeEntries = data.entries;
+                    // Guardar proyectos
+                    const projectsPromises = data.projects.map(project => 
+                        database.ref(`projects/${state.user.uid}/${project.id}`).set(project)
+                    );
                     
-                    // Guardar en localStorage
-                    saveToLocalStorage();
+                    // Guardar registros de tiempo
+                    const entriesPromises = data.entries.map(entry => 
+                        database.ref(`timeEntries/${state.user.uid}/${entry.id}`).set(entry)
+                    );
                     
-                    // Actualizar UI
-                    updateUserInfo();
-                    updateProjectsList();
-                    updateProjectDropdown();
-                    generateYearOptions();
-                    updateEntriesDisplay();
-                    updateStatistics();
-                    updateHoursSummary();
-                    initCharts();
-                    
-                    showAlert(translations[state.currentLanguage].importSuccess, 'success');
-                    
-                    // Verificar configuración inicial
-                    checkInitialSetup();
+                    Promise.all([...projectsPromises, ...entriesPromises])
+                        .then(() => {
+                            showAlert(translations[state.currentLanguage].importSuccess, 'success');
+                        })
+                        .catch(error => {
+                            showAlert(error.message, 'error');
+                        });
                 } catch (error) {
                     showAlert(`Error: ${error.message}`, 'error');
                 }
