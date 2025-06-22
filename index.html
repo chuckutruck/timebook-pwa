@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TimeBook - Registro Profesional de Horas</title>
-    <!-- base SDK -->
-    <script src="https://www.gstatic.com/basejs/9.22.1/base-app-compat.js"></script>
-    <script src="https://www.gstatic.com/basejs/9.22.1/base-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/basejs/9.22.1/base-database-compat.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="app.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Estilos anteriores (mantenidos) */
         :root {
             --primary: #2c3e50;
             --secondary: #3498db;
@@ -772,7 +772,7 @@
                 <i class="fas fa-clock"></i>
                 <h1 id="app-title">TimeBook</h1>
             </div>
-            <div class="controls" id="app-controls">
+            <div class="controls hidden" id="app-controls">
                 <select id="language" class="language-selector">
                     <option value="sv" selected>Svenska</option>				
                     <option value="es">Spanska</option>
@@ -793,7 +793,7 @@
                     <input type="file" id="import-file" accept=".json" style="display: none;">
                 </div>
             </div>
-            <div class="user-section" id="user-section">
+            <div class="user-section hidden" id="user-section">
                 <div class="user-avatar" id="user-avatar">A</div>
                 <span id="user-name">Användare</span>
                 <button id="logout-btn" class="btn btn-danger" style="padding: 8px 15px;">
@@ -1132,15 +1132,15 @@
     </div>
     
     <script>
-       // Configuración Firebase
+        // Configuración de Firebase con tus datos
         const firebaseConfig = {
-          apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
-          authDomain: "tidbok-df555.firebaseapp.com",
-          databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app",
-          projectId: "tidbok-df555",
-          storageBucket: "tidbok-df555.firebasestorage.app",
-          messagingSenderId: "467331966400",
-          appId: "1:467331966400:web:abb6949a76918f2eb8d425"
+            apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
+            authDomain: "tidbok-df555.firebaseapp.com",
+            databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "tidbok-df555",
+            storageBucket: "tidbok-df555.firebasestorage.app",
+            messagingSenderId: "467331966400",
+            appId: "1:467331966400:web:abb6949a76918f2eb8d425"
         };
 
         // Inicializar Firebase
@@ -1557,11 +1557,19 @@
                     document.getElementById('auth-container').classList.add('hidden');
                     document.getElementById('main-app').classList.remove('hidden');
                     updateUserInfo();
+                    
+                    // Mostrar controles y botón de cerrar sesión
+                    document.getElementById('app-controls').classList.remove('hidden');
+                    document.getElementById('user-section').classList.remove('hidden');
                 } else {
                     // No autenticado
                     state.user = null;
                     document.getElementById('auth-container').classList.remove('hidden');
                     document.getElementById('main-app').classList.add('hidden');
+                    
+                    // Ocultar controles y botón de cerrar sesión
+                    document.getElementById('app-controls').classList.add('hidden');
+                    document.getElementById('user-section').classList.add('hidden');
                 }
             });
             
@@ -1594,7 +1602,11 @@
                 updateStatistics();
                 updateHoursSummary();
                 generateYearOptions();
-                initCharts();
+                if (state.weeklyChart && state.projectChart) {
+                    updateCharts();
+                } else {
+                    initCharts();
+                }
             });
         }
 
@@ -1607,13 +1619,16 @@
                 const userData = snapshot.val();
                 
                 if (userData) {
+                    const firstName = userData.firstName || '';
+                    const lastName = userData.lastName || '';
+                    
                     document.getElementById('user-avatar').textContent = 
-                        (userData.firstName?.charAt(0) || '') + (userData.lastName?.charAt(0) || '');
+                        (firstName.charAt(0) || '') + (lastName.charAt(0) || '');
                     document.getElementById('user-name').textContent = 
-                        `${userData.firstName || ''} ${userData.lastName || ''}`;
+                        `${firstName} ${lastName}`;
                     
                     document.getElementById('info-name').textContent = 
-                        `${userData.firstName || ''} ${userData.lastName || ''}`;
+                        `${firstName} ${lastName}`;
                     document.getElementById('info-email').textContent = state.user.email;
                     document.getElementById('info-phone').textContent = userData.phone || '';
                     document.getElementById('info-id').textContent = userData.idNumber || '';
@@ -2245,7 +2260,7 @@
             const t = translations[state.currentLanguage];
             if (!confirm(t.deleteConfirm)) return;
             
-            // Eliminar de base
+            // Eliminar de Firebase
             database.ref(`timeEntries/${state.user.uid}/${entryId}`).remove()
                 .then(() => {
                     showAlert(t.entryDeleted, 'success');
