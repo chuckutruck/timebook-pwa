@@ -1511,15 +1511,16 @@
         }
 
         // Comprobar la configuración inicial
-        function checkInitialSetup() {
+        function checkUserSetup() {
             const initialSetup = document.getElementById('initial-setup');
             const mainApp = document.getElementById('main-app');
             
             if (!initialSetup) return;
             
-            if (state.projects && state.projects.length > 0) {
+            if (state.user) {
                 initialSetup.classList.add('hidden');
                 mainApp.classList.remove('hidden');
+                updateUserInfo(); // Actualizar UI con datos del usuario
             } else {
                 initialSetup.classList.remove('hidden');
                 mainApp.classList.add('hidden');
@@ -1670,8 +1671,13 @@
                 });
             });
             
-            // Botón de cerrar sesión
-            document.getElementById('logout-btn').addEventListener('click', () => {
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            state.user = null;
+            saveToLocalStorage();
+            document.getElementById('user-form-data').reset();
+            checkUserSetup(); // Actualizar visibilidad
+            showAlert('Sesión cerrada con éxito', 'success');
+        });
                 // Limpiar datos de usuario
                 state.user = null;
                 saveToLocalStorage();
@@ -1719,12 +1725,8 @@
             
             saveToLocalStorage();
             updateUserInfo();
-            
-            // Crear alerta de éxito
             showAlert(translations[state.currentLanguage].entrySaved, 'success');
-            
-            // Verificar configuración inicial
-            checkInitialSetup();
+            checkUserSetup(); // Verificación actualizada
         }
 
         // Actualizar información del usuario en la UI
