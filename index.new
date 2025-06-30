@@ -6,9 +6,6 @@
     <title>TimeTrack - Registro de Horas Profesional</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         :root {
             --primary: #4361ee;
@@ -590,9 +587,38 @@
                 justify-content: space-between;
             }
         }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: var(--border-radius);
+            color: white;
+            font-weight: 500;
+            box-shadow: var(--box-shadow);
+            z-index: 2000;
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background-color: #28a745;
+        }
+        
+        .notification.error {
+            background-color: #dc3545;
+        }
     </style>
 </head>
 <body>
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+    
     <!-- Header -->
     <header>
         <div class="container">
@@ -991,21 +1017,116 @@
     </footer>
     
     <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
-            authDomain: "tidbok-df555.firebaseapp.com",
-            databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "tidbok-df555",
-            storageBucket: "tidbok-df555.appspot.com",
-            messagingSenderId: "467331966400",
-            appId: "1:467331966400:web:abb6949a76918f2eb8d425"
+        // LocalStorage-based database simulation
+        const LocalStorageDB = {
+            // Initialize with sample data if empty
+            init() {
+                if (!localStorage.getItem('users')) {
+                    localStorage.setItem('users', JSON.stringify({}));
+                }
+                if (!localStorage.getItem('projects')) {
+                    localStorage.setItem('projects', JSON.stringify({}));
+                }
+                if (!localStorage.getItem('timeEntries')) {
+                    localStorage.setItem('timeEntries', JSON.stringify({}));
+                }
+            },
+            
+            // User methods
+            createUser(uid, userData) {
+                const users = JSON.parse(localStorage.getItem('users'));
+                users[uid] = userData;
+                localStorage.setItem('users', JSON.stringify(users));
+            },
+            
+            getUser(uid) {
+                const users = JSON.parse(localStorage.getItem('users'));
+                return users[uid] || null;
+            },
+            
+            updateUser(uid, updates) {
+                const users = JSON.parse(localStorage.getItem('users'));
+                if (users[uid]) {
+                    users[uid] = {...users[uid], ...updates};
+                    localStorage.setItem('users', JSON.stringify(users));
+                    return true;
+                }
+                return false;
+            },
+            
+            // Project methods
+            createProject(uid, projectData) {
+                const projects = JSON.parse(localStorage.getItem('projects'));
+                if (!projects[uid]) projects[uid] = {};
+                const projectId = 'proj_' + Date.now();
+                projects[uid][projectId] = projectData;
+                localStorage.setItem('projects', JSON.stringify(projects));
+                return projectId;
+            },
+            
+            getProjects(uid) {
+                const projects = JSON.parse(localStorage.getItem('projects'));
+                return projects[uid] || {};
+            },
+            
+            updateProject(uid, projectId, projectData) {
+                const projects = JSON.parse(localStorage.getItem('projects'));
+                if (projects[uid] && projects[uid][projectId]) {
+                    projects[uid][projectId] = projectData;
+                    localStorage.setItem('projects', JSON.stringify(projects));
+                    return true;
+                }
+                return false;
+            },
+            
+            deleteProject(uid, projectId) {
+                const projects = JSON.parse(localStorage.getItem('projects'));
+                if (projects[uid] && projects[uid][projectId]) {
+                    delete projects[uid][projectId];
+                    localStorage.setItem('projects', JSON.stringify(projects));
+                    return true;
+                }
+                return false;
+            },
+            
+            // Time entry methods
+            createTimeEntry(uid, entryData) {
+                const timeEntries = JSON.parse(localStorage.getItem('timeEntries'));
+                if (!timeEntries[uid]) timeEntries[uid] = {};
+                const entryId = 'entry_' + Date.now();
+                timeEntries[uid][entryId] = entryData;
+                localStorage.setItem('timeEntries', JSON.stringify(timeEntries));
+                return entryId;
+            },
+            
+            getTimeEntries(uid) {
+                const timeEntries = JSON.parse(localStorage.getItem('timeEntries'));
+                return timeEntries[uid] || {};
+            },
+            
+            updateTimeEntry(uid, entryId, entryData) {
+                const timeEntries = JSON.parse(localStorage.getItem('timeEntries'));
+                if (timeEntries[uid] && timeEntries[uid][entryId]) {
+                    timeEntries[uid][entryId] = entryData;
+                    localStorage.setItem('timeEntries', JSON.stringify(timeEntries));
+                    return true;
+                }
+                return false;
+            },
+            
+            deleteTimeEntry(uid, entryId) {
+                const timeEntries = JSON.parse(localStorage.getItem('timeEntries'));
+                if (timeEntries[uid] && timeEntries[uid][entryId]) {
+                    delete timeEntries[uid][entryId];
+                    localStorage.setItem('timeEntries', JSON.stringify(timeEntries));
+                    return true;
+                }
+                return false;
+            }
         };
         
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const database = firebase.database();
+        // Initialize the database
+        LocalStorageDB.init();
         
         // Global variables
         let currentUser = null;
@@ -1046,6 +1167,7 @@
         const userInfoHeader = document.getElementById('user-info-header');
         const timeFilter = document.getElementById('time-filter');
         const historyFilter = document.getElementById('history-filter');
+        const notificationEl = document.getElementById('notification');
         
         // Stats elements
         const totalHoursEl = document.getElementById('total-hours');
@@ -1075,20 +1197,16 @@
             document.getElementById('end-time').value = '17:00';
         });
         
-        // Initialize Firebase app
+        // Initialize app
         function initApp() {
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    currentUser = user;
-                    authSection.classList.add('hidden');
-                    mainContent.classList.remove('hidden');
-                    loadUserData();
-                } else {
-                    currentUser = null;
-                    authSection.classList.remove('hidden');
-                    mainContent.classList.add('hidden');
-                }
-            });
+            // Check if user is already logged in
+            const loggedInUserId = localStorage.getItem('loggedInUserId');
+            if (loggedInUserId) {
+                currentUser = { uid: loggedInUserId };
+                authSection.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                loadUserData();
+            }
         }
         
         // Set up event listeners
@@ -1251,25 +1369,19 @@
             if (!currentUser) return;
             
             // Load user profile
-            database.ref('users/' + currentUser.uid).once('value').then(snapshot => {
-                userData = snapshot.val() || {};
-                updateUserProfile();
-            });
+            userData = LocalStorageDB.getUser(currentUser.uid) || {};
+            updateUserProfile();
             
             // Load projects
-            database.ref('projects/' + currentUser.uid).on('value', snapshot => {
-                projects = snapshot.val() || {};
-                renderProjects();
-                updateProjectSelector();
-            });
+            projects = LocalStorageDB.getProjects(currentUser.uid) || {};
+            renderProjects();
+            updateProjectSelector();
             
             // Load time entries
-            database.ref('timeEntries/' + currentUser.uid).on('value', snapshot => {
-                timeEntries = snapshot.val() || {};
-                renderTimeEntries();
-                updateStats();
-                updateCharts();
-            });
+            timeEntries = LocalStorageDB.getTimeEntries(currentUser.uid) || {};
+            renderTimeEntries();
+            updateStats();
+            updateCharts();
         }
         
         // Update user profile in UI
@@ -1517,7 +1629,7 @@
             hoursChart.update();
         }
         
-        // Firebase Functions
+        // Authentication Functions
         function loginUser(email, password) {
             resetErrors();
             
@@ -1531,46 +1643,78 @@
                 return;
             }
             
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    // Signed in
-                    console.log('Usuario autenticado:', userCredential.user);
-                })
-                .catch((error) => {
-                    const errorMessage = error.message;
-                    showError('login-password-error', errorMessage);
-                });
+            // For demo, we'll just use the email as UID
+            const uid = 'user_' + email.replace(/[^a-z0-9]/gi, '');
+            
+            // Check if user exists
+            const user = LocalStorageDB.getUser(uid);
+            
+            if (user) {
+                // "Authenticate" user
+                currentUser = { uid: uid };
+                userData = user;
+                
+                // Save login state
+                localStorage.setItem('loggedInUserId', uid);
+                
+                // Show main content
+                authSection.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                
+                // Load user data
+                loadUserData();
+                
+                showNotification('¡Bienvenido de nuevo!', 'success');
+            } else {
+                showError('login-password-error', 'Credenciales inválidas');
+            }
         }
         
         function signupUser(email, password, firstName, lastName, phone, userId) {
-            auth.createUserWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    // Signed up
-                    const user = userCredential.user;
-                    
-                    // Save additional user data to Realtime Database
-                    database.ref('users/' + user.uid).set({
-                        firstName: firstName,
-                        lastName: lastName,
-                        email: email,
-                        phone: phone,
-                        userId: userId
-                    });
-                    
-                    console.log('Usuario registrado:', user);
-                })
-                .catch((error) => {
-                    const errorMessage = error.message;
-                    showError('register-email-error', errorMessage);
-                });
+            // Create user ID based on email
+            const uid = 'user_' + email.replace(/[^a-z0-9]/gi, '');
+            
+            // Create user data
+            const userData = {
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                phone: phone,
+                userId: userId
+            };
+            
+            // Save user to "database"
+            LocalStorageDB.createUser(uid, userData);
+            
+            // "Authenticate" user
+            currentUser = { uid: uid };
+            this.userData = userData;
+            
+            // Save login state
+            localStorage.setItem('loggedInUserId', uid);
+            
+            // Show main content
+            authSection.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+            
+            // Load user data
+            loadUserData();
+            
+            showNotification('¡Cuenta creada con éxito!', 'success');
         }
         
         function logoutUser() {
-            auth.signOut().then(() => {
-                console.log('Usuario cerró sesión');
-            }).catch((error) => {
-                console.error('Error al cerrar sesión:', error);
-            });
+            currentUser = null;
+            userData = {};
+            
+            // Clear login state
+            localStorage.removeItem('loggedInUserId');
+            
+            // Show auth section
+            authSection.classList.remove('hidden');
+            mainContent.classList.add('hidden');
+            
+            showNotification('Sesión cerrada correctamente', 'success');
         }
         
         function saveProject(e) {
@@ -1593,27 +1737,29 @@
             };
             
             if (currentUser) {
-                let updates = {};
+                let projectId;
                 
                 if (editingProjectId) {
                     // Update existing project
-                    updates['/projects/' + currentUser.uid + '/' + editingProjectId] = projectData;
+                    LocalStorageDB.updateProject(currentUser.uid, editingProjectId, projectData);
+                    projectId = editingProjectId;
                 } else {
                     // Create new project
-                    const newProjectKey = database.ref().child('projects').child(currentUser.uid).push().key;
-                    updates['/projects/' + currentUser.uid + '/' + newProjectKey] = projectData;
+                    projectId = LocalStorageDB.createProject(currentUser.uid, projectData);
                 }
                 
-                database.ref().update(updates)
-                    .then(() => {
-                        projectModal.style.display = 'none';
-                        projectForm.reset();
-                        editingProjectId = null;
-                    })
-                    .catch(error => {
-                        console.error('Error al guardar proyecto:', error);
-                        alert('Error al guardar proyecto');
-                    });
+                // Update local data
+                projects = LocalStorageDB.getProjects(currentUser.uid);
+                
+                // Update UI
+                renderProjects();
+                updateProjectSelector();
+                
+                projectModal.style.display = 'none';
+                projectForm.reset();
+                editingProjectId = null;
+                
+                showNotification('Proyecto guardado exitosamente', 'success');
             }
         }
         
@@ -1630,24 +1776,27 @@
         function deleteProject(projectId) {
             if (confirm('¿Estás seguro de eliminar este proyecto? Todas las entradas relacionadas también se eliminarán.')) {
                 // Delete project
-                database.ref('projects/' + currentUser.uid + '/' + projectId).remove()
-                    .then(() => {
-                        // Delete related time entries
-                        let updates = {};
-                        for (const entryId in timeEntries) {
-                            if (timeEntries[entryId].project === projectId) {
-                                updates['/timeEntries/' + currentUser.uid + '/' + entryId] = null;
-                            }
-                        }
-                        
-                        if (Object.keys(updates).length > 0) {
-                            database.ref().update(updates);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error al eliminar proyecto:', error);
-                        alert('Error al eliminar proyecto');
-                    });
+                LocalStorageDB.deleteProject(currentUser.uid, projectId);
+                
+                // Delete related time entries
+                for (const entryId in timeEntries) {
+                    if (timeEntries[entryId].project === projectId) {
+                        LocalStorageDB.deleteTimeEntry(currentUser.uid, entryId);
+                    }
+                }
+                
+                // Update local data
+                projects = LocalStorageDB.getProjects(currentUser.uid);
+                timeEntries = LocalStorageDB.getTimeEntries(currentUser.uid);
+                
+                // Update UI
+                renderProjects();
+                updateProjectSelector();
+                renderTimeEntries();
+                updateStats();
+                updateCharts();
+                
+                showNotification('Proyecto eliminado exitosamente', 'success');
             }
         }
         
@@ -1684,11 +1833,9 @@
                 return;
             }
             
-            // Create new entry
-            const newEntryKey = database.ref().child('timeEntries').child(currentUser.uid).push().key;
-            
+            // Create entry data
             const entryData = {
-                id: newEntryKey,
+                id: '', // Will be set by create method
                 date: date,
                 project: projectId,
                 startTime: startTime,
@@ -1699,24 +1846,25 @@
                 team: team
             };
             
-            // Save to Firebase
-            const updates = {};
-            updates['/timeEntries/' + currentUser.uid + '/' + newEntryKey] = entryData;
+            // Save to "database"
+            const entryId = LocalStorageDB.createTimeEntry(currentUser.uid, entryData);
+            entryData.id = entryId;
             
-            database.ref().update(updates)
-                .then(() => {
-                    alert('Entrada guardada exitosamente');
-                    timeEntryForm.reset();
-                    
-                    // Reset to current date and default times
-                    document.getElementById('entry-date').valueAsDate = new Date();
-                    document.getElementById('start-time').value = '09:00';
-                    document.getElementById('end-time').value = '17:00';
-                })
-                .catch(error => {
-                    console.error('Error al guardar entrada:', error);
-                    alert('Error al guardar entrada');
-                });
+            // Update local data
+            timeEntries = LocalStorageDB.getTimeEntries(currentUser.uid);
+            
+            // Update UI
+            renderTimeEntries();
+            updateStats();
+            updateCharts();
+            
+            // Reset form
+            timeEntryForm.reset();
+            document.getElementById('entry-date').valueAsDate = new Date();
+            document.getElementById('start-time').value = '09:00';
+            document.getElementById('end-time').value = '17:00';
+            
+            showNotification('Entrada guardada exitosamente', 'success');
         }
         
         function editTimeEntry(entryId) {
@@ -1740,16 +1888,23 @@
             document.querySelector('#time-entry-form button[type="submit"]').innerHTML = 
                 '<i class="fas fa-save"></i> Actualizar Entrada';
             
-            alert('Ahora puedes editar la entrada. Modifica los campos necesarios y haz clic en "Actualizar Entrada".');
+            showNotification('Ahora puedes editar la entrada. Modifica los campos necesarios y haz clic en "Actualizar Entrada".', 'success');
         }
         
         function deleteTimeEntry(entryId) {
             if (confirm('¿Estás seguro de eliminar esta entrada?')) {
-                database.ref('timeEntries/' + currentUser.uid + '/' + entryId).remove()
-                    .catch(error => {
-                        console.error('Error al eliminar entrada:', error);
-                        alert('Error al eliminar entrada');
-                    });
+                // Delete from "database"
+                LocalStorageDB.deleteTimeEntry(currentUser.uid, entryId);
+                
+                // Update local data
+                timeEntries = LocalStorageDB.getTimeEntries(currentUser.uid);
+                
+                // Update UI
+                renderTimeEntries();
+                updateStats();
+                updateCharts();
+                
+                showNotification('Entrada eliminada exitosamente', 'success');
             }
         }
         
@@ -1767,18 +1922,17 @@
             userData.lastName = newLastName;
             if (newPhone !== null) userData.phone = newPhone;
             
-            // Save to Firebase
-            database.ref('users/' + currentUser.uid).update({
+            // Save to "database"
+            LocalStorageDB.updateUser(currentUser.uid, {
                 firstName: newFirstName,
                 lastName: newLastName,
                 phone: newPhone
-            }).then(() => {
-                updateUserProfile();
-                alert('Perfil actualizado exitosamente');
-            }).catch(error => {
-                console.error('Error al actualizar perfil:', error);
-                alert('Error al actualizar perfil');
             });
+            
+            // Update UI
+            updateUserProfile();
+            
+            showNotification('Perfil actualizado exitosamente', 'success');
         }
         
         // Helper functions
@@ -1798,6 +1952,16 @@
                 el.style.display = 'none';
                 el.textContent = '';
             });
+        }
+        
+        function showNotification(message, type) {
+            notificationEl.textContent = message;
+            notificationEl.className = `notification ${type}`;
+            notificationEl.classList.add('show');
+            
+            setTimeout(() => {
+                notificationEl.classList.remove('show');
+            }, 3000);
         }
     </script>
 </body>
