@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeTrack - Registro de Horas Profesional</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #4895ef;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 15px 0;
+            box-shadow: var(--box-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .logo i {
+            font-size: 1.8rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: var(--success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid white;
+            color: white;
+        }
+        
+        .btn-outline:hover {
+            background-color: white;
+            color: var(--primary);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #d91a6d;
+        }
+        
+        /* Auth Section */
+        .auth-container {
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .auth-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+        
+        .auth-tabs {
+            display: flex;
+            background-color: var(--light-gray);
+        }
+        
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+        
+        .auth-tab.active {
+            background-color: white;
+            color: var(--primary);
+        }
+        
+        .auth-form {
+            padding: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: var(--border-radius);
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.25);
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .error-message {
+            color: var(--danger);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 25px 0;
+            flex: 1;
+        }
+        
+        .section {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            padding: 18px 20px;
+            background-color: var(--light);
+            border-bottom: 1px solid var(--light-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .section-title {
+            font-size: 1.4rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-body {
+            padding: 20px;
+        }
+        
+        /* Dashboard */
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stat-title {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .stat-icon {
+            align-self: flex-end;
+            font-size: 2.2rem;
+            color: var(--light-gray);
+            margin-top: 10px;
+        }
+        
+        /* Charts */
+        .chart-container {
+            height: 280px;
+            margin-top: 20px;
+        }
+        
+        /* Projects */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 18px;
+        }
+        
+        .project-card {
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .project-header {
+            padding: 15px;
+            background-color: var(--light);
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .project-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .project-id {
+            color: var(--gray);
+            font-size: 0.85rem;
+        }
+        
+        .project-body {
+            padding: 15px;
+            flex: 1;
+        }
+        
+        .project-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        
+        .project-stat {
+            text-align: center;
+        }
+        
+        .project-stat-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .project-stat-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+        
+        .project-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--light-gray);
+        }
+        
+        /* Time Entry Form */
+        .time-entry-form .form-row {
+            margin-bottom: 15px;
+        }
+        
+        /* History Table */
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        
+        .history-table th, 
+        .history-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .history-table th {
+            background-color: var(--light);
+            font-weight: 600;
+        }
+        
+        .history-table tr:hover {
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            margin: 0 4px;
+            color: var(--gray);
+            transition: var(--transition);
+            padding: 5px;
+        }
+        
+        .action-btn:hover {
+            color: var(--primary);
+        }
+        
+        /* Export Section */
+        .export-options {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 100%;
+            max-width: 500px;
+            padding: 25px;
+            position: relative;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+        
+        .modal-title {
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            color: var(--dark);
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: white;
+            padding: 30px 0;
+            margin-top: 50px;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        
+        .footer-section {
+            flex: 1;
+            min-width: 220px;
+        }
+        
+        .footer-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        .footer-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background-color: var(--primary);
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+        
+        .footer-links a {
+            color: var(--light-gray);
+            text-decoration: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+            padding-left: 5px;
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 30px;
+            color: var(--light-gray);
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .nav-links {
+                width: 100%;
+            }
+            
+            .user-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-clock"></i>
+                    <span>TimeTrack</span>
+                </div>
+                
+                <nav class="nav-links">
+                    <a href="#" class="nav-link active" data-section="dashboard"><i class="fas fa-home"></i> Dashboard</a>
+                    <a href="#" class="nav-link" data-section="projects"><i class="fas fa-folder"></i> Proyectos</a>
+                    <a href="#" class="nav-link" data-section="time-entry"><i class="fas fa-plus-circle"></i> Registrar Horas</a>
+                    <a href="#" class="nav-link" data-section="history"><i class="fas fa-history"></i> Historial</a>
+                    <a href="#" class="nav-link" data-section="profile"><i class="fas fa-user"></i> Perfil</a>
+                </nav>
+                
+                <div class="user-actions">
+                    <div class="language-selector">
+                        <select id="language-select" class="form-control">
+                            <option value="es">Español</option>
+                            <option value="en">English</option>
+                            <option value="sv">Svenska</option>
+                            <option value="ru">Русский</option>
+                            <option value="pl">Polski</option>
+                        </select>
+                    </div>
+                    
+                    <div class="user-info" id="user-info-header">
+                        <div class="user-avatar">JD</div>
+                        <span>John Doe</span>
+                    </div>
+                    
+                    <button id="logout-btn" class="btn btn-outline">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Authentication Section -->
+    <section id="auth-section" class="auth-section">
+        <div class="container">
+            <div class="auth-container">
+                <div class="auth-card">
+                    <div class="auth-tabs">
+                        <div class="auth-tab active" data-tab="login">Iniciar Sesión</div>
+                        <div class="auth-tab" data-tab="register">Registrarse</div>
+                    </div>
+                    
+                    <!-- Login Form -->
+                    <div class="auth-form" id="login-form">
+                        <div class="form-group">
+                            <label for="login-email">Correo Electrónico</label>
+                            <input type="email" id="login-email" class="form-control" placeholder="tu@email.com">
+                            <div class="error-message" id="login-email-error"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="login-password">Contraseña</label>
+                            <input type="password" id="login-password" class="form-control" placeholder="••••••••">
+                            <div class="error-message" id="login-password-error"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button id="login-btn" class="btn btn-primary" style="width: 100%;">
+                                <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Register Form -->
+                    <div class="auth-form hidden" id="register-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="register-firstname">Nombre</label>
+                                <input type="text" id="register-firstname" class="form-control" placeholder="Juan">
+                                <div class="error-message" id="register-firstname-error"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="register-lastname">Apellido</label>
+                                <input type="text" id="register-lastname" class="form-control" placeholder="Pérez">
+                                <div class="error-message" id="register-lastname-error"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="register-email">Correo Electrónico</label>
+                            <input type="email" id="register-email" class="form-control" placeholder="tu@email.com">
+                            <div class="error-message" id="register-email-error"></div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="register-password">Contraseña</label>
+                                <input type="password" id="register-password" class="form-control" placeholder="••••••••">
+                                <div class="error-message" id="register-password-error"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="register-confirm">Confirmar Contraseña</label>
+                                <input type="password" id="register-confirm" class="form-control" placeholder="••••••••">
+                                <div class="error-message" id="register-confirm-error"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="register-phone">Teléfono</label>
+                                <input type="tel" id="register-phone" class="form-control" placeholder="+34 600 000 000">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="register-id">ID</label>
+                                <input type="text" id="register-id" class="form-control" placeholder="ID12345">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button id="register-btn" class="btn btn-primary" style="width: 100%;">
+                                <i class="fas fa-user-plus"></i> Crear Cuenta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Main Content (Visible after login) -->
+    <main id="main-content" class="main-content hidden">
+        <div class="container">
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="section">
+                <div class="section-header">
+                    <h2 class="section-title"><i class="fas fa-tachometer-alt"></i> Panel de Control</h2>
+                    <div class="filters">
+                        <select id="time-filter" class="form-control">
+                            <option value="week">Esta Semana</option>
+                            <option value="month">Este Mes</option>
+                            <option value="quarter">Este Trimestre</option>
+                            <option value="year">Este Año</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="section-body">
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <div class="stat-title">Horas Totales</div>
+                            <div class="stat-value" id="total-hours">0</div>
+                            <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-title">Días Trabajados</div>
+                            <div class="stat-value" id="days-worked">0</div>
+                            <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-title">Proyectos Activos</div>
+                            <div class="stat-value" id="active-projects">0</div>
+                            <div class="stat-icon"><i class="fas fa-folder"></i></div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-title">Horas Semanales</div>
+                            <div class="stat-value" id="weekly-hours">0</div>
+                            <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="hours-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Projects Section -->
+            <section id="projects-section" class="section hidden">
+                <div class="section-header">
+                    <h2 class="section-title"><i class="fas fa-folder"></i> Gestión de Proyectos</h2>
+                    <button id="add-project-btn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nuevo Proyecto
+                    </button>
+                </div>
+                
+                <div class="section-body">
+                    <div class="projects-grid" id="projects-grid">
+                        <!-- Project cards will be added dynamically -->
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Time Entry Section -->
+            <section id="time-entry-section" class="section hidden">
+                <div class="section-header">
+                    <h2 class="section-title"><i class="fas fa-plus-circle"></i> Registrar Horas</h2>
+                </div>
+                
+                <div class="section-body">
+                    <form id="time-entry-form" class="time-entry-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="entry-date">Fecha</label>
+                                <input type="date" id="entry-date" class="form-control" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="entry-project">Proyecto</label>
+                                <select id="entry-project" class="form-control" required>
+                                    <option value="">Seleccionar proyecto...</option>
+                                    <!-- Projects will be added dynamically -->
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="start-time">Hora de Inicio</label>
+                                <input type="time" id="start-time" class="form-control" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="end-time">Hora de Fin</label>
+                                <input type="time" id="end-time" class="form-control" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="break-time">Descanso (minutos)</label>
+                                <input type="number" id="break-time" class="form-control" min="0" value="30">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="entry-notes">Notas</label>
+                            <textarea id="entry-notes" class="form-control" rows="3" placeholder="Describe las tareas realizadas..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="entry-team">Compañeros</label>
+                            <input type="text" id="entry-team" class="form-control" placeholder="Nombres de compañeros separados por coma">
+                        </div>
+                        
+                        <div class="form-group" style="display: flex; gap: 15px;">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar Entrada
+                            </button>
+                            <button type="reset" class="btn" style="background-color: var(--light-gray);">
+                                <i class="fas fa-redo"></i> Reiniciar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+            
+            <!-- History Section -->
+            <section id="history-section" class="section hidden">
+                <div class="section-header">
+                    <h2 class="section-title"><i class="fas fa-history"></i> Historial de Entradas</h2>
+                    <div class="filters">
+                        <select id="history-filter" class="form-control">
+                            <option value="all">Todas las entradas</option>
+                            <option value="week">Esta semana</option>
+                            <option value="month">Este mes</option>
+                            <option value="year">Este año</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="section-body">
+                    <div class="table-container">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Proyecto</th>
+                                    <th>Horario</th>
+                                    <th>Horas</th>
+                                    <th>Descanso</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-body">
+                                <!-- Entries will be added dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Profile Section -->
+            <section id="profile-section" class="section hidden">
+                <div class="section-header">
+                    <h2 class="section-title"><i class="fas fa-user"></i> Información de Usuario</h2>
+                    <button id="edit-profile-btn" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Editar Perfil
+                    </button>
+                </div>
+                
+                <div class="section-body">
+                    <div class="user-profile">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nombre</label>
+                                <div class="form-control-static" id="profile-firstname">John</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Apellido</label>
+                                <div class="form-control-static" id="profile-lastname">Doe</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <div class="form-control-static" id="profile-email">john.doe@example.com</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Teléfono</label>
+                                <div class="form-control-static" id="profile-phone">+34 600 000 000</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>ID de Usuario</label>
+                            <div class="form-control-static" id="profile-userid">USR-12345</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+    
+    <!-- Project Modal -->
+    <div id="project-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h3 class="modal-title" id="modal-project-title">Nuevo Proyecto</h3>
+            <form id="project-form">
+                <div class="form-group">
+                    <label for="project-name">Nombre del Proyecto</label>
+                    <input type="text" id="project-name" class="form-control" required>
+                    <div class="error-message" id="project-name-error"></div>
+                </div>
+                <div class="form-group">
+                    <label for="project-code">Código (opcional)</label>
+                    <input type="text" id="project-code" class="form-control">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Guardar Proyecto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 class="footer-title">TimeTrack</h3>
+                    <p>Solución profesional para el registro y seguimiento de horas de trabajo. Mantén un control total de tus proyectos y actividades.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3 class="footer-title">Enlaces Rápidos</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fas fa-home"></i> Inicio</a></li>
+                        <li><a href="#"><i class="fas fa-folder"></i> Proyectos</a></li>
+                        <li><a href="#"><i class="fas fa-history"></i> Historial</a></li>
+                        <li><a href="#"><i class="fas fa-chart-bar"></i> Estadísticas</a></li>
+                        <li><a href="#"><i class="fas fa-user"></i> Perfil</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3 class="footer-title">Contacto</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fas fa-envelope"></i> soporte@timetrack.com</a></li>
+                        <li><a href="#"><i class="fas fa-phone"></i> +34 900 000 000</a></li>
+                        <li><a href="#"><i class="fas fa-map-marker-alt"></i> Madrid, España</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                &copy; 2023 TimeTrack. Todos los derechos reservados.
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
+            authDomain: "tidbok-df555.firebaseapp.com",
+            databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "tidbok-df555",
+            storageBucket: "tidbok-df555.firebasestorage.app",
+            messagingSenderId: "467331966400",
+            appId: "1:467331966400:web:abb6949a76918f2eb8d425"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        
+        // Global variables
+        let currentUser = null;
+        let userData = {};
+        let projects = {};
+        let timeEntries = {};
+        let hoursChart = null;
+        let editingProjectId = null;
+        
+        // DOM Elements
+        const authSection = document.getElementById('auth-section');
+        const mainContent = document.getElementById('main-content');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const authTabs = document.querySelectorAll('.auth-tab');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = {
+            dashboard: document.getElementById('dashboard-section'),
+            projects: document.getElementById('projects-section'),
+            'time-entry': document.getElementById('time-entry-section'),
+            history: document.getElementById('history-section'),
+            profile: document.getElementById('profile-section')
+        };
+        const projectModal = document.getElementById('project-modal');
+        const projectForm = document.getElementById('project-form');
+        const projectNameInput = document.getElementById('project-name');
+        const projectCodeInput = document.getElementById('project-code');
+        const modalClose = document.querySelector('.modal-close');
+        const addProjectBtn = document.getElementById('add-project-btn');
+        const projectsGrid = document.getElementById('projects-grid');
+        const entryProjectSelect = document.getElementById('entry-project');
+        const historyBody = document.getElementById('history-body');
+        const timeEntryForm = document.getElementById('time-entry-form');
+        const editProfileBtn = document.getElementById('edit-profile-btn');
+        const userInfoHeader = document.getElementById('user-info-header');
+        const timeFilter = document.getElementById('time-filter');
+        const historyFilter = document.getElementById('history-filter');
+        
+        // Stats elements
+        const totalHoursEl = document.getElementById('total-hours');
+        const daysWorkedEl = document.getElementById('days-worked');
+        const activeProjectsEl = document.getElementById('active-projects');
+        const weeklyHoursEl = document.getElementById('weekly-hours');
+        
+        // Profile elements
+        const profileFirstName = document.getElementById('profile-firstname');
+        const profileLastName = document.getElementById('profile-lastname');
+        const profileEmail = document.getElementById('profile-email');
+        const profilePhone = document.getElementById('profile-phone');
+        const profileUserId = document.getElementById('profile-userid');
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initApp();
+            setupEventListeners();
+            initCharts();
+            
+            // Set current date
+            const today = new Date();
+            document.getElementById('entry-date').valueAsDate = today;
+            
+            // Set default times
+            document.getElementById('start-time').value = '09:00';
+            document.getElementById('end-time').value = '17:00';
+        });
+        
+        // Initialize Firebase app
+        function initApp() {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    authSection.classList.add('hidden');
+                    mainContent.classList.remove('hidden');
+                    loadUserData();
+                } else {
+                    currentUser = null;
+                    authSection.classList.remove('hidden');
+                    mainContent.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Auth tabs
+            authTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    authTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    if (tab.dataset.tab === 'login') {
+                        loginForm.classList.remove('hidden');
+                        registerForm.classList.add('hidden');
+                    } else {
+                        loginForm.classList.add('hidden');
+                        registerForm.classList.remove('hidden');
+                    }
+                });
+            });
+            
+            // Login button
+            loginBtn.addEventListener('click', e => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                loginUser(email, password);
+            });
+            
+            // Register button
+            registerBtn.addEventListener('click', e => {
+                e.preventDefault();
+                const firstName = document.getElementById('register-firstname').value;
+                const lastName = document.getElementById('register-lastname').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const confirmPassword = document.getElementById('register-confirm').value;
+                const phone = document.getElementById('register-phone').value;
+                const userId = document.getElementById('register-id').value;
+                
+                // Reset errors
+                resetErrors();
+                
+                // Validation
+                let isValid = true;
+                
+                if (!firstName) {
+                    showError('register-firstname-error', 'El nombre es obligatorio');
+                    isValid = false;
+                }
+                
+                if (!lastName) {
+                    showError('register-lastname-error', 'El apellido es obligatorio');
+                    isValid = false;
+                }
+                
+                if (!email || !validateEmail(email)) {
+                    showError('register-email-error', 'Ingresa un email válido');
+                    isValid = false;
+                }
+                
+                if (!password || password.length < 6) {
+                    showError('register-password-error', 'La contraseña debe tener al menos 6 caracteres');
+                    isValid = false;
+                }
+                
+                if (password !== confirmPassword) {
+                    showError('register-confirm-error', 'Las contraseñas no coinciden');
+                    isValid = false;
+                }
+                
+                if (isValid) {
+                    signupUser(email, password, firstName, lastName, phone, userId);
+                }
+            });
+            
+            // Logout button
+            logoutBtn.addEventListener('click', logoutUser);
+            
+            // Navigation links
+            navLinks.forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    const section = link.dataset.section;
+                    
+                    // Update active nav link
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                    
+                    // Show selected section
+                    Object.values(sections).forEach(s => s.classList.add('hidden'));
+                    sections[section].classList.remove('hidden');
+                });
+            });
+            
+            // Project modal
+            addProjectBtn.addEventListener('click', () => {
+                projectForm.reset();
+                editingProjectId = null;
+                document.getElementById('modal-project-title').textContent = 'Nuevo Proyecto';
+                projectModal.style.display = 'flex';
+            });
+            
+            modalClose.addEventListener('click', () => {
+                projectModal.style.display = 'none';
+            });
+            
+            window.addEventListener('click', (e) => {
+                if (e.target === projectModal) {
+                    projectModal.style.display = 'none';
+                }
+            });
+            
+            // Project form submit
+            projectForm.addEventListener('submit', saveProject);
+            
+            // Time entry form submit
+            timeEntryForm.addEventListener('submit', saveTimeEntry);
+            
+            // Edit profile button
+            editProfileBtn.addEventListener('click', editUserInfo);
+            
+            // Filters
+            timeFilter.addEventListener('change', updateCharts);
+            historyFilter.addEventListener('change', renderTimeEntries);
+        }
+        
+        // Initialize charts
+        function initCharts() {
+            const ctx = document.getElementById('hours-chart').getContext('2d');
+            hoursChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                    datasets: [{
+                        label: 'Horas trabajadas',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(67, 97, 238, 0.7)',
+                        borderColor: 'rgba(67, 97, 238, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Horas'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Load user data (projects and time entries)
+        function loadUserData() {
+            if (!currentUser) return;
+            
+            // Load user profile
+            database.ref('users/' + currentUser.uid).once('value').then(snapshot => {
+                userData = snapshot.val() || {};
+                updateUserProfile();
+            });
+            
+            // Load projects
+            database.ref('projects/' + currentUser.uid).on('value', snapshot => {
+                projects = snapshot.val() || {};
+                renderProjects();
+                updateProjectSelector();
+            });
+            
+            // Load time entries
+            database.ref('timeEntries/' + currentUser.uid).on('value', snapshot => {
+                timeEntries = snapshot.val() || {};
+                renderTimeEntries();
+                updateStats();
+                updateCharts();
+            });
+        }
+        
+        // Update user profile in UI
+        function updateUserProfile() {
+            if (!userData) return;
+            
+            // Update header
+            const initials = (userData.firstName ? userData.firstName.charAt(0) : '') + 
+                            (userData.lastName ? userData.lastName.charAt(0) : '');
+            userInfoHeader.innerHTML = `
+                <div class="user-avatar">${initials}</div>
+                <span>${userData.firstName || ''} ${userData.lastName || ''}</span>
+            `;
+            
+            // Update profile section
+            profileFirstName.textContent = userData.firstName || '';
+            profileLastName.textContent = userData.lastName || '';
+            profileEmail.textContent = userData.email || '';
+            profilePhone.textContent = userData.phone || '';
+            profileUserId.textContent = userData.userId || '';
+        }
+        
+        // Render projects in the projects grid
+        function renderProjects() {
+            projectsGrid.innerHTML = '';
+            
+            for (const projectId in projects) {
+                const project = projects[projectId];
+                
+                // Calculate hours for this project
+                let projectHours = 0;
+                for (const entryId in timeEntries) {
+                    const entry = timeEntries[entryId];
+                    if (entry.project === projectId) {
+                        projectHours += parseFloat(entry.hours) || 0;
+                    }
+                }
+                
+                const projectElement = document.createElement('div');
+                projectElement.className = 'project-card';
+                projectElement.innerHTML = `
+                    <div class="project-header">
+                        <h3 class="project-title">${project.name}</h3>
+                        ${project.code ? `<div class="project-id">${project.code}</div>` : ''}
+                    </div>
+                    <div class="project-body">
+                        <div class="project-stats">
+                            <div class="project-stat">
+                                <div class="project-stat-value">${projectHours.toFixed(1)}</div>
+                                <div class="project-stat-label">Horas</div>
+                            </div>
+                            <div class="project-stat">
+                                <div class="project-stat-value">${countProjectEntries(projectId)}</div>
+                                <div class="project-stat-label">Entradas</div>
+                            </div>
+                        </div>
+                        <div class="project-actions">
+                            <button class="btn action-btn edit-project" data-id="${projectId}">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                            <button class="btn btn-danger action-btn delete-project" data-id="${projectId}">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+                `;
+                projectsGrid.appendChild(projectElement);
+            }
+            
+            // Add event listeners to project actions
+            document.querySelectorAll('.edit-project').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const projectId = btn.dataset.id;
+                    editProject(projectId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-project').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const projectId = btn.dataset.id;
+                    deleteProject(projectId);
+                });
+            });
+        }
+        
+        // Count entries for a project
+        function countProjectEntries(projectId) {
+            let count = 0;
+            for (const entryId in timeEntries) {
+                if (timeEntries[entryId].project === projectId) {
+                    count++;
+                }
+            }
+            return count;
+        }
+        
+        // Update project selector in time entry form
+        function updateProjectSelector() {
+            entryProjectSelect.innerHTML = '<option value="">Seleccionar proyecto...</option>';
+            
+            for (const projectId in projects) {
+                const project = projects[projectId];
+                const option = document.createElement('option');
+                option.value = projectId;
+                option.textContent = project.name;
+                entryProjectSelect.appendChild(option);
+            }
+        }
+        
+        // Render time entries in history table
+        function renderTimeEntries() {
+            historyBody.innerHTML = '';
+            
+            const filter = historyFilter.value;
+            const now = new Date();
+            let filteredEntries = [];
+            
+            // Apply filter
+            for (const entryId in timeEntries) {
+                const entry = timeEntries[entryId];
+                const entryDate = new Date(entry.date);
+                
+                let include = true;
+                
+                if (filter === 'week') {
+                    const oneWeekAgo = new Date();
+                    oneWeekAgo.setDate(now.getDate() - 7);
+                    include = entryDate >= oneWeekAgo;
+                } else if (filter === 'month') {
+                    const oneMonthAgo = new Date();
+                    oneMonthAgo.setMonth(now.getMonth() - 1);
+                    include = entryDate >= oneMonthAgo;
+                } else if (filter === 'year') {
+                    const oneYearAgo = new Date();
+                    oneYearAgo.setFullYear(now.getFullYear() - 1);
+                    include = entryDate >= oneYearAgo;
+                }
+                
+                if (include) {
+                    filteredEntries.push({
+                        id: entryId,
+                        ...entry
+                    });
+                }
+            }
+            
+            // Sort by date (newest first)
+            filteredEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // Render entries
+            filteredEntries.forEach(entry => {
+                const project = projects[entry.project] || { name: 'Proyecto eliminado' };
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(entry.date)}</td>
+                    <td>${project.name}</td>
+                    <td>${entry.startTime} - ${entry.endTime}</td>
+                    <td>${entry.hours.toFixed(1)}</td>
+                    <td>${entry.breakTime} min</td>
+                    <td>
+                        <button class="action-btn edit-entry" data-id="${entry.id}"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn delete-entry" data-id="${entry.id}"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                historyBody.appendChild(row);
+            });
+            
+            // Add event listeners to entry actions
+            document.querySelectorAll('.edit-entry').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const entryId = btn.dataset.id;
+                    editTimeEntry(entryId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-entry').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const entryId = btn.dataset.id;
+                    deleteTimeEntry(entryId);
+                });
+            });
+        }
+        
+        // Format date to dd/mm/yyyy
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES');
+        }
+        
+        // Update statistics
+        function updateStats() {
+            let totalHours = 0;
+            let days = new Set();
+            let weeklyHours = 0;
+            
+            const now = new Date();
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(now.getDate() - 7);
+            
+            for (const entryId in timeEntries) {
+                const entry = timeEntries[entryId];
+                totalHours += parseFloat(entry.hours) || 0;
+                days.add(entry.date);
+                
+                const entryDate = new Date(entry.date);
+                if (entryDate >= oneWeekAgo) {
+                    weeklyHours += parseFloat(entry.hours) || 0;
+                }
+            }
+            
+            totalHoursEl.textContent = totalHours.toFixed(1);
+            daysWorkedEl.textContent = days.size;
+            activeProjectsEl.textContent = Object.keys(projects).length;
+            weeklyHoursEl.textContent = weeklyHours.toFixed(1);
+        }
+        
+        // Update charts with real data
+        function updateCharts() {
+            if (!hoursChart) return;
+            
+            // Get current date and set up days of week
+            const now = new Date();
+            const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            const hoursByDay = [0, 0, 0, 0, 0, 0, 0];
+            
+            // Calculate Monday of current week
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
+            
+            // Fill hours for each day
+            for (const entryId in timeEntries) {
+                const entry = timeEntries[entryId];
+                const entryDate = new Date(entry.date);
+                
+                // Check if entry is in current week
+                if (entryDate >= monday && entryDate <= now) {
+                    const dayIndex = (entryDate.getDay() + 6) % 7; // Monday is 0
+                    hoursByDay[dayIndex] += parseFloat(entry.hours) || 0;
+                }
+            }
+            
+            // Update chart
+            hoursChart.data.datasets[0].data = hoursByDay;
+            hoursChart.update();
+        }
+        
+        // Firebase Functions
+        function loginUser(email, password) {
+            resetErrors();
+            
+            if (!email || !validateEmail(email)) {
+                showError('login-email-error', 'Ingresa un email válido');
+                return;
+            }
+            
+            if (!password) {
+                showError('login-password-error', 'Ingresa tu contraseña');
+                return;
+            }
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Signed in
+                    console.log('Usuario autenticado:', userCredential.user);
+                })
+                .catch((error) => {
+                    const errorMessage = error.message;
+                    showError('login-password-error', errorMessage);
+                });
+        }
+        
+        function signupUser(email, password, firstName, lastName, phone, userId) {
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Signed up
+                    const user = userCredential.user;
+                    
+                    // Save additional user data to Realtime Database
+                    database.ref('users/' + user.uid).set({
+                        firstName: firstName,
+                        lastName: lastName,
+                        email: email,
+                        phone: phone,
+                        userId: userId
+                    });
+                    
+                    console.log('Usuario registrado:', user);
+                })
+                .catch((error) => {
+                    const errorMessage = error.message;
+                    showError('register-email-error', errorMessage);
+                });
+        }
+        
+        function logoutUser() {
+            auth.signOut().then(() => {
+                console.log('Usuario cerró sesión');
+            }).catch((error) => {
+                console.error('Error al cerrar sesión:', error);
+            });
+        }
+        
+        function saveProject(e) {
+            e.preventDefault();
+            
+            const name = projectNameInput.value;
+            const code = projectCodeInput.value;
+            
+            // Reset error
+            document.getElementById('project-name-error').style.display = 'none';
+            
+            if (!name) {
+                showError('project-name-error', 'El nombre es obligatorio');
+                return;
+            }
+            
+            const projectData = {
+                name: name,
+                code: code || ''
+            };
+            
+            if (currentUser) {
+                let updates = {};
+                
+                if (editingProjectId) {
+                    // Update existing project
+                    updates['/projects/' + currentUser.uid + '/' + editingProjectId] = projectData;
+                } else {
+                    // Create new project
+                    const newProjectKey = database.ref().child('projects').child(currentUser.uid).push().key;
+                    updates['/projects/' + currentUser.uid + '/' + newProjectKey] = projectData;
+                }
+                
+                database.ref().update(updates)
+                    .then(() => {
+                        projectModal.style.display = 'none';
+                        projectForm.reset();
+                        editingProjectId = null;
+                    })
+                    .catch(error => {
+                        console.error('Error al guardar proyecto:', error);
+                        alert('Error al guardar proyecto');
+                    });
+            }
+        }
+        
+        function editProject(projectId) {
+            const project = projects[projectId];
+            projectNameInput.value = project.name;
+            projectCodeInput.value = project.code || '';
+            editingProjectId = projectId;
+            
+            document.getElementById('modal-project-title').textContent = 'Editar Proyecto';
+            projectModal.style.display = 'flex';
+        }
+        
+        function deleteProject(projectId) {
+            if (confirm('¿Estás seguro de eliminar este proyecto? Todas las entradas relacionadas también se eliminarán.')) {
+                // Delete project
+                database.ref('projects/' + currentUser.uid + '/' + projectId).remove()
+                    .then(() => {
+                        // Delete related time entries
+                        let updates = {};
+                        for (const entryId in timeEntries) {
+                            if (timeEntries[entryId].project === projectId) {
+                                updates['/timeEntries/' + currentUser.uid + '/' + entryId] = null;
+                            }
+                        }
+                        
+                        if (Object.keys(updates).length > 0) {
+                            database.ref().update(updates);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al eliminar proyecto:', error);
+                        alert('Error al eliminar proyecto');
+                    });
+            }
+        }
+        
+        function saveTimeEntry(e) {
+            e.preventDefault();
+            
+            const date = document.getElementById('entry-date').value;
+            const projectId = document.getElementById('entry-project').value;
+            const startTime = document.getElementById('start-time').value;
+            const endTime = document.getElementById('end-time').value;
+            const breakTime = parseInt(document.getElementById('break-time').value) || 0;
+            const notes = document.getElementById('entry-notes').value;
+            const team = document.getElementById('entry-team').value;
+            
+            if (!projectId) {
+                alert('Selecciona un proyecto');
+                return;
+            }
+            
+            // Calculate hours
+            const start = new Date(`1970-01-01T${startTime}:00`);
+            const end = new Date(`1970-01-01T${endTime}:00`);
+            const diff = (end - start) / (1000 * 60 * 60); // in hours
+            const hours = diff - (breakTime / 60);
+            
+            if (hours <= 0) {
+                alert('La hora de fin debe ser posterior a la hora de inicio');
+                return;
+            }
+            
+            // Get current user
+            if (!currentUser) {
+                alert('Usuario no autenticado');
+                return;
+            }
+            
+            // Create new entry
+            const newEntryKey = database.ref().child('timeEntries').child(currentUser.uid).push().key;
+            
+            const entryData = {
+                id: newEntryKey,
+                date: date,
+                project: projectId,
+                startTime: startTime,
+                endTime: endTime,
+                breakTime: breakTime,
+                hours: hours,
+                notes: notes,
+                team: team
+            };
+            
+            // Save to Firebase
+            const updates = {};
+            updates['/timeEntries/' + currentUser.uid + '/' + newEntryKey] = entryData;
+            
+            database.ref().update(updates)
+                .then(() => {
+                    alert('Entrada guardada exitosamente');
+                    timeEntryForm.reset();
+                    
+                    // Reset to current date and default times
+                    document.getElementById('entry-date').valueAsDate = new Date();
+                    document.getElementById('start-time').value = '09:00';
+                    document.getElementById('end-time').value = '17:00';
+                })
+                .catch(error => {
+                    console.error('Error al guardar entrada:', error);
+                    alert('Error al guardar entrada');
+                });
+        }
+        
+        function editTimeEntry(entryId) {
+            const entry = timeEntries[entryId];
+            if (!entry) return;
+            
+            // Fill the form with entry data
+            document.getElementById('entry-date').value = entry.date;
+            document.getElementById('entry-project').value = entry.project;
+            document.getElementById('start-time').value = entry.startTime;
+            document.getElementById('end-time').value = entry.endTime;
+            document.getElementById('break-time').value = entry.breakTime;
+            document.getElementById('entry-notes').value = entry.notes || '';
+            document.getElementById('entry-team').value = entry.team || '';
+            
+            // Scroll to time entry form
+            document.querySelector('.nav-link[data-section="time-entry"]').click();
+            
+            // Change form to update mode
+            timeEntryForm.dataset.editing = entryId;
+            document.querySelector('#time-entry-form button[type="submit"]').innerHTML = 
+                '<i class="fas fa-save"></i> Actualizar Entrada';
+            
+            alert('Ahora puedes editar la entrada. Modifica los campos necesarios y haz clic en "Actualizar Entrada".');
+        }
+        
+        function deleteTimeEntry(entryId) {
+            if (confirm('¿Estás seguro de eliminar esta entrada?')) {
+                database.ref('timeEntries/' + currentUser.uid + '/' + entryId).remove()
+                    .catch(error => {
+                        console.error('Error al eliminar entrada:', error);
+                        alert('Error al eliminar entrada');
+                    });
+            }
+        }
+        
+        function editUserInfo() {
+            const newFirstName = prompt('Nuevo nombre:', userData.firstName || '');
+            if (newFirstName === null) return;
+            
+            const newLastName = prompt('Nuevo apellido:', userData.lastName || '');
+            if (newLastName === null) return;
+            
+            const newPhone = prompt('Nuevo teléfono:', userData.phone || '');
+            
+            // Update user data
+            userData.firstName = newFirstName;
+            userData.lastName = newLastName;
+            if (newPhone !== null) userData.phone = newPhone;
+            
+            // Save to Firebase
+            database.ref('users/' + currentUser.uid).update({
+                firstName: newFirstName,
+                lastName: newLastName,
+                phone: newPhone
+            }).then(() => {
+                updateUserProfile();
+                alert('Perfil actualizado exitosamente');
+            }).catch(error => {
+                console.error('Error al actualizar perfil:', error);
+                alert('Error al actualizar perfil');
+            });
+        }
+        
+        // Helper functions
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+        
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.style.display = 'block';
+        }
+        
+        function resetErrors() {
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.style.display = 'none';
+                el.textContent = '';
+            });
+        }
+    </script>
+</body>
+</html>
