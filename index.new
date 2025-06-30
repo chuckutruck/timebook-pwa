@@ -997,7 +997,7 @@
             authDomain: "tidbok-df555.firebaseapp.com",
             databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "tidbok-df555",
-            storageBucket: "tidbok-df555.firebasestorage.app",
+            storageBucket: "tidbok-df555.appspot.com",
             messagingSenderId: "467331966400",
             appId: "1:467331966400:web:abb6949a76918f2eb8d425"
         };
