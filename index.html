@@ -1048,6 +1048,12 @@
         let editingProjectId = null;
         let currentLanguage = 'sv';
         
+        // Function to validate email format
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+        
         // Translation dictionary
         const translations = {
             sv: {
@@ -1097,7 +1103,27 @@
                 'time-week': 'Denna vecka',
                 'time-month': 'Denna månad',
                 'time-quarter': 'Detta kvartal',
-                'time-year': 'Detta år'
+                'time-year': 'Detta år',
+                'email-invalid': 'Ange en giltig e-postadress',
+                'password-required': 'Lösenord krävs',
+                'welcome-back': 'Välkommen tillbaka!',
+                'account-created': 'Konto skapat framgångsrikt!',
+                'logout-success': 'Du har loggat ut',
+                'select-project': 'Välj projekt',
+                'time-error': 'Sluttiden måste vara efter starttiden',
+                'not-authenticated': 'Användaren är inte autentiserad',
+                'entry-saved': 'Tidsregistrering sparad',
+                'update-entry': 'Uppdatera registrering',
+                'edit-entry-notification': 'Du kan nu redigera registreringen. Ändra nödvändiga fält och klicka på "Uppdatera registrering".',
+                'delete-entry-confirm': 'Är du säker på att du vill ta bort denna registrering?',
+                'entry-deleted': 'Registrering borttagen',
+                'new-firstname': 'Nytt förnamn:',
+                'new-lastname': 'Nytt efternamn:',
+                'new-phone': 'Nytt telefonnummer:',
+                'profile-updated': 'Profil uppdaterad',
+                'delete-project-confirm': 'Är du säker på att du vill ta bort detta projekt? Alla relaterade registreringar kommer också att tas bort.',
+                'project-saved': 'Projekt sparat',
+                'project-deleted': 'Projekt borttaget'
             },
             en: {
                 'app-title': 'TimeTrack - Professional Hour Tracking',
@@ -1146,7 +1172,27 @@
                 'time-week': 'This Week',
                 'time-month': 'This Month',
                 'time-quarter': 'This Quarter',
-                'time-year': 'This Year'
+                'time-year': 'This Year',
+                'email-invalid': 'Please enter a valid email address',
+                'password-required': 'Password is required',
+                'welcome-back': 'Welcome back!',
+                'account-created': 'Account created successfully!',
+                'logout-success': 'You have logged out',
+                'select-project': 'Select project',
+                'time-error': 'End time must be after start time',
+                'not-authenticated': 'User not authenticated',
+                'entry-saved': 'Time entry saved',
+                'update-entry': 'Update entry',
+                'edit-entry-notification': 'You can now edit the entry. Modify necessary fields and click "Update entry".',
+                'delete-entry-confirm': 'Are you sure you want to delete this entry?',
+                'entry-deleted': 'Entry deleted',
+                'new-firstname': 'New first name:',
+                'new-lastname': 'New last name:',
+                'new-phone': 'New phone number:',
+                'profile-updated': 'Profile updated',
+                'delete-project-confirm': 'Are you sure you want to delete this project? All related entries will also be deleted.',
+                'project-saved': 'Project saved',
+                'project-deleted': 'Project deleted'
             },
             es: {
                 'app-title': 'TimeTrack - Registro de Horas Profesional',
@@ -1195,7 +1241,27 @@
                 'time-week': 'Esta Semana',
                 'time-month': 'Este Mes',
                 'time-quarter': 'Este Trimestre',
-                'time-year': 'Este Año'
+                'time-year': 'Este Año',
+                'email-invalid': 'Ingrese un correo electrónico válido',
+                'password-required': 'Contraseña requerida',
+                'welcome-back': '¡Bienvenido de nuevo!',
+                'account-created': '¡Cuenta creada exitosamente!',
+                'logout-success': 'Has cerrado sesión',
+                'select-project': 'Seleccionar proyecto',
+                'time-error': 'La hora de fin debe ser posterior a la hora de inicio',
+                'not-authenticated': 'Usuario no autenticado',
+                'entry-saved': 'Entrada de tiempo guardada',
+                'update-entry': 'Actualizar entrada',
+                'edit-entry-notification': 'Ahora puede editar la entrada. Modifique los campos necesarios y haga clic en "Actualizar entrada".',
+                'delete-entry-confirm': '¿Está seguro de que desea eliminar esta entrada?',
+                'entry-deleted': 'Entrada eliminada',
+                'new-firstname': 'Nuevo nombre:',
+                'new-lastname': 'Nuevo apellido:',
+                'new-phone': 'Nuevo número de teléfono:',
+                'profile-updated': 'Perfil actualizado',
+                'delete-project-confirm': '¿Está seguro de que desea eliminar este proyecto? Todas las entradas relacionadas también se eliminarán.',
+                'project-saved': 'Proyecto guardado',
+                'project-deleted': 'Proyecto eliminado'
             },
             ru: {
                 'app-title': 'TimeTrack - Учет рабочего времени',
@@ -1244,7 +1310,27 @@
                 'time-week': 'Эта Неделя',
                 'time-month': 'Этот Месяц',
                 'time-quarter': 'Этот Квартал',
-                'time-year': 'Этот Год'
+                'time-year': 'Этот Год',
+                'email-invalid': 'Пожалуйста, введите действительный адрес электронной почты',
+                'password-required': 'Требуется пароль',
+                'welcome-back': 'С возвращением!',
+                'account-created': 'Аккаунт успешно создан!',
+                'logout-success': 'Вы вышли из системы',
+                'select-project': 'Выберите проект',
+                'time-error': 'Время окончания должно быть позже времени начала',
+                'not-authenticated': 'Пользователь не аутентифицирован',
+                'entry-saved': 'Запись времени сохранена',
+                'update-entry': 'Обновить запись',
+                'edit-entry-notification': 'Теперь вы можете редактировать запись. Измените необходимые поля и нажмите "Обновить запись".',
+                'delete-entry-confirm': 'Вы уверены, что хотите удалить эту запись?',
+                'entry-deleted': 'Запись удалена',
+                'new-firstname': 'Новое имя:',
+                'new-lastname': 'Новая фамилия:',
+                'new-phone': 'Новый номер телефона:',
+                'profile-updated': 'Профиль обновлен',
+                'delete-project-confirm': 'Вы уверены, что хотите удалить этот проект? Все связанные записи также будут удалены.',
+                'project-saved': 'Проект сохранен',
+                'project-deleted': 'Проект удален'
             },
             pl: {
                 'app-title': 'TimeTrack - Profesjonalne Śledzenie Czasu',
@@ -1293,7 +1379,27 @@
                 'time-week': 'Ten Tydzień',
                 'time-month': 'Ten Miesiąc',
                 'time-quarter': 'Ten Kwartał',
-                'time-year': 'Ten Rok'
+                'time-year': 'Ten Rok',
+                'email-invalid': 'Wprowadź prawidłowy adres email',
+                'password-required': 'Hasło jest wymagane',
+                'welcome-back': 'Witamy ponownie!',
+                'account-created': 'Konto utworzone pomyślnie!',
+                'logout-success': 'Zostałeś wylogowany',
+                'select-project': 'Wybierz projekt',
+                'time-error': 'Czas zakończenia musi być późniejszy niż czas rozpoczęcia',
+                'not-authenticated': 'Użytkownik nieuwierzytelniony',
+                'entry-saved': 'Wpis czasu zapisany',
+                'update-entry': 'Aktualizuj wpis',
+                'edit-entry-notification': 'Możesz teraz edytować wpis. Zmodyfikuj niezbędne pola i kliknij "Aktualizuj wpis".',
+                'delete-entry-confirm': 'Czy na pewno chcesz usunąć ten wpis?',
+                'entry-deleted': 'Wpis usunięty',
+                'new-firstname': 'Nowe imię:',
+                'new-lastname': 'Nowe nazwisko:',
+                'new-phone': 'Nowy numer telefonu:',
+                'profile-updated': 'Profil zaktualizowany',
+                'delete-project-confirm': 'Czy na pewno chcesz usunąć ten projekt? Wszystkie powiązane wpisy również zostaną usunięte.',
+                'project-saved': 'Projekt zapisany',
+                'project-deleted': 'Projekt usunięty'
             }
         };
         
@@ -2156,11 +2262,6 @@
         }
         
         // Helper functions
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
-        
         function showError(elementId, message) {
             const element = document.getElementById(elementId);
             element.textContent = message;
