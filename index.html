@@ -879,6 +879,18 @@
             clip: rect(0, 0, 0, 0);
             border: 0;
         }
+        
+        /* Animation for section transitions */
+        .section-content {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .section-content.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
@@ -1391,8 +1403,9 @@
         let editingTimeEntryId = null;
         let currentLanguage = 'sv';
         let debounceTimers = {};
+        let lastFocusedElement = null;
         
-        // Translation dictionary - Expanded with all necessary keys
+        // Translation dictionary
         const translations = {
             sv: {
                 'app-title': 'TimeTrack - Professionell Timrapportering',
@@ -1583,13 +1596,13 @@
                 'validation-date': 'Invalid date'
             },
             es: {
-                // Spanish translations similarly expanded
+                // Spanish translations
             },
             ru: {
-                // Russian translations similarly expanded
+                // Russian translations
             },
             pl: {
-                // Polish translations similarly expanded
+                // Polish translations
             }
         };
         
@@ -1648,6 +1661,10 @@
         
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
+            // Load user preferences
+            loadUserPreferences();
+            
+            // Initialize Firebase and app
             initApp();
             setupEventListeners();
             initCharts();
@@ -1659,10 +1676,26 @@
             // Set default times
             document.getElementById('start-time').value = '09:00';
             document.getElementById('end-time').value = '17:00';
-            
-            // Set language
-            setLanguage('sv');
         });
+        
+        // Load user preferences from localStorage
+        function loadUserPreferences() {
+            // Load theme preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggle.querySelector('i').classList.remove('fa-moon');
+                themeToggle.querySelector('i').classList.add('fa-sun');
+            }
+            
+            // Load language preference
+            const savedLanguage = localStorage.getItem('language');
+            if (savedLanguage && translations[savedLanguage]) {
+                setLanguage(savedLanguage);
+            } else {
+                setLanguage('sv');
+            }
+        }
         
         // Initialize app
         function initApp() {
@@ -1766,9 +1799,15 @@
                     navLinks.forEach(l => l.classList.remove('active'));
                     link.classList.add('active');
                     
-                    // Show selected section
-                    Object.values(sections).forEach(s => s.classList.add('hidden'));
+                    // Show selected section with animation
+                    Object.values(sections).forEach(s => {
+                        s.classList.add('hidden');
+                        s.querySelector('.section-body').classList.remove('active');
+                    });
                     sections[section].classList.remove('hidden');
+                    setTimeout(() => {
+                        sections[section].querySelector('.section-body').classList.add('active');
+                    }, 50);
                 });
             });
             
@@ -1778,16 +1817,19 @@
                 editingProjectId = null;
                 document.getElementById('modal-project-title').textContent = translations[currentLanguage]['add-project'];
                 projectModal.classList.add('show');
+                lastFocusedElement = addProjectBtn;
                 projectNameInput.focus();
             });
             
             modalClose.addEventListener('click', () => {
                 closeModal(projectModal);
+                if (lastFocusedElement) lastFocusedElement.focus();
             });
             
             window.addEventListener('click', (e) => {
                 if (e.target === projectModal) {
                     closeModal(projectModal);
+                    if (lastFocusedElement) lastFocusedElement.focus();
                 }
             });
             
@@ -1795,6 +1837,7 @@
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     closeModal(projectModal);
+                    if (lastFocusedElement) lastFocusedElement.focus();
                 }
             });
             
@@ -1817,6 +1860,7 @@
             // Language selector
             languageSelect.addEventListener('change', (e) => {
                 setLanguage(e.target.value);
+                localStorage.setItem('language', e.target.value);
             });
             
             // Theme toggle
@@ -1880,6 +1924,7 @@
                 updateCharts();
             } catch (error) {
                 showNotification(error.message, 'error');
+                console.error('Error loading user data:', error);
             } finally {
                 showLoading(false);
             }
@@ -2343,6 +2388,7 @@
             
             document.getElementById('modal-project-title').textContent = translations[currentLanguage]['edit-project'];
             projectModal.classList.add('show');
+            lastFocusedElement = document.querySelector(`.edit-project[data-id="${projectId}"]`);
             projectNameInput.focus();
         }
         
@@ -2663,10 +2709,12 @@
                 icon.classList.remove('fa-moon');
                 icon.classList.add('fa-sun');
                 themeToggle.setAttribute('aria-label', 'Switch to light mode');
+                localStorage.setItem('theme', 'dark');
             } else {
                 icon.classList.remove('fa-sun');
                 icon.classList.add('fa-moon');
                 themeToggle.setAttribute('aria-label', 'Switch to dark mode');
+                localStorage.setItem('theme', 'light');
             }
         }
         
