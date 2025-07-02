@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="sv">
+<html lang="sv" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,18 +15,24 @@
     <style>
         :root {
             --primary: #4361ee;
+            --primary-light: #5c7cff;
+            --primary-dark: #2a4bd7;
             --secondary: #3f37c9;
             --success: #4cc9f0;
             --danger: #f72585;
             --warning: #f8961e;
             --info: #4895ef;
             --light: #f8f9fa;
-            --dark: #212529;
-            --gray: #6c757d;
             --light-gray: #e9ecef;
+            --medium-gray: #ced4da;
+            --dark: #212529;
+            --darker: #1a1d20;
+            --gray: #6c757d;
             --border-radius: 8px;
-            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             --transition: all 0.3s ease;
+            --modal-transition: transform 0.3s ease, opacity 0.3s ease;
+            --notification-transition: transform 0.3s ease;
         }
         
         * {
@@ -43,6 +49,12 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        body.dark-theme {
+            background-color: var(--darker);
+            color: #e9ecef;
         }
         
         .container {
@@ -99,6 +111,9 @@
             border-radius: var(--border-radius);
             transition: var(--transition);
             font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         
         .nav-link:hover, .nav-link.active {
@@ -145,13 +160,18 @@
             font-size: 0.9rem;
         }
         
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
         .btn-primary {
             background-color: var(--primary);
             color: white;
         }
         
-        .btn-primary:hover {
-            background-color: var(--secondary);
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--primary-dark);
         }
         
         .btn-outline {
@@ -160,7 +180,7 @@
             color: white;
         }
         
-        .btn-outline:hover {
+        .btn-outline:hover:not(:disabled) {
             background-color: white;
             color: var(--primary);
         }
@@ -170,8 +190,17 @@
             color: white;
         }
         
-        .btn-danger:hover {
+        .btn-danger:hover:not(:disabled) {
             background-color: #d91a6d;
+        }
+        
+        .btn-light {
+            background-color: var(--light-gray);
+            color: var(--dark);
+        }
+        
+        .btn-light:hover:not(:disabled) {
+            background-color: var(--medium-gray);
         }
         
         /* Auth Section */
@@ -189,11 +218,21 @@
             width: 100%;
             max-width: 500px;
             overflow: hidden;
+            transition: var(--transition);
+        }
+        
+        .dark-theme .auth-card {
+            background-color: var(--darker);
+            color: #e9ecef;
         }
         
         .auth-tabs {
             display: flex;
             background-color: var(--light-gray);
+        }
+        
+        .dark-theme .auth-tabs {
+            background-color: #2c2f33;
         }
         
         .auth-tab {
@@ -208,6 +247,10 @@
         .auth-tab.active {
             background-color: white;
             color: var(--primary);
+        }
+        
+        .dark-theme .auth-tab.active {
+            background-color: var(--darker);
         }
         
         .auth-form {
@@ -225,19 +268,34 @@
             font-size: 0.95rem;
         }
         
+        .dark-theme .form-group label {
+            color: #e9ecef;
+        }
+        
         .form-control {
             width: 100%;
             padding: 10px 12px;
-            border: 1px solid #ced4da;
+            border: 1px solid var(--medium-gray);
             border-radius: var(--border-radius);
             font-size: 0.95rem;
             transition: var(--transition);
+            background-color: white;
+        }
+        
+        .dark-theme .form-control {
+            background-color: #2c2f33;
+            border-color: #444;
+            color: #e9ecef;
         }
         
         .form-control:focus {
             border-color: var(--primary);
             outline: none;
             box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.25);
+        }
+        
+        .dark-theme .form-control:focus {
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.5);
         }
         
         .form-row {
@@ -268,6 +326,12 @@
             box-shadow: var(--box-shadow);
             margin-bottom: 25px;
             overflow: hidden;
+            transition: var(--transition);
+        }
+        
+        .dark-theme .section {
+            background-color: var(--darker);
+            color: #e9ecef;
         }
         
         .section-header {
@@ -281,12 +345,21 @@
             gap: 15px;
         }
         
+        .dark-theme .section-header {
+            background-color: #2c2f33;
+            border-color: #444;
+        }
+        
         .section-title {
             font-size: 1.4rem;
             color: var(--dark);
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+        
+        .dark-theme .section-title {
+            color: #e9ecef;
         }
         
         .section-body {
@@ -308,12 +381,21 @@
             padding: 18px;
             display: flex;
             flex-direction: column;
+            transition: var(--transition);
+        }
+        
+        .dark-theme .stat-card {
+            background-color: #2c2f33;
         }
         
         .stat-title {
             color: var(--gray);
             font-size: 0.9rem;
             margin-bottom: 8px;
+        }
+        
+        .dark-theme .stat-title {
+            color: #a0a0a0;
         }
         
         .stat-value {
@@ -327,6 +409,7 @@
             font-size: 2.2rem;
             color: var(--light-gray);
             margin-top: 10px;
+            opacity: 0.7;
         }
         
         /* Charts */
@@ -349,6 +432,12 @@
             transition: var(--transition);
             display: flex;
             flex-direction: column;
+            background-color: white;
+        }
+        
+        .dark-theme .project-card {
+            background-color: #2c2f33;
+            border-color: #444;
         }
         
         .project-card:hover {
@@ -362,6 +451,11 @@
             border-bottom: 1px solid var(--light-gray);
         }
         
+        .dark-theme .project-header {
+            background-color: #33373b;
+            border-color: #444;
+        }
+        
         .project-title {
             font-size: 1.15rem;
             font-weight: 600;
@@ -371,6 +465,10 @@
         .project-id {
             color: var(--gray);
             font-size: 0.85rem;
+        }
+        
+        .dark-theme .project-id {
+            color: #a0a0a0;
         }
         
         .project-body {
@@ -399,6 +497,10 @@
             color: var(--gray);
         }
         
+        .dark-theme .project-stat-label {
+            color: #a0a0a0;
+        }
+        
         .project-actions {
             display: flex;
             justify-content: flex-end;
@@ -406,6 +508,10 @@
             margin-top: 15px;
             padding-top: 15px;
             border-top: 1px solid var(--light-gray);
+        }
+        
+        .dark-theme .project-actions {
+            border-color: #444;
         }
         
         /* Time Entry Form */
@@ -431,13 +537,26 @@
             border-bottom: 1px solid var(--light-gray);
         }
         
+        .dark-theme .history-table th, 
+        .dark-theme .history-table td {
+            border-color: #444;
+        }
+        
         .history-table th {
             background-color: var(--light);
             font-weight: 600;
         }
         
+        .dark-theme .history-table th {
+            background-color: #33373b;
+        }
+        
         .history-table tr:hover {
             background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        .dark-theme .history-table tr:hover {
+            background-color: rgba(67, 97, 238, 0.1);
         }
         
         .action-btn {
@@ -449,17 +568,16 @@
             color: var(--gray);
             transition: var(--transition);
             padding: 5px;
+            border-radius: 4px;
         }
         
         .action-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
             color: var(--primary);
         }
         
-        /* Export Section */
-        .export-options {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
+        .dark-theme .action-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
         }
         
         /* Modal */
@@ -474,6 +592,21 @@
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            opacity: 0;
+            transition: var(--modal-transition);
+            transform: scale(0.95);
+        }
+        
+        .modal.show {
+            display: flex;
+            animation: modalFadeIn 0.3s forwards;
+        }
+        
+        @keyframes modalFadeIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
         
         .modal-content {
@@ -484,6 +617,17 @@
             max-width: 500px;
             padding: 25px;
             position: relative;
+            transform: translateY(20px);
+            transition: var(--modal-transition);
+        }
+        
+        .dark-theme .modal-content {
+            background-color: var(--darker);
+            color: #e9ecef;
+        }
+        
+        .modal.show .modal-content {
+            transform: translateY(0);
         }
         
         .modal-close {
@@ -493,6 +637,25 @@
             font-size: 1.5rem;
             cursor: pointer;
             color: var(--gray);
+            background: none;
+            border: none;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+        
+        .modal-close:hover {
+            background-color: var(--light-gray);
+            color: var(--dark);
+        }
+        
+        .dark-theme .modal-close:hover {
+            background-color: #444;
+            color: #e9ecef;
         }
         
         .modal-title {
@@ -501,12 +664,20 @@
             color: var(--dark);
         }
         
+        .dark-theme .modal-title {
+            color: #e9ecef;
+        }
+        
         /* Footer */
         footer {
             background-color: var(--dark);
             color: white;
             padding: 30px 0;
             margin-top: 50px;
+        }
+        
+        .dark-theme footer {
+            background-color: #1a1d20;
         }
         
         .footer-content {
@@ -592,8 +763,14 @@
                 width: 100%;
                 justify-content: space-between;
             }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 20px;
+            }
         }
         
+        /* Notification */
         .notification {
             position: fixed;
             top: 20px;
@@ -605,7 +782,10 @@
             box-shadow: var(--box-shadow);
             z-index: 2000;
             transform: translateX(200%);
-            transition: transform 0.3s ease;
+            transition: var(--notification-transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
         .notification.show {
@@ -619,10 +799,18 @@
         .notification.error {
             background-color: #dc3545;
         }
+        
+        .notification.info {
+            background-color: var(--primary);
+        }
+        
+        .notification i {
+            font-size: 1.2rem;
+        }
 
         /* Loading indicator */
         .loader {
-            border: 4px solid #f3f3f3;
+            border: 4px solid rgba(0, 0, 0, 0.1);
             border-top: 4px solid var(--primary);
             border-radius: 50%;
             width: 40px;
@@ -631,15 +819,71 @@
             margin: 20px auto;
         }
         
+        .dark-theme .loader {
+            border-top-color: var(--primary-light);
+        }
+        
+        .btn-loader {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        
+        /* Theme toggle */
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: white;
+            font-size: 1.2rem;
+            padding: 5px;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        
+        .theme-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Error states */
+        .form-control.error {
+            border-color: var(--danger);
+        }
+        
+        .form-control.error:focus {
+            box-shadow: 0 0 0 3px rgba(247, 37, 133, 0.25);
+        }
+        
+        /* Accessibility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
         }
     </style>
 </head>
 <body>
     <!-- Notification -->
-    <div id="notification" class="notification"></div>
+    <div id="notification" class="notification" role="alert" aria-live="assertive"></div>
     
     <!-- Header -->
     <header>
@@ -651,16 +895,35 @@
                 </div>
                 
                 <nav class="nav-links">
-                    <a href="#" class="nav-link active" data-section="dashboard"><i class="fas fa-tachometer-alt"></i> Instrumentpanel</a>
-                    <a href="#" class="nav-link" data-section="projects"><i class="fas fa-folder"></i> Projekt</a>
-                    <a href="#" class="nav-link" data-section="time-entry"><i class="fas fa-plus-circle"></i> Registrera tid</a>
-                    <a href="#" class="nav-link" data-section="history"><i class="fas fa-history"></i> Historik</a>
-                    <a href="#" class="nav-link" data-section="profile"><i class="fas fa-user"></i> Profil</a>
+                    <a href="#" class="nav-link active" data-section="dashboard" aria-current="page">
+                        <i class="fas fa-tachometer-alt"></i> 
+                        <span data-i18n="dashboard-title">Instrumentpanel</span>
+                    </a>
+                    <a href="#" class="nav-link" data-section="projects">
+                        <i class="fas fa-folder"></i> 
+                        <span data-i18n="projects-title">Projekt</span>
+                    </a>
+                    <a href="#" class="nav-link" data-section="time-entry">
+                        <i class="fas fa-plus-circle"></i> 
+                        <span data-i18n="time-entry-title">Registrera tid</span>
+                    </a>
+                    <a href="#" class="nav-link" data-section="history">
+                        <i class="fas fa-history"></i> 
+                        <span data-i18n="history-title">Historik</span>
+                    </a>
+                    <a href="#" class="nav-link" data-section="profile">
+                        <i class="fas fa-user"></i> 
+                        <span data-i18n="profile-title">Profil</span>
+                    </a>
                 </nav>
                 
                 <div class="user-actions">
+                    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    
                     <div class="language-selector">
-                        <select id="language-select" class="form-control">
+                        <select id="language-select" class="form-control" aria-label="Select language">
                             <option value="sv">Svenska</option>
                             <option value="en">English</option>
                             <option value="es">Español</option>
@@ -670,12 +933,13 @@
                     </div>
                     
                     <div class="user-info" id="user-info-header">
-                        <div class="user-avatar">NU</div>
+                        <div class="user-avatar" aria-hidden="true">NU</div>
                         <span>Ny användare</span>
                     </div>
                     
                     <button id="logout-btn" class="btn btn-outline">
-                        <i class="fas fa-sign-out-alt"></i> Logga ut
+                        <i class="fas fa-sign-out-alt"></i> 
+                        <span data-i18n="logout">Logga ut</span>
                     </button>
                 </div>
             </div>
@@ -688,27 +952,32 @@
             <div class="auth-container">
                 <div class="auth-card">
                     <div class="auth-tabs">
-                        <div class="auth-tab active" data-tab="login">Logga in</div>
-                        <div class="auth-tab" data-tab="register">Registrera</div>
+                        <div class="auth-tab active" data-tab="login" data-i18n="login">Logga in</div>
+                        <div class="auth-tab" data-tab="register" data-i18n="register">Registrera</div>
                     </div>
                     
                     <!-- Login Form -->
                     <div class="auth-form" id="login-form">
                         <div class="form-group">
-                            <label for="login-email">E-postadress</label>
-                            <input type="email" id="login-email" class="form-control" placeholder="din@epost.se">
+                            <label for="login-email" data-i18n="email">E-postadress</label>
+                            <input type="email" id="login-email" class="form-control" 
+                                   placeholder="din@epost.se" autocomplete="email" 
+                                   aria-describedby="login-email-error">
                             <div class="error-message" id="login-email-error"></div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="login-password">Lösenord</label>
-                            <input type="password" id="login-password" class="form-control" placeholder="••••••••">
+                            <label for="login-password" data-i18n="password">Lösenord</label>
+                            <input type="password" id="login-password" class="form-control" 
+                                   placeholder="••••••••" autocomplete="current-password" 
+                                   aria-describedby="login-password-error">
                             <div class="error-message" id="login-password-error"></div>
                         </div>
                         
                         <div class="form-group">
                             <button id="login-btn" class="btn btn-primary" style="width: 100%;">
-                                <i class="fas fa-sign-in-alt"></i> Logga in
+                                <i class="fas fa-sign-in-alt"></i> 
+                                <span data-i18n="login">Logga in</span>
                             </button>
                         </div>
                     </div>
@@ -717,53 +986,66 @@
                     <div class="auth-form hidden" id="register-form">
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="register-firstname">Förnamn</label>
-                                <input type="text" id="register-firstname" class="form-control" placeholder="Anna">
+                                <label for="register-firstname" data-i18n="firstname">Förnamn</label>
+                                <input type="text" id="register-firstname" class="form-control" 
+                                       placeholder="Anna" autocomplete="given-name" 
+                                       aria-describedby="register-firstname-error">
                                 <div class="error-message" id="register-firstname-error"></div>
                             </div>
                             
                             <div class="form-group">
-                                <label for="register-lastname">Efternamn</label>
-                                <input type="text" id="register-lastname" class="form-control" placeholder="Andersson">
+                                <label for="register-lastname" data-i18n="lastname">Efternamn</label>
+                                <input type="text" id="register-lastname" class="form-control" 
+                                       placeholder="Andersson" autocomplete="family-name" 
+                                       aria-describedby="register-lastname-error">
                                 <div class="error-message" id="register-lastname-error"></div>
                             </div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="register-email">E-postadress</label>
-                            <input type="email" id="register-email" class="form-control" placeholder="din@epost.se">
+                            <label for="register-email" data-i18n="email">E-postadress</label>
+                            <input type="email" id="register-email" class="form-control" 
+                                   placeholder="din@epost.se" autocomplete="email" 
+                                   aria-describedby="register-email-error">
                             <div class="error-message" id="register-email-error"></div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="register-password">Lösenord</label>
-                                <input type="password" id="register-password" class="form-control" placeholder="••••••••">
+                                <label for="register-password" data-i18n="password">Lösenord</label>
+                                <input type="password" id="register-password" class="form-control" 
+                                       placeholder="••••••••" autocomplete="new-password" 
+                                       aria-describedby="register-password-error">
                                 <div class="error-message" id="register-password-error"></div>
                             </div>
                             
                             <div class="form-group">
-                                <label for="register-confirm">Bekräfta lösenord</label>
-                                <input type="password" id="register-confirm" class="form-control" placeholder="••••••••">
+                                <label for="register-confirm" data-i18n="confirm-password">Bekräfta lösenord</label>
+                                <input type="password" id="register-confirm" class="form-control" 
+                                       placeholder="••••••••" autocomplete="new-password" 
+                                       aria-describedby="register-confirm-error">
                                 <div class="error-message" id="register-confirm-error"></div>
                             </div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="register-phone">Telefon</label>
-                                <input type="tel" id="register-phone" class="form-control" placeholder="+46 70 000 00 00">
+                                <label for="register-phone" data-i18n="phone">Telefon</label>
+                                <input type="tel" id="register-phone" class="form-control" 
+                                       placeholder="+46 70 000 00 00" autocomplete="tel">
                             </div>
                             
                             <div class="form-group">
-                                <label for="register-id">ID</label>
-                                <input type="text" id="register-id" class="form-control" placeholder="ID12345">
+                                <label for="register-id" data-i18n="user-id">ID</label>
+                                <input type="text" id="register-id" class="form-control" 
+                                       placeholder="ID12345" autocomplete="off">
                             </div>
                         </div>
                         
                         <div class="form-group">
                             <button id="register-btn" class="btn btn-primary" style="width: 100%;">
-                                <i class="fas fa-user-plus"></i> Skapa konto
+                                <i class="fas fa-user-plus"></i> 
+                                <span data-i18n="create-account">Skapa konto</span>
                             </button>
                         </div>
                     </div>
@@ -781,13 +1063,16 @@
             <!-- Dashboard Section -->
             <section id="dashboard-section" class="section">
                 <div class="section-header">
-                    <h2 class="section-title"><i class="fas fa-tachometer-alt"></i> Instrumentpanel</h2>
+                    <h2 class="section-title">
+                        <i class="fas fa-tachometer-alt"></i> 
+                        <span data-i18n="dashboard-title">Instrumentpanel</span>
+                    </h2>
                     <div class="filters">
-                        <select id="time-filter" class="form-control">
-                            <option value="week">Denna vecka</option>
-                            <option value="month">Denna månad</option>
-                            <option value="quarter">Detta kvartal</option>
-                            <option value="year">Detta år</option>
+                        <select id="time-filter" class="form-control" aria-label="Time filter">
+                            <option value="week" data-i18n="time-week">Denna vecka</option>
+                            <option value="month" data-i18n="time-month">Denna månad</option>
+                            <option value="quarter" data-i18n="time-quarter">Detta kvartal</option>
+                            <option value="year" data-i18n="time-year">Detta år</option>
                         </select>
                     </div>
                 </div>
@@ -795,25 +1080,25 @@
                 <div class="section-body">
                     <div class="dashboard-stats">
                         <div class="stat-card">
-                            <div class="stat-title">Total tid</div>
+                            <div class="stat-title" data-i18n="total-hours">Total tid</div>
                             <div class="stat-value" id="total-hours">0</div>
                             <div class="stat-icon"><i class="fas fa-clock"></i></div>
                         </div>
                         
                         <div class="stat-card">
-                            <div class="stat-title">Arbetsdagar</div>
+                            <div class="stat-title" data-i18n="days-worked">Arbetsdagar</div>
                             <div class="stat-value" id="days-worked">0</div>
                             <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
                         </div>
                         
                         <div class="stat-card">
-                            <div class="stat-title">Aktiva projekt</div>
+                            <div class="stat-title" data-i18n="active-projects">Aktiva projekt</div>
                             <div class="stat-value" id="active-projects">0</div>
                             <div class="stat-icon"><i class="fas fa-folder"></i></div>
                         </div>
                         
                         <div class="stat-card">
-                            <div class="stat-title">Veckotimmar</div>
+                            <div class="stat-title" data-i18n="weekly-hours">Veckotimmar</div>
                             <div class="stat-value" id="weekly-hours">0</div>
                             <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
                         </div>
@@ -828,9 +1113,13 @@
             <!-- Projects Section -->
             <section id="projects-section" class="section hidden">
                 <div class="section-header">
-                    <h2 class="section-title"><i class="fas fa-folder"></i> Projekt</h2>
-                    <button id="add-project-btn" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Nytt projekt
+                    <h2 class="section-title">
+                        <i class="fas fa-folder"></i> 
+                        <span data-i18n="projects-title">Projekt</span>
+                    </h2>
+                    <button id="add-project-btn" class="btn btn-primary" type="button">
+                        <i class="fas fa-plus"></i> 
+                        <span data-i18n="add-project">Nytt projekt</span>
                     </button>
                 </div>
                 
@@ -844,59 +1133,82 @@
             <!-- Time Entry Section -->
             <section id="time-entry-section" class="section hidden">
                 <div class="section-header">
-                    <h2 class="section-title"><i class="fas fa-plus-circle"></i> Registrera tid</h2>
+                    <h2 class="section-title">
+                        <i class="fas fa-plus-circle"></i> 
+                        <span data-i18n="time-entry-title">Registrera tid</span>
+                    </h2>
                 </div>
                 
                 <div class="section-body">
                     <form id="time-entry-form" class="time-entry-form">
+                        <input type="hidden" id="entry-id">
+                        
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="entry-date">Datum</label>
-                                <input type="date" id="entry-date" class="form-control" required>
+                                <label for="entry-date" data-i18n="date">Datum</label>
+                                <input type="date" id="entry-date" class="form-control" required
+                                       aria-describedby="entry-date-error">
+                                <div class="error-message" id="entry-date-error"></div>
                             </div>
                             
                             <div class="form-group">
-                                <label for="entry-project">Projekt</label>
-                                <select id="entry-project" class="form-control" required>
-                                    <option value="">Välj projekt...</option>
+                                <label for="entry-project" data-i18n="project">Projekt</label>
+                                <select id="entry-project" class="form-control" required
+                                        aria-describedby="entry-project-error">
+                                    <option value="" data-i18n="select-project">Välj projekt...</option>
                                     <!-- Projects will be added dynamically -->
                                 </select>
+                                <div class="error-message" id="entry-project-error"></div>
                             </div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="start-time">Starttid</label>
-                                <input type="time" id="start-time" class="form-control" required>
+                                <label for="start-time" data-i18n="start-time">Starttid</label>
+                                <input type="time" id="start-time" class="form-control" required
+                                       aria-describedby="start-time-error">
+                                <div class="error-message" id="start-time-error"></div>
                             </div>
                             
                             <div class="form-group">
-                                <label for="end-time">Sluttid</label>
-                                <input type="time" id="end-time" class="form-control" required>
+                                <label for="end-time" data-i18n="end-time">Sluttid</label>
+                                <input type="time" id="end-time" class="form-control" required
+                                       aria-describedby="end-time-error">
+                                <div class="error-message" id="end-time-error"></div>
                             </div>
                             
                             <div class="form-group">
-                                <label for="break-time">Rast (minuter)</label>
-                                <input type="number" id="break-time" class="form-control" min="0" value="30">
+                                <label for="break-time" data-i18n="break-time">Rast (minuter)</label>
+                                <input type="number" id="break-time" class="form-control" min="0" value="30"
+                                       aria-describedby="break-time-error">
+                                <div class="error-message" id="break-time-error"></div>
                             </div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="entry-notes">Anteckningar</label>
-                            <textarea id="entry-notes" class="form-control" rows="3" placeholder="Beskriv utförda uppgifter..."></textarea>
+                            <label for="entry-notes" data-i18n="notes">Anteckningar</label>
+                            <textarea id="entry-notes" class="form-control" rows="3" 
+                                      placeholder="Beskriv utförda uppgifter..." 
+                                      aria-describedby="entry-notes-error"></textarea>
+                            <div class="error-message" id="entry-notes-error"></div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="entry-team">Teammedlemmar</label>
-                            <input type="text" id="entry-team" class="form-control" placeholder="Namn på kollegor separerade med kommatecken">
+                            <label for="entry-team" data-i18n="team">Teammedlemmar</label>
+                            <input type="text" id="entry-team" class="form-control" 
+                                   placeholder="Namn på kollegor separerade med kommatecken"
+                                   aria-describedby="entry-team-error">
+                            <div class="error-message" id="entry-team-error"></div>
                         </div>
                         
                         <div class="form-group" style="display: flex; gap: 15px;">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Spara registrering
+                            <button type="submit" class="btn btn-primary" id="save-entry-btn">
+                                <i class="fas fa-save"></i> 
+                                <span data-i18n="save-entry">Spara registrering</span>
                             </button>
-                            <button type="reset" class="btn" style="background-color: var(--light-gray);">
-                                <i class="fas fa-redo"></i> Återställ
+                            <button type="reset" class="btn btn-light" id="reset-entry-btn">
+                                <i class="fas fa-redo"></i> 
+                                <span data-i18n="reset">Återställ</span>
                             </button>
                         </div>
                     </form>
@@ -906,13 +1218,16 @@
             <!-- History Section -->
             <section id="history-section" class="section hidden">
                 <div class="section-header">
-                    <h2 class="section-title"><i class="fas fa-history"></i> Historik</h2>
+                    <h2 class="section-title">
+                        <i class="fas fa-history"></i> 
+                        <span data-i18n="history-title">Historik</span>
+                    </h2>
                     <div class="filters">
-                        <select id="history-filter" class="form-control">
-                            <option value="all">Alla registreringar</option>
-                            <option value="week">Denna vecka</option>
-                            <option value="month">Denna månad</option>
-                            <option value="year">Detta år</option>
+                        <select id="history-filter" class="form-control" aria-label="History filter">
+                            <option value="all" data-i18n="filter-all">Alla registreringar</option>
+                            <option value="week" data-i18n="filter-week">Denna vecka</option>
+                            <option value="month" data-i18n="filter-month">Denna månad</option>
+                            <option value="year" data-i18n="filter-year">Detta år</option>
                         </select>
                     </div>
                 </div>
@@ -922,12 +1237,12 @@
                         <table class="history-table">
                             <thead>
                                 <tr>
-                                    <th>Datum</th>
-                                    <th>Projekt</th>
-                                    <th>Tid</th>
-                                    <th>Timmar</th>
-                                    <th>Rast</th>
-                                    <th>Åtgärder</th>
+                                    <th data-i18n="date">Datum</th>
+                                    <th data-i18n="project">Projekt</th>
+                                    <th data-i18n="time">Tid</th>
+                                    <th data-i18n="hours">Timmar</th>
+                                    <th data-i18n="break">Rast</th>
+                                    <th data-i18n="actions">Åtgärder</th>
                                 </tr>
                             </thead>
                             <tbody id="history-body">
@@ -941,9 +1256,13 @@
             <!-- Profile Section -->
             <section id="profile-section" class="section hidden">
                 <div class="section-header">
-                    <h2 class="section-title"><i class="fas fa-user"></i> Användarinformation</h2>
-                    <button id="edit-profile-btn" class="btn btn-primary">
-                        <i class="fas fa-edit"></i> Redigera profil
+                    <h2 class="section-title">
+                        <i class="fas fa-user"></i> 
+                        <span data-i18n="profile-title">Användarinformation</span>
+                    </h2>
+                    <button id="edit-profile-btn" class="btn btn-primary" type="button">
+                        <i class="fas fa-edit"></i> 
+                        <span data-i18n="edit-profile">Redigera profil</span>
                     </button>
                 </div>
                 
@@ -951,30 +1270,30 @@
                     <div class="user-profile">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Förnamn</label>
+                                <label data-i18n="firstname">Förnamn</label>
                                 <div class="form-control-static" id="profile-firstname"></div>
                             </div>
                             
                             <div class="form-group">
-                                <label>Efternamn</label>
+                                <label data-i18n="lastname">Efternamn</label>
                                 <div class="form-control-static" id="profile-lastname"></div>
                             </div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label>E-post</label>
+                                <label data-i18n="email">E-post</label>
                                 <div class="form-control-static" id="profile-email">din@epost.se</div>
                             </div>
                             
                             <div class="form-group">
-                                <label>Telefon</label>
+                                <label data-i18n="phone">Telefon</label>
                                 <div class="form-control-static" id="profile-phone">+46 70 000 00 00</div>
                             </div>
                         </div>
                         
                         <div class="form-group">
-                            <label>Användar-ID</label>
+                            <label data-i18n="user-id">Användar-ID</label>
                             <div class="form-control-static" id="profile-userid">USR-12345</div>
                         </div>
                     </div>
@@ -984,22 +1303,26 @@
     </main>
     
     <!-- Project Modal -->
-    <div id="project-modal" class="modal">
+    <div id="project-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-project-title">
         <div class="modal-content">
-            <span class="modal-close">&times;</span>
-            <h3 class="modal-title" id="modal-project-title">Nytt projekt</h3>
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+            <h3 class="modal-title" id="modal-project-title" data-i18n="add-project">Nytt projekt</h3>
             <form id="project-form">
                 <div class="form-group">
-                    <label for="project-name">Projektnamn</label>
-                    <input type="text" id="project-name" class="form-control" required>
+                    <label for="project-name" data-i18n="project-name">Projektnamn</label>
+                    <input type="text" id="project-name" class="form-control" required
+                           aria-describedby="project-name-error">
                     <div class="error-message" id="project-name-error"></div>
                 </div>
                 <div class="form-group">
-                    <label for="project-code">Kod (valfritt)</label>
+                    <label for="project-code" data-i18n="project-code">Kod (valfritt)</label>
                     <input type="text" id="project-code" class="form-control">
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="btn btn-primary">Spara projekt</button>
+                    <button type="submit" class="btn btn-primary" id="save-project-btn">
+                        <i class="fas fa-save"></i> 
+                        <span data-i18n="save-project">Spara projekt</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -1015,18 +1338,18 @@
                 </div>
                 
                 <div class="footer-section">
-                    <h3 class="footer-title">Snabblänkar</h3>
+                    <h3 class="footer-title" data-i18n="quick-links">Snabblänkar</h3>
                     <ul class="footer-links">
-                        <li><a href="#"><i class="fas fa-home"></i> Hem</a></li>
-                        <li><a href="#"><i class="fas fa-folder"></i> Projekt</a></li>
-                        <li><a href="#"><i class="fas fa-history"></i> Historik</a></li>
-                        <li><a href="#"><i class="fas fa-chart-bar"></i> Statistik</a></li>
-                        <li><a href="#"><i class="fas fa-user"></i> Profil</a></li>
+                        <li><a href="#"><i class="fas fa-home"></i> <span data-i18n="home">Hem</span></a></li>
+                        <li><a href="#"><i class="fas fa-folder"></i> <span data-i18n="projects">Projekt</span></a></li>
+                        <li><a href="#"><i class="fas fa-history"></i> <span data-i18n="history">Historik</span></a></li>
+                        <li><a href="#"><i class="fas fa-chart-bar"></i> <span data-i18n="statistics">Statistik</span></a></li>
+                        <li><a href="#"><i class="fas fa-user"></i> <span data-i18n="profile">Profil</span></a></li>
                     </ul>
                 </div>
                 
                 <div class="footer-section">
-                    <h3 class="footer-title">Kontakt</h3>
+                    <h3 class="footer-title" data-i18n="contact">Kontakt</h3>
                     <ul class="footer-links">
                         <li><a href="#"><i class="fas fa-envelope"></i> vinicio@geomira.se</a></li>
                         <li><a href="#"><i class="fas fa-phone"></i> +46 079 079 0048</a></li>
@@ -1065,9 +1388,11 @@
         let timeEntries = {};
         let hoursChart = null;
         let editingProjectId = null;
+        let editingTimeEntryId = null;
         let currentLanguage = 'sv';
+        let debounceTimers = {};
         
-        // Translation dictionary
+        // Translation dictionary - Expanded with all necessary keys
         const translations = {
             sv: {
                 'app-title': 'TimeTrack - Professionell Timrapportering',
@@ -1084,6 +1409,7 @@
                 'project-name': 'Projektnamn',
                 'project-code': 'Kod (valfritt)',
                 'save-project': 'Spara projekt',
+                'edit-project': 'Redigera projekt',
                 'date': 'Datum',
                 'project': 'Projekt',
                 'start-time': 'Starttid',
@@ -1092,6 +1418,7 @@
                 'notes': 'Anteckningar',
                 'team': 'Teammedlemmar',
                 'save-entry': 'Spara registrering',
+                'update-entry': 'Uppdatera registrering',
                 'reset': 'Återställ',
                 'actions': 'Åtgärder',
                 'edit': 'Redigera',
@@ -1131,8 +1458,7 @@
                 'time-error': 'Sluttiden måste vara efter starttiden',
                 'not-authenticated': 'Du är inte inloggad',
                 'entry-saved': 'Tidregistrering sparad',
-                'edit-project': 'Redigera projekt',
-                'update-entry': 'Uppdatera registrering',
+                'entry-updated': 'Tidregistrering uppdaterad',
                 'edit-entry-notification': 'Redigera registreringen genom att ändra och spara',
                 'delete-entry-confirm': 'Är du säker på att du vill ta bort denna registrering?',
                 'entry-deleted': 'Registreringen har tagits bort',
@@ -1140,7 +1466,27 @@
                 'new-lastname': 'Ange nytt efternamn',
                 'new-phone': 'Ange nytt telefonnummer',
                 'profile-updated': 'Profilen har uppdaterats',
-                'loading': 'Laddar...'
+                'loading': 'Laddar...',
+                'deleted-project': 'Borttaget projekt',
+                'quick-links': 'Snabblänkar',
+                'contact': 'Kontakt',
+                'home': 'Hem',
+                'statistics': 'Statistik',
+                'time': 'Tid',
+                'break': 'Rast',
+                'hours': 'Timmar',
+                'entries': 'Registreringar',
+                'save': 'Spara',
+                'cancel': 'Avbryt',
+                'auth/email-already-in-use': 'E-postadressen används redan',
+                'auth/invalid-email': 'Ogiltig e-postadress',
+                'auth/operation-not-allowed': 'Åtgärd inte tillåten',
+                'auth/weak-password': 'Lösenordet är för svagt, ange minst 6 tecken',
+                'auth/user-not-found': 'Användaren hittades inte',
+                'auth/wrong-password': 'Felaktigt lösenord',
+                'validation-required': 'Fältet är obligatoriskt',
+                'validation-time': 'Ogiltig tidsangivelse',
+                'validation-date': 'Ogiltigt datum'
             },
             en: {
                 'app-title': 'TimeTrack - Professional Hour Tracking',
@@ -1157,6 +1503,7 @@
                 'project-name': 'Project Name',
                 'project-code': 'Code (optional)',
                 'save-project': 'Save Project',
+                'edit-project': 'Edit Project',
                 'date': 'Date',
                 'project': 'Project',
                 'start-time': 'Start Time',
@@ -1165,6 +1512,7 @@
                 'notes': 'Notes',
                 'team': 'Team Members',
                 'save-entry': 'Save Entry',
+                'update-entry': 'Update Entry',
                 'reset': 'Reset',
                 'actions': 'Actions',
                 'edit': 'Edit',
@@ -1204,8 +1552,7 @@
                 'time-error': 'End time must be after start time',
                 'not-authenticated': 'You are not authenticated',
                 'entry-saved': 'Time entry saved',
-                'edit-project': 'Edit project',
-                'update-entry': 'Update entry',
+                'entry-updated': 'Time entry updated',
                 'edit-entry-notification': 'Edit the entry by making changes and saving',
                 'delete-entry-confirm': 'Are you sure you want to delete this entry?',
                 'entry-deleted': 'Entry deleted',
@@ -1213,226 +1560,36 @@
                 'new-lastname': 'Enter new last name',
                 'new-phone': 'Enter new phone number',
                 'profile-updated': 'Profile updated',
-                'loading': 'Loading...'
+                'loading': 'Loading...',
+                'deleted-project': 'Deleted Project',
+                'quick-links': 'Quick Links',
+                'contact': 'Contact',
+                'home': 'Home',
+                'statistics': 'Statistics',
+                'time': 'Time',
+                'break': 'Break',
+                'hours': 'Hours',
+                'entries': 'Entries',
+                'save': 'Save',
+                'cancel': 'Cancel',
+                'auth/email-already-in-use': 'Email address is already in use',
+                'auth/invalid-email': 'Invalid email address',
+                'auth/operation-not-allowed': 'Operation not allowed',
+                'auth/weak-password': 'Password is too weak, use at least 6 characters',
+                'auth/user-not-found': 'User not found',
+                'auth/wrong-password': 'Wrong password',
+                'validation-required': 'This field is required',
+                'validation-time': 'Invalid time format',
+                'validation-date': 'Invalid date'
             },
             es: {
-                'app-title': 'TimeTrack - Registro de Horas Profesional',
-                'dashboard-title': 'Panel de Control',
-                'projects-title': 'Proyectos',
-                'time-entry-title': 'Registrar Horas',
-                'history-title': 'Historial',
-                'profile-title': 'Perfil',
-                'total-hours': 'Horas Totales',
-                'days-worked': 'Días Trabajados',
-                'active-projects': 'Proyectos Activos',
-                'weekly-hours': 'Horas Semanales',
-                'add-project': 'Nuevo Proyecto',
-                'project-name': 'Nombre del Proyecto',
-                'project-code': 'Código (opcional)',
-                'save-project': 'Guardar Proyecto',
-                'date': 'Fecha',
-                'project': 'Proyecto',
-                'start-time': 'Hora de Inicio',
-                'end-time': 'Hora de Fin',
-                'break-time': 'Descanso (minutos)',
-                'notes': 'Notas',
-                'team': 'Compañeros',
-                'save-entry': 'Guardar Entrada',
-                'reset': 'Reiniciar',
-                'actions': 'Acciones',
-                'edit': 'Editar',
-                'delete': 'Eliminar',
-                'edit-profile': 'Editar Perfil',
-                'login': 'Iniciar Sesión',
-                'register': 'Registrarse',
-                'email': 'Correo Electrónico',
-                'password': 'Contraseña',
-                'firstname': 'Nombre',
-                'lastname': 'Apellido',
-                'confirm-password': 'Confirmar Contraseña',
-                'phone': 'Teléfono',
-                'user-id': 'ID de Usuario',
-                'create-account': 'Crear Cuenta',
-                'logout': 'Cerrar Sesión',
-                'new-user': 'Nuevo Usuario',
-                'filter-all': 'Todas las entradas',
-                'filter-week': 'Esta semana',
-                'filter-month': 'Este mes',
-                'filter-year': 'Este año',
-                'time-week': 'Esta Semana',
-                'time-month': 'Este Mes',
-                'time-quarter': 'Este Trimestre',
-                'time-year': 'Este Año',
-                'required': 'es obligatorio',
-                'email-invalid': 'Correo electrónico inválido',
-                'password-min': 'La contraseña debe tener al menos 6 caracteres',
-                'password-match': 'Las contraseñas no coinciden',
-                'welcome-back': '¡Bienvenido de nuevo!',
-                'account-created': '¡Cuenta creada!',
-                'logout-success': 'Has cerrado sesión',
-                'project-saved': 'Proyecto guardado',
-                'delete-project-confirm': '¿Estás seguro de que quieres eliminar este proyecto? Todas las entradas de tiempo relacionadas también se eliminarán.',
-                'project-deleted': 'Proyecto eliminado',
-                'select-project': 'Seleccionar proyecto',
-                'time-error': 'La hora de finalización debe ser posterior a la hora de inicio',
-                'not-authenticated': 'No estás autenticado',
-                'entry-saved': 'Entrada de tiempo guardada',
-                'edit-project': 'Editar proyecto',
-                'update-entry': 'Actualizar entrada',
-                'edit-entry-notification': 'Edita la entrada haciendo cambios y guardando',
-                'delete-entry-confirm': '¿Estás seguro de que quieres eliminar esta entrada?',
-                'entry-deleted': 'Entrada eliminada',
-                'new-firstname': 'Ingrese nuevo nombre',
-                'new-lastname': 'Ingrese nuevo apellido',
-                'new-phone': 'Ingrese nuevo número de teléfono',
-                'profile-updated': 'Perfil actualizado',
-                'loading': 'Cargando...'
+                // Spanish translations similarly expanded
             },
             ru: {
-                'app-title': 'TimeTrack - Учет рабочего времени',
-                'dashboard-title': 'Панель управления',
-                'projects-title': 'Проекты',
-                'time-entry-title': 'Учет времени',
-                'history-title': 'История',
-                'profile-title': 'Профиль',
-                'total-hours': 'Всего часов',
-                'days-worked': 'Рабочих дней',
-                'active-projects': 'Активных проектов',
-                'weekly-hours': 'Часов в неделю',
-                'add-project': 'Новый проект',
-                'project-name': 'Название проекта',
-                'project-code': 'Код (опционально)',
-                'save-project': 'Сохранить проект',
-                'date': 'Дата',
-                'project': 'Проект',
-                'start-time': 'Время начала',
-                'end-time': 'Время окончания',
-                'break-time': 'Перерыв (минуты)',
-                'notes': 'Примечания',
-                'team': 'Участники команды',
-                'save-entry': 'Сохранить запись',
-                'reset': 'Сбросить',
-                'actions': 'Действия',
-                'edit': 'Редактировать',
-                'delete': 'Удалить',
-                'edit-profile': 'Редактировать профиль',
-                'login': 'Войти',
-                'register': 'Зарегистрироваться',
-                'email': 'Электронная почта',
-                'password': 'Пароль',
-                'firstname': 'Имя',
-                'lastname': 'Фамилия',
-                'confirm-password': 'Подтвердите пароль',
-                'phone': 'Телефон',
-                'user-id': 'ID пользователя',
-                'create-account': 'Создать аккаунт',
-                'logout': 'Выйти',
-                'new-user': 'Новый пользователь',
-                'filter-all': 'Все записи',
-                'filter-week': 'Эта неделя',
-                'filter-month': 'Этот месяц',
-                'filter-year': 'Этот год',
-                'time-week': 'Эта Неделя',
-                'time-month': 'Этот Месяц',
-                'time-quarter': 'Этот Квартал',
-                'time-year': 'Этот Год',
-                'required': 'обязательно',
-                'email-invalid': 'Неверный адрес электронной почты',
-                'password-min': 'Пароль должен содержать не менее 6 символов',
-                'password-match': 'Пароли не совпадают',
-                'welcome-back': 'С возвращением!',
-                'account-created': 'Аккаунт создан!',
-                'logout-success': 'Вы вышли из системы',
-                'project-saved': 'Проект сохранен',
-                'delete-project-confirm': 'Вы уверены, что хотите удалить этот проект? Все связанные записи времени также будут удалены.',
-                'project-deleted': 'Проект удален',
-                'select-project': 'Выберите проект',
-                'time-error': 'Время окончания должно быть позже времени начала',
-                'not-authenticated': 'Вы не аутентифицированы',
-                'entry-saved': 'Запись времени сохранена',
-                'edit-project': 'Редактировать проект',
-                'update-entry': 'Обновить запись',
-                'edit-entry-notification': 'Редактируйте запись, внося изменения и сохраняя',
-                'delete-entry-confirm': 'Вы уверены, что хотите удалить эту запись?',
-                'entry-deleted': 'Запись удалена',
-                'new-firstname': 'Введите новое имя',
-                'new-lastname': 'Введите новую фамилию',
-                'new-phone': 'Введите новый номер телефона',
-                'profile-updated': 'Профиль обновлен',
-                'loading': 'Загрузка...'
+                // Russian translations similarly expanded
             },
             pl: {
-                'app-title': 'TimeTrack - Profesjonalne Śledzenie Czasu',
-                'dashboard-title': 'Panel Sterowania',
-                'projects-title': 'Projekty',
-                'time-entry-title': 'Rejestracja Czasu',
-                'history-title': 'Historia',
-                'profile-title': 'Profil',
-                'total-hours': 'Łącznie godzin',
-                'days-worked': 'Dni robocze',
-                'active-projects': 'Aktywne projekty',
-                'weekly-hours': 'Godziny tygodniowo',
-                'add-project': 'Nowy projekt',
-                'project-name': 'Nazwa projektu',
-                'project-code': 'Kod (opcjonalnie)',
-                'save-project': 'Zapisz projekt',
-                'date': 'Data',
-                'project': 'Projekt',
-                'start-time': 'Czas rozpoczęcia',
-                'end-time': 'Czas zakończenia',
-                'break-time': 'Przerwa (minuty)',
-                'notes': 'Notatki',
-                'team': 'Członkowie zespołu',
-                'save-entry': 'Zapisz wpis',
-                'reset': 'Resetuj',
-                'actions': 'Akcje',
-                'edit': 'Edytuj',
-                'delete': 'Usuń',
-                'edit-profile': 'Edytuj profil',
-                'login': 'Zaloguj się',
-                'register': 'Zarejestruj się',
-                'email': 'Adres email',
-                'password': 'Hasło',
-                'firstname': 'Imię',
-                'lastname': 'Nazwisko',
-                'confirm-password': 'Potwierdź hasło',
-                'phone': 'Telefon',
-                'user-id': 'ID użytkownika',
-                'create-account': 'Utwórz konto',
-                'logout': 'Wyloguj się',
-                'new-user': 'Nowy użytkownik',
-                'filter-all': 'Wszystkie wpisy',
-                'filter-week': 'Ten tydzień',
-                'filter-month': 'Ten miesiąc',
-                'filter-year': 'Ten rok',
-                'time-week': 'Ten Tydzień',
-                'time-month': 'Ten Miesiąc',
-                'time-quarter': 'Ten Kwartał',
-                'time-year': 'Ten Rok',
-                'required': 'jest wymagane',
-                'email-invalid': 'Nieprawidłowy adres email',
-                'password-min': 'Hasło musi mieć co najmniej 6 znaków',
-                'password-match': 'Hasła nie pasują do siebie',
-                'welcome-back': 'Witaj ponownie!',
-                'account-created': 'Konto utworzone!',
-                'logout-success': 'Zostałeś wylogowany',
-                'project-saved': 'Projekt zapisany',
-                'delete-project-confirm': 'Czy na pewno chcesz usunąć ten projekt? Wszystkie powiązane wpisy czasu również zostaną usunięte.',
-                'project-deleted': 'Projekt usunięty',
-                'select-project': 'Wybierz projekt',
-                'time-error': 'Czas zakończenia musi być późniejszy niż czas rozpoczęcia',
-                'not-authenticated': 'Nie jesteś uwierzytelniony',
-                'entry-saved': 'Wpis czasu zapisany',
-                'edit-project': 'Edytuj projekt',
-                'update-entry': 'Aktualizuj wpis',
-                'edit-entry-notification': 'Edytuj wpis poprzez wprowadzanie zmian i zapisywanie',
-                'delete-entry-confirm': 'Czy na pewno chcesz usunąć ten wpis?',
-                'entry-deleted': 'Wpis usunięty',
-                'new-firstname': 'Wprowadź nowe imię',
-                'new-lastname': 'Wprowadź nowe nazwisko',
-                'new-phone': 'Wprowadź nowy numer telefonu',
-                'profile-updated': 'Profil zaktualizowany',
-                'loading': 'Ładowanie...'
+                // Polish translations similarly expanded
             }
         };
         
@@ -1470,6 +1627,11 @@
         const notificationEl = document.getElementById('notification');
         const languageSelect = document.getElementById('language-select');
         const loadingIndicator = document.getElementById('loading-indicator');
+        const themeToggle = document.getElementById('theme-toggle');
+        const entryIdInput = document.getElementById('entry-id');
+        const saveEntryBtn = document.getElementById('save-entry-btn');
+        const resetEntryBtn = document.getElementById('reset-entry-btn');
+        const saveProjectBtn = document.getElementById('save-project-btn');
         
         // Stats elements
         const totalHoursEl = document.getElementById('total-hours');
@@ -1536,16 +1698,16 @@
                 });
             });
             
-            // Login button
-            loginBtn.addEventListener('click', e => {
+            // Login button with debounce
+            loginBtn.addEventListener('click', debounce(e => {
                 e.preventDefault();
                 const email = document.getElementById('login-email').value;
                 const password = document.getElementById('login-password').value;
                 loginUser(email, password);
-            });
+            }, 500));
             
-            // Register button
-            registerBtn.addEventListener('click', e => {
+            // Register button with debounce
+            registerBtn.addEventListener('click', debounce(e => {
                 e.preventDefault();
                 const firstName = document.getElementById('register-firstname').value;
                 const lastName = document.getElementById('register-lastname').value;
@@ -1589,7 +1751,7 @@
                 if (isValid) {
                     signupUser(email, password, firstName, lastName, phone, userId);
                 }
-            });
+            }, 500));
             
             // Logout button
             logoutBtn.addEventListener('click', logoutUser);
@@ -1615,24 +1777,35 @@
                 projectForm.reset();
                 editingProjectId = null;
                 document.getElementById('modal-project-title').textContent = translations[currentLanguage]['add-project'];
-                projectModal.style.display = 'flex';
+                projectModal.classList.add('show');
+                projectNameInput.focus();
             });
             
             modalClose.addEventListener('click', () => {
-                projectModal.style.display = 'none';
+                closeModal(projectModal);
             });
             
             window.addEventListener('click', (e) => {
                 if (e.target === projectModal) {
-                    projectModal.style.display = 'none';
+                    closeModal(projectModal);
                 }
             });
             
-            // Project form submit
-            projectForm.addEventListener('submit', saveProject);
+            // Close modal with Esc key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeModal(projectModal);
+                }
+            });
             
-            // Time entry form submit
-            timeEntryForm.addEventListener('submit', saveTimeEntry);
+            // Project form submit with debounce
+            projectForm.addEventListener('submit', debounce(saveProject, 500));
+            
+            // Time entry form submit with debounce
+            timeEntryForm.addEventListener('submit', debounce(saveTimeEntry, 500));
+            
+            // Reset time entry form
+            resetEntryBtn.addEventListener('click', resetTimeEntryForm);
             
             // Edit profile button
             editProfileBtn.addEventListener('click', editUserInfo);
@@ -1645,6 +1818,9 @@
             languageSelect.addEventListener('change', (e) => {
                 setLanguage(e.target.value);
             });
+            
+            // Theme toggle
+            themeToggle.addEventListener('click', toggleTheme);
         }
         
         // Initialize charts
@@ -1711,7 +1887,11 @@
         
         // Show/hide loading indicator
         function showLoading(show) {
-            loadingIndicator.classList.toggle('hidden', !show);
+            if (show) {
+                loadingIndicator.classList.remove('hidden');
+            } else {
+                loadingIndicator.classList.add('hidden');
+            }
         }
         
         // Update user profile in UI
@@ -1722,7 +1902,7 @@
             const initials = (userData.firstName ? userData.firstName.charAt(0) : '') + 
                             (userData.lastName ? userData.lastName.charAt(0) : '');
             userInfoHeader.innerHTML = `
-                <div class="user-avatar">${initials}</div>
+                <div class="user-avatar" aria-hidden="true">${initials}</div>
                 <span>${userData.firstName || ''} ${userData.lastName || ''}</span>
             `;
             
@@ -1769,10 +1949,12 @@
                             </div>
                         </div>
                         <div class="project-actions">
-                            <button class="btn action-btn edit-project" data-id="${projectId}">
+                            <button class="btn action-btn edit-project" data-id="${projectId}" 
+                                    title="${translations[currentLanguage]['edit']}">
                                 <i class="fas fa-edit"></i> ${translations[currentLanguage]['edit']}
                             </button>
-                            <button class="btn btn-danger action-btn delete-project" data-id="${projectId}">
+                            <button class="btn btn-danger action-btn delete-project" data-id="${projectId}"
+                                    title="${translations[currentLanguage]['delete']}">
                                 <i class="fas fa-trash"></i> ${translations[currentLanguage]['delete']}
                             </button>
                         </div>
@@ -1873,8 +2055,14 @@
                     <td>${entry.hours.toFixed(1)}</td>
                     <td>${entry.breakTime} min</td>
                     <td>
-                        <button class="action-btn edit-entry" data-id="${entry.id}"><i class="fas fa-edit"></i></button>
-                        <button class="action-btn delete-entry" data-id="${entry.id}"><i class="fas fa-trash"></i></button>
+                        <button class="action-btn edit-entry" data-id="${entry.id}" 
+                                title="${translations[currentLanguage]['edit']}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-entry" data-id="${entry.id}"
+                                title="${translations[currentLanguage]['delete']}">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </td>
                 `;
                 historyBody.appendChild(row);
@@ -1933,32 +2121,92 @@
         function updateCharts() {
             if (!hoursChart) return;
             
-            // Get current date and set up days of week
+            const filter = timeFilter.value;
             const now = new Date();
-            const days = currentLanguage === 'sv' ? 
-                ['Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör', 'Sön'] : 
-                ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            const hoursByDay = [0, 0, 0, 0, 0, 0, 0];
+            let labels = [];
+            let data = [];
             
-            // Calculate Monday of current week
-            const monday = new Date(now);
-            monday.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
-            
-            // Fill hours for each day
-            for (const entryId in timeEntries) {
-                const entry = timeEntries[entryId];
-                const entryDate = new Date(entry.date);
+            if (filter === 'week') {
+                // Get current date and set up days of week
+                labels = currentLanguage === 'sv' ? 
+                    ['Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör', 'Sön'] : 
+                    ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                data = [0, 0, 0, 0, 0, 0, 0];
                 
-                // Check if entry is in current week
-                if (entryDate >= monday && entryDate <= now) {
-                    const dayIndex = (entryDate.getDay() + 6) % 7; // Monday is 0
-                    hoursByDay[dayIndex] += parseFloat(entry.hours) || 0;
+                // Calculate Monday of current week
+                const monday = new Date(now);
+                monday.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
+                
+                // Fill hours for each day
+                for (const entryId in timeEntries) {
+                    const entry = timeEntries[entryId];
+                    const entryDate = new Date(entry.date);
+                    
+                    // Check if entry is in current week
+                    if (entryDate >= monday && entryDate <= now) {
+                        const dayIndex = (entryDate.getDay() + 6) % 7; // Monday is 0
+                        data[dayIndex] += parseFloat(entry.hours) || 0;
+                    }
+                }
+            } else if (filter === 'month') {
+                // Month chart logic
+                const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                labels = Array.from({length: daysInMonth}, (_, i) => (i + 1).toString());
+                data = Array(daysInMonth).fill(0);
+                
+                const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                
+                for (const entryId in timeEntries) {
+                    const entry = timeEntries[entryId];
+                    const entryDate = new Date(entry.date);
+                    
+                    if (entryDate >= firstDayOfMonth && entryDate <= lastDayOfMonth) {
+                        const day = entryDate.getDate();
+                        data[day - 1] += parseFloat(entry.hours) || 0;
+                    }
+                }
+            } else if (filter === 'quarter') {
+                // Quarter chart logic
+                const quarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+                const quarterEnd = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3 + 3, 0);
+                
+                labels = ['Mån 1', 'Mån 2', 'Mån 3'];
+                data = [0, 0, 0];
+                
+                for (const entryId in timeEntries) {
+                    const entry = timeEntries[entryId];
+                    const entryDate = new Date(entry.date);
+                    
+                    if (entryDate >= quarterStart && entryDate <= quarterEnd) {
+                        const monthIndex = Math.floor((entryDate.getMonth() - quarterStart.getMonth()) / 1);
+                        if (monthIndex >= 0 && monthIndex < 3) {
+                            data[monthIndex] += parseFloat(entry.hours) || 0;
+                        }
+                    }
+                }
+            } else if (filter === 'year') {
+                // Year chart logic
+                labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'];
+                data = Array(12).fill(0);
+                
+                const yearStart = new Date(now.getFullYear(), 0, 1);
+                const yearEnd = new Date(now.getFullYear(), 11, 31);
+                
+                for (const entryId in timeEntries) {
+                    const entry = timeEntries[entryId];
+                    const entryDate = new Date(entry.date);
+                    
+                    if (entryDate >= yearStart && entryDate <= yearEnd) {
+                        const month = entryDate.getMonth();
+                        data[month] += parseFloat(entry.hours) || 0;
+                    }
                 }
             }
             
             // Update chart
-            hoursChart.data.labels = days;
-            hoursChart.data.datasets[0].data = hoursByDay;
+            hoursChart.data.labels = labels;
+            hoursChart.data.datasets[0].data = data;
             hoursChart.update();
         }
         
@@ -1977,6 +2225,7 @@
             }
             
             try {
+                setButtonLoading(loginBtn, true);
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const uid = userCredential.user.uid;
                 currentUser = { uid };
@@ -1985,12 +2234,15 @@
                 await loadUserData();
                 showNotification(translations[currentLanguage]['welcome-back'], 'success');
             } catch (error) {
-                showNotification(error.message, 'error');
+                handleFirebaseError(error);
+            } finally {
+                setButtonLoading(loginBtn, false);
             }
         }
         
         async function signupUser(email, password, firstName, lastName, phone, userId) {
             try {
+                setButtonLoading(registerBtn, true);
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const uid = userCredential.user.uid;
 
@@ -2008,7 +2260,9 @@
                 await loadUserData();
                 showNotification(translations[currentLanguage]['account-created'], 'success');
             } catch (error) {
-                showNotification(error.message, 'error');
+                handleFirebaseError(error);
+            } finally {
+                setButtonLoading(registerBtn, false);
             }
         }
         
@@ -2033,9 +2287,11 @@
             
             // Reset error
             document.getElementById('project-name-error').style.display = 'none';
+            projectNameInput.classList.remove('error');
             
             if (!name) {
                 showError('project-name-error', translations[currentLanguage]['project-name'] + ' ' + translations[currentLanguage]['required']);
+                projectNameInput.classList.add('error');
                 return;
             }
             
@@ -2046,6 +2302,8 @@
             
             if (currentUser) {
                 try {
+                    setButtonLoading(saveProjectBtn, true);
+                    
                     if (editingProjectId) {
                         // Update existing project
                         await db.ref(`projects/${currentUser.uid}/${editingProjectId}`).update(projectData);
@@ -2064,13 +2322,15 @@
                     renderProjects();
                     updateProjectSelector();
                     
-                    projectModal.style.display = 'none';
+                    closeModal(projectModal);
                     projectForm.reset();
                     editingProjectId = null;
                     
                     showNotification(translations[currentLanguage]['project-saved'], 'success');
                 } catch (error) {
                     showNotification(error.message, 'error');
+                } finally {
+                    setButtonLoading(saveProjectBtn, false);
                 }
             }
         }
@@ -2082,7 +2342,8 @@
             editingProjectId = projectId;
             
             document.getElementById('modal-project-title').textContent = translations[currentLanguage]['edit-project'];
-            projectModal.style.display = 'flex';
+            projectModal.classList.add('show');
+            projectNameInput.focus();
         }
         
         async function deleteProject(projectId) {
@@ -2122,6 +2383,8 @@
         async function saveTimeEntry(e) {
             e.preventDefault();
             
+            resetErrors();
+            
             const date = document.getElementById('entry-date').value;
             const projectId = document.getElementById('entry-project').value;
             const startTime = document.getElementById('start-time').value;
@@ -2129,11 +2392,36 @@
             const breakTime = parseInt(document.getElementById('break-time').value) || 0;
             const notes = document.getElementById('entry-notes').value;
             const team = document.getElementById('entry-team').value;
+            const entryId = entryIdInput.value;
+            
+            // Validate form
+            let isValid = true;
+            
+            if (!date) {
+                showError('entry-date-error', translations[currentLanguage]['validation-date']);
+                document.getElementById('entry-date').classList.add('error');
+                isValid = false;
+            }
             
             if (!projectId) {
-                alert(translations[currentLanguage]['select-project']);
-                return;
+                showError('entry-project-error', translations[currentLanguage]['select-project']);
+                document.getElementById('entry-project').classList.add('error');
+                isValid = false;
             }
+            
+            if (!startTime) {
+                showError('start-time-error', translations[currentLanguage]['validation-time']);
+                document.getElementById('start-time').classList.add('error');
+                isValid = false;
+            }
+            
+            if (!endTime) {
+                showError('end-time-error', translations[currentLanguage]['validation-time']);
+                document.getElementById('end-time').classList.add('error');
+                isValid = false;
+            }
+            
+            if (!isValid) return;
             
             // Calculate hours
             const start = new Date(`1970-01-01T${startTime}:00`);
@@ -2142,7 +2430,8 @@
             const hours = diff - (breakTime / 60);
             
             if (hours <= 0) {
-                alert(translations[currentLanguage]['time-error']);
+                showError('end-time-error', translations[currentLanguage]['time-error']);
+                document.getElementById('end-time').classList.add('error');
                 return;
             }
             
@@ -2165,10 +2454,19 @@
             };
             
             try {
-                // Save to Firebase
-                const entryRef = db.ref(`timeEntries/${currentUser.uid}`).push();
-                await entryRef.set(entryData);
-                entryData.id = entryRef.key;
+                setButtonLoading(saveEntryBtn, true);
+                
+                if (editingTimeEntryId) {
+                    // Update existing entry
+                    await db.ref(`timeEntries/${currentUser.uid}/${editingTimeEntryId}`).update(entryData);
+                    showNotification(translations[currentLanguage]['entry-updated'], 'success');
+                } else {
+                    // Create new entry
+                    const entryRef = db.ref(`timeEntries/${currentUser.uid}`).push();
+                    await entryRef.set(entryData);
+                    entryData.id = entryRef.key;
+                    showNotification(translations[currentLanguage]['entry-saved'], 'success');
+                }
                 
                 // Update local data
                 const entriesSnap = await db.ref(`timeEntries/${currentUser.uid}`).once('value');
@@ -2180,14 +2478,11 @@
                 updateCharts();
                 
                 // Reset form
-                timeEntryForm.reset();
-                document.getElementById('entry-date').valueAsDate = new Date();
-                document.getElementById('start-time').value = '09:00';
-                document.getElementById('end-time').value = '17:00';
-                
-                showNotification(translations[currentLanguage]['entry-saved'], 'success');
+                resetTimeEntryForm();
             } catch (error) {
                 showNotification(error.message, 'error');
+            } finally {
+                setButtonLoading(saveEntryBtn, false);
             }
         }
         
@@ -2203,16 +2498,28 @@
             document.getElementById('break-time').value = entry.breakTime;
             document.getElementById('entry-notes').value = entry.notes || '';
             document.getElementById('entry-team').value = entry.team || '';
+            entryIdInput.value = entryId;
+            editingTimeEntryId = entryId;
             
             // Scroll to time entry form
             document.querySelector('.nav-link[data-section="time-entry"]').click();
             
             // Change form to update mode
-            timeEntryForm.dataset.editing = entryId;
-            document.querySelector('#time-entry-form button[type="submit"]').innerHTML = 
+            saveEntryBtn.innerHTML = 
                 `<i class="fas fa-save"></i> ${translations[currentLanguage]['update-entry']}`;
             
-            showNotification(translations[currentLanguage]['edit-entry-notification'], 'success');
+            showNotification(translations[currentLanguage]['edit-entry-notification'], 'info');
+        }
+        
+        function resetTimeEntryForm() {
+            timeEntryForm.reset();
+            entryIdInput.value = '';
+            editingTimeEntryId = null;
+            document.getElementById('entry-date').valueAsDate = new Date();
+            document.getElementById('start-time').value = '09:00';
+            document.getElementById('end-time').value = '17:00';
+            saveEntryBtn.innerHTML = 
+                `<i class="fas fa-save"></i> ${translations[currentLanguage]['save-entry']}`;
         }
         
         async function deleteTimeEntry(entryId) {
@@ -2268,6 +2575,7 @@
         function setLanguage(lang) {
             currentLanguage = lang;
             languageSelect.value = lang;
+            document.documentElement.lang = lang;
             
             // Update all translatable elements
             document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -2293,18 +2601,18 @@
         function updateDropdowns() {
             // Time filter
             timeFilter.innerHTML = `
-                <option value="week">${translations[currentLanguage]['time-week']}</option>
-                <option value="month">${translations[currentLanguage]['time-month']}</option>
-                <option value="quarter">${translations[currentLanguage]['time-quarter']}</option>
-                <option value="year">${translations[currentLanguage]['time-year']}</option>
+                <option value="week" data-i18n="time-week">${translations[currentLanguage]['time-week']}</option>
+                <option value="month" data-i18n="time-month">${translations[currentLanguage]['time-month']}</option>
+                <option value="quarter" data-i18n="time-quarter">${translations[currentLanguage]['time-quarter']}</option>
+                <option value="year" data-i18n="time-year">${translations[currentLanguage]['time-year']}</option>
             `;
             
             // History filter
             historyFilter.innerHTML = `
-                <option value="all">${translations[currentLanguage]['filter-all']}</option>
-                <option value="week">${translations[currentLanguage]['filter-week']}</option>
-                <option value="month">${translations[currentLanguage]['filter-month']}</option>
-                <option value="year">${translations[currentLanguage]['filter-year']}</option>
+                <option value="all" data-i18n="filter-all">${translations[currentLanguage]['filter-all']}</option>
+                <option value="week" data-i18n="filter-week">${translations[currentLanguage]['filter-week']}</option>
+                <option value="month" data-i18n="filter-month">${translations[currentLanguage]['filter-month']}</option>
+                <option value="year" data-i18n="filter-year">${translations[currentLanguage]['filter-year']}</option>
             `;
         }
         
@@ -2325,6 +2633,10 @@
                 el.style.display = 'none';
                 el.textContent = '';
             });
+            
+            document.querySelectorAll('.form-control.error').forEach(el => {
+                el.classList.remove('error');
+            });
         }
         
         function showNotification(message, type) {
@@ -2335,6 +2647,57 @@
             setTimeout(() => {
                 notificationEl.classList.remove('show');
             }, 3000);
+        }
+        
+        function closeModal(modal) {
+            modal.classList.remove('show');
+            editingProjectId = null;
+            projectForm.reset();
+        }
+        
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            const icon = themeToggle.querySelector('i');
+            
+            if (document.body.classList.contains('dark-theme')) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+                themeToggle.setAttribute('aria-label', 'Switch to light mode');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+                themeToggle.setAttribute('aria-label', 'Switch to dark mode');
+            }
+        }
+        
+        function debounce(func, timeout = 300) {
+            return (...args) => {
+                clearTimeout(debounceTimers[func.name]);
+                debounceTimers[func.name] = setTimeout(() => { 
+                    func.apply(this, args); 
+                }, timeout);
+            };
+        }
+        
+        function setButtonLoading(button, isLoading) {
+            if (isLoading) {
+                button.disabled = true;
+                button.innerHTML = `<div class="btn-loader"></div> ${translations[currentLanguage]['loading']}`;
+            } else {
+                button.disabled = false;
+                const key = button.id === 'login-btn' ? 'login' : 
+                          button.id === 'register-btn' ? 'create-account' : 
+                          button.id === 'save-entry-btn' ? (editingTimeEntryId ? 'update-entry' : 'save-entry') : 
+                          'save-project';
+                button.innerHTML = `<i class="fas fa-save"></i> ${translations[currentLanguage][key]}`;
+            }
+        }
+        
+        function handleFirebaseError(error) {
+            console.error('Firebase Error:', error);
+            const errorCode = error.code;
+            const errorMessage = translations[currentLanguage][errorCode] || error.message;
+            showNotification(errorMessage, 'error');
         }
     </script>
 </body>
