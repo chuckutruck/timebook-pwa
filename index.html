@@ -619,6 +619,22 @@
         .notification.error {
             background-color: #dc3545;
         }
+
+        /* Loading indicator */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -635,7 +651,7 @@
                 </div>
                 
                 <nav class="nav-links">
-                    <a href="#" class="nav-link active" data-section="dashboard"><i class="fas fa-home"></i> Instrumentpanel</a>
+                    <a href="#" class="nav-link active" data-section="dashboard"><i class="fas fa-tachometer-alt"></i> Instrumentpanel</a>
                     <a href="#" class="nav-link" data-section="projects"><i class="fas fa-folder"></i> Projekt</a>
                     <a href="#" class="nav-link" data-section="time-entry"><i class="fas fa-plus-circle"></i> Registrera tid</a>
                     <a href="#" class="nav-link" data-section="history"><i class="fas fa-history"></i> Historik</a>
@@ -759,6 +775,9 @@
     <!-- Main Content (Visible after login) -->
     <main id="main-content" class="main-content hidden">
         <div class="container">
+            <!-- Loading indicator -->
+            <div id="loading-indicator" class="loader hidden"></div>
+            
             <!-- Dashboard Section -->
             <section id="dashboard-section" class="section">
                 <div class="section-header">
@@ -1048,12 +1067,6 @@
         let editingProjectId = null;
         let currentLanguage = 'sv';
         
-        // Function to validate email format
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
-        
         // Translation dictionary
         const translations = {
             sv: {
@@ -1104,26 +1117,30 @@
                 'time-month': 'Denna månad',
                 'time-quarter': 'Detta kvartal',
                 'time-year': 'Detta år',
-                'email-invalid': 'Ange en giltig e-postadress',
-                'password-required': 'Lösenord krävs',
+                'required': 'är obligatoriskt',
+                'email-invalid': 'Ogiltig e-postadress',
+                'password-min': 'Lösenordet måste vara minst 6 tecken',
+                'password-match': 'Lösenorden matchar inte',
                 'welcome-back': 'Välkommen tillbaka!',
-                'account-created': 'Konto skapat framgångsrikt!',
-                'logout-success': 'Du har loggat ut',
+                'account-created': 'Konto skapat!',
+                'logout-success': 'Du är nu utloggad',
+                'project-saved': 'Projektet har sparats',
+                'delete-project-confirm': 'Är du säker på att du vill ta bort detta projekt? Alla relaterade tidsregistreringar kommer också att tas bort.',
+                'project-deleted': 'Projektet har tagits bort',
                 'select-project': 'Välj projekt',
                 'time-error': 'Sluttiden måste vara efter starttiden',
-                'not-authenticated': 'Användaren är inte autentiserad',
-                'entry-saved': 'Tidsregistrering sparad',
+                'not-authenticated': 'Du är inte inloggad',
+                'entry-saved': 'Tidregistrering sparad',
+                'edit-project': 'Redigera projekt',
                 'update-entry': 'Uppdatera registrering',
-                'edit-entry-notification': 'Du kan nu redigera registreringen. Ändra nödvändiga fält och klicka på "Uppdatera registrering".',
+                'edit-entry-notification': 'Redigera registreringen genom att ändra och spara',
                 'delete-entry-confirm': 'Är du säker på att du vill ta bort denna registrering?',
-                'entry-deleted': 'Registrering borttagen',
-                'new-firstname': 'Nytt förnamn:',
-                'new-lastname': 'Nytt efternamn:',
-                'new-phone': 'Nytt telefonnummer:',
-                'profile-updated': 'Profil uppdaterad',
-                'delete-project-confirm': 'Är du säker på att du vill ta bort detta projekt? Alla relaterade registreringar kommer också att tas bort.',
-                'project-saved': 'Projekt sparat',
-                'project-deleted': 'Projekt borttaget'
+                'entry-deleted': 'Registreringen har tagits bort',
+                'new-firstname': 'Ange nytt förnamn',
+                'new-lastname': 'Ange nytt efternamn',
+                'new-phone': 'Ange nytt telefonnummer',
+                'profile-updated': 'Profilen har uppdaterats',
+                'loading': 'Laddar...'
             },
             en: {
                 'app-title': 'TimeTrack - Professional Hour Tracking',
@@ -1173,26 +1190,30 @@
                 'time-month': 'This Month',
                 'time-quarter': 'This Quarter',
                 'time-year': 'This Year',
-                'email-invalid': 'Please enter a valid email address',
-                'password-required': 'Password is required',
+                'required': 'is required',
+                'email-invalid': 'Invalid email address',
+                'password-min': 'Password must be at least 6 characters',
+                'password-match': 'Passwords do not match',
                 'welcome-back': 'Welcome back!',
-                'account-created': 'Account created successfully!',
-                'logout-success': 'You have logged out',
+                'account-created': 'Account created!',
+                'logout-success': 'You are now logged out',
+                'project-saved': 'Project saved',
+                'delete-project-confirm': 'Are you sure you want to delete this project? All related time entries will also be deleted.',
+                'project-deleted': 'Project deleted',
                 'select-project': 'Select project',
                 'time-error': 'End time must be after start time',
-                'not-authenticated': 'User not authenticated',
+                'not-authenticated': 'You are not authenticated',
                 'entry-saved': 'Time entry saved',
+                'edit-project': 'Edit project',
                 'update-entry': 'Update entry',
-                'edit-entry-notification': 'You can now edit the entry. Modify necessary fields and click "Update entry".',
+                'edit-entry-notification': 'Edit the entry by making changes and saving',
                 'delete-entry-confirm': 'Are you sure you want to delete this entry?',
                 'entry-deleted': 'Entry deleted',
-                'new-firstname': 'New first name:',
-                'new-lastname': 'New last name:',
-                'new-phone': 'New phone number:',
+                'new-firstname': 'Enter new first name',
+                'new-lastname': 'Enter new last name',
+                'new-phone': 'Enter new phone number',
                 'profile-updated': 'Profile updated',
-                'delete-project-confirm': 'Are you sure you want to delete this project? All related entries will also be deleted.',
-                'project-saved': 'Project saved',
-                'project-deleted': 'Project deleted'
+                'loading': 'Loading...'
             },
             es: {
                 'app-title': 'TimeTrack - Registro de Horas Profesional',
@@ -1242,26 +1263,30 @@
                 'time-month': 'Este Mes',
                 'time-quarter': 'Este Trimestre',
                 'time-year': 'Este Año',
-                'email-invalid': 'Ingrese un correo electrónico válido',
-                'password-required': 'Contraseña requerida',
+                'required': 'es obligatorio',
+                'email-invalid': 'Correo electrónico inválido',
+                'password-min': 'La contraseña debe tener al menos 6 caracteres',
+                'password-match': 'Las contraseñas no coinciden',
                 'welcome-back': '¡Bienvenido de nuevo!',
-                'account-created': '¡Cuenta creada exitosamente!',
+                'account-created': '¡Cuenta creada!',
                 'logout-success': 'Has cerrado sesión',
-                'select-project': 'Seleccionar proyecto',
-                'time-error': 'La hora de fin debe ser posterior a la hora de inicio',
-                'not-authenticated': 'Usuario no autenticado',
-                'entry-saved': 'Entrada de tiempo guardada',
-                'update-entry': 'Actualizar entrada',
-                'edit-entry-notification': 'Ahora puede editar la entrada. Modifique los campos necesarios y haga clic en "Actualizar entrada".',
-                'delete-entry-confirm': '¿Está seguro de que desea eliminar esta entrada?',
-                'entry-deleted': 'Entrada eliminada',
-                'new-firstname': 'Nuevo nombre:',
-                'new-lastname': 'Nuevo apellido:',
-                'new-phone': 'Nuevo número de teléfono:',
-                'profile-updated': 'Perfil actualizado',
-                'delete-project-confirm': '¿Está seguro de que desea eliminar este proyecto? Todas las entradas relacionadas también se eliminarán.',
                 'project-saved': 'Proyecto guardado',
-                'project-deleted': 'Proyecto eliminado'
+                'delete-project-confirm': '¿Estás seguro de que quieres eliminar este proyecto? Todas las entradas de tiempo relacionadas también se eliminarán.',
+                'project-deleted': 'Proyecto eliminado',
+                'select-project': 'Seleccionar proyecto',
+                'time-error': 'La hora de finalización debe ser posterior a la hora de inicio',
+                'not-authenticated': 'No estás autenticado',
+                'entry-saved': 'Entrada de tiempo guardada',
+                'edit-project': 'Editar proyecto',
+                'update-entry': 'Actualizar entrada',
+                'edit-entry-notification': 'Edita la entrada haciendo cambios y guardando',
+                'delete-entry-confirm': '¿Estás seguro de que quieres eliminar esta entrada?',
+                'entry-deleted': 'Entrada eliminada',
+                'new-firstname': 'Ingrese nuevo nombre',
+                'new-lastname': 'Ingrese nuevo apellido',
+                'new-phone': 'Ingrese nuevo número de teléfono',
+                'profile-updated': 'Perfil actualizado',
+                'loading': 'Cargando...'
             },
             ru: {
                 'app-title': 'TimeTrack - Учет рабочего времени',
@@ -1311,26 +1336,30 @@
                 'time-month': 'Этот Месяц',
                 'time-quarter': 'Этот Квартал',
                 'time-year': 'Этот Год',
-                'email-invalid': 'Пожалуйста, введите действительный адрес электронной почты',
-                'password-required': 'Требуется пароль',
+                'required': 'обязательно',
+                'email-invalid': 'Неверный адрес электронной почты',
+                'password-min': 'Пароль должен содержать не менее 6 символов',
+                'password-match': 'Пароли не совпадают',
                 'welcome-back': 'С возвращением!',
-                'account-created': 'Аккаунт успешно создан!',
+                'account-created': 'Аккаунт создан!',
                 'logout-success': 'Вы вышли из системы',
+                'project-saved': 'Проект сохранен',
+                'delete-project-confirm': 'Вы уверены, что хотите удалить этот проект? Все связанные записи времени также будут удалены.',
+                'project-deleted': 'Проект удален',
                 'select-project': 'Выберите проект',
                 'time-error': 'Время окончания должно быть позже времени начала',
-                'not-authenticated': 'Пользователь не аутентифицирован',
+                'not-authenticated': 'Вы не аутентифицированы',
                 'entry-saved': 'Запись времени сохранена',
+                'edit-project': 'Редактировать проект',
                 'update-entry': 'Обновить запись',
-                'edit-entry-notification': 'Теперь вы можете редактировать запись. Измените необходимые поля и нажмите "Обновить запись".',
+                'edit-entry-notification': 'Редактируйте запись, внося изменения и сохраняя',
                 'delete-entry-confirm': 'Вы уверены, что хотите удалить эту запись?',
                 'entry-deleted': 'Запись удалена',
-                'new-firstname': 'Новое имя:',
-                'new-lastname': 'Новая фамилия:',
-                'new-phone': 'Новый номер телефона:',
+                'new-firstname': 'Введите новое имя',
+                'new-lastname': 'Введите новую фамилию',
+                'new-phone': 'Введите новый номер телефона',
                 'profile-updated': 'Профиль обновлен',
-                'delete-project-confirm': 'Вы уверены, что хотите удалить этот проект? Все связанные записи также будут удалены.',
-                'project-saved': 'Проект сохранен',
-                'project-deleted': 'Проект удален'
+                'loading': 'Загрузка...'
             },
             pl: {
                 'app-title': 'TimeTrack - Profesjonalne Śledzenie Czasu',
@@ -1380,26 +1409,30 @@
                 'time-month': 'Ten Miesiąc',
                 'time-quarter': 'Ten Kwartał',
                 'time-year': 'Ten Rok',
-                'email-invalid': 'Wprowadź prawidłowy adres email',
-                'password-required': 'Hasło jest wymagane',
-                'welcome-back': 'Witamy ponownie!',
-                'account-created': 'Konto utworzone pomyślnie!',
+                'required': 'jest wymagane',
+                'email-invalid': 'Nieprawidłowy adres email',
+                'password-min': 'Hasło musi mieć co najmniej 6 znaków',
+                'password-match': 'Hasła nie pasują do siebie',
+                'welcome-back': 'Witaj ponownie!',
+                'account-created': 'Konto utworzone!',
                 'logout-success': 'Zostałeś wylogowany',
+                'project-saved': 'Projekt zapisany',
+                'delete-project-confirm': 'Czy na pewno chcesz usunąć ten projekt? Wszystkie powiązane wpisy czasu również zostaną usunięte.',
+                'project-deleted': 'Projekt usunięty',
                 'select-project': 'Wybierz projekt',
                 'time-error': 'Czas zakończenia musi być późniejszy niż czas rozpoczęcia',
-                'not-authenticated': 'Użytkownik nieuwierzytelniony',
+                'not-authenticated': 'Nie jesteś uwierzytelniony',
                 'entry-saved': 'Wpis czasu zapisany',
+                'edit-project': 'Edytuj projekt',
                 'update-entry': 'Aktualizuj wpis',
-                'edit-entry-notification': 'Możesz teraz edytować wpis. Zmodyfikuj niezbędne pola i kliknij "Aktualizuj wpis".',
+                'edit-entry-notification': 'Edytuj wpis poprzez wprowadzanie zmian i zapisywanie',
                 'delete-entry-confirm': 'Czy na pewno chcesz usunąć ten wpis?',
                 'entry-deleted': 'Wpis usunięty',
-                'new-firstname': 'Nowe imię:',
-                'new-lastname': 'Nowe nazwisko:',
-                'new-phone': 'Nowy numer telefonu:',
+                'new-firstname': 'Wprowadź nowe imię',
+                'new-lastname': 'Wprowadź nowe nazwisko',
+                'new-phone': 'Wprowadź nowy numer telefonu',
                 'profile-updated': 'Profil zaktualizowany',
-                'delete-project-confirm': 'Czy na pewno chcesz usunąć ten projekt? Wszystkie powiązane wpisy również zostaną usunięte.',
-                'project-saved': 'Projekt zapisany',
-                'project-deleted': 'Projekt usunięty'
+                'loading': 'Ładowanie...'
             }
         };
         
@@ -1436,6 +1469,7 @@
         const historyFilter = document.getElementById('history-filter');
         const notificationEl = document.getElementById('notification');
         const languageSelect = document.getElementById('language-select');
+        const loadingIndicator = document.getElementById('loading-indicator');
         
         // Stats elements
         const totalHoursEl = document.getElementById('total-hours');
@@ -1648,23 +1682,36 @@
         async function loadUserData() {
             if (!currentUser) return;
             
-            // Load user profile
-            const userSnap = await db.ref(`users/${currentUser.uid}`).once('value');
-            userData = userSnap.val() || {};
-            updateUserProfile();
+            showLoading(true);
             
-            // Load projects
-            const projectsSnap = await db.ref(`projects/${currentUser.uid}`).once('value');
-            projects = projectsSnap.val() || {};
-            renderProjects();
-            updateProjectSelector();
-            
-            // Load time entries
-            const entriesSnap = await db.ref(`timeEntries/${currentUser.uid}`).once('value');
-            timeEntries = entriesSnap.val() || {};
-            renderTimeEntries();
-            updateStats();
-            updateCharts();
+            try {
+                // Load user profile
+                const userSnap = await db.ref(`users/${currentUser.uid}`).once('value');
+                userData = userSnap.val() || {};
+                updateUserProfile();
+                
+                // Load projects
+                const projectsSnap = await db.ref(`projects/${currentUser.uid}`).once('value');
+                projects = projectsSnap.val() || {};
+                renderProjects();
+                updateProjectSelector();
+                
+                // Load time entries
+                const entriesSnap = await db.ref(`timeEntries/${currentUser.uid}`).once('value');
+                timeEntries = entriesSnap.val() || {};
+                renderTimeEntries();
+                updateStats();
+                updateCharts();
+            } catch (error) {
+                showNotification(error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Show/hide loading indicator
+        function showLoading(show) {
+            loadingIndicator.classList.toggle('hidden', !show);
         }
         
         // Update user profile in UI
@@ -1925,7 +1972,7 @@
             }
             
             if (!password) {
-                showError('login-password-error', translations[currentLanguage]['password-required']);
+                showError('login-password-error', translations[currentLanguage]['password'] + ' ' + translations[currentLanguage]['required']);
                 return;
             }
             
@@ -2262,6 +2309,11 @@
         }
         
         // Helper functions
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+        
         function showError(elementId, message) {
             const element = document.getElementById(elementId);
             element.textContent = message;
