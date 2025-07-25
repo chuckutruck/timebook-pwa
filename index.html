@@ -122,6 +122,10 @@
                 border-bottom: 1px solid var(--border-color);
             }
         }
+    </style>
+</head>
+<body>
+    <!-- Loading Spinner -->
     <div class="loading-spinner" id="loadingSpinner">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -450,7 +454,7 @@
                                     <form id="projectForm">
                                         <input type="hidden" id="projectId">
                                         <div class="mb-3">
-                                            <label for="projectName" class="form-label">Project Name</label>
+                                            <label for="projectName" class="form-label">Project Name *</label>
                                             <input type="text" class="form-control" id="projectName" required>
                                         </div>
                                         <div class="mb-3">
@@ -462,16 +466,16 @@
                                             <textarea class="form-control" id="projectDescription" rows="3"></textarea>
                                         </div>
                                         <div class="mb-3">
-                                            <label for="projectStatus" class="form-label">Status</label>
-                                            <select class="form-select" id="projectStatus">
+                                            <label for="projectStatus" class="form-label">Status *</label>
+                                            <select class="form-select" id="projectStatus" required>
                                                 <option value="active">Active</option>
                                                 <option value="on-hold">On Hold</option>
                                                 <option value="completed">Completed</option>
                                             </select>
                                         </div>
                                         <div class="mb-3">
-                                            <label for="projectColor" class="form-label">Color</label>
-                                            <input type="color" class="form-control form-control-color" id="projectColor" value="#4e73df">
+                                            <label for="projectColor" class="form-label">Color *</label>
+                                            <input type="color" class="form-control form-control-color" id="projectColor" value="#4e73df" required>
                                         </div>
                                     </form>
                                 </div>
@@ -543,11 +547,11 @@
                                     <form id="timeEntryForm">
                                         <input type="hidden" id="timeEntryId">
                                         <div class="mb-3">
-                                            <label for="entryDate" class="form-label">Date</label>
-                                            <input type="date" class="form-control" id="entryDate" required>
+                                            <label for="entryDate" class="form-label">Date *</label>
+                                            <input type="date" class="form-control" id="entryDate" required pattern="\d{4}-\d{2}-\d{2}">
                                         </div>
                                         <div class="mb-3">
-                                            <label for="entryProject" class="form-label">Project</label>
+                                            <label for="entryProject" class="form-label">Project *</label>
                                             <select class="form-select" id="entryProject" required>
                                                 <option value="">Select a project</option>
                                                 <!-- Filled by JavaScript -->
@@ -555,17 +559,17 @@
                                         </div>
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
-                                                <label for="entryStartTime" class="form-label">Start Time</label>
-                                                <input type="time" class="form-control" id="entryStartTime" required>
+                                                <label for="entryStartTime" class="form-label">Start Time *</label>
+                                                <input type="time" class="form-control" id="entryStartTime" required pattern="[0-9]{2}:[0-9]{2}">
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label for="entryEndTime" class="form-label">End Time</label>
-                                                <input type="time" class="form-control" id="entryEndTime" required>
+                                                <label for="entryEndTime" class="form-label">End Time *</label>
+                                                <input type="time" class="form-control" id="entryEndTime" required pattern="[0-9]{2}:[0-9]{2}">
                                             </div>
                                         </div>
                                         <div class="mb-3">
-                                            <label for="entryBreak" class="form-label">Break (minutes)</label>
-                                            <input type="number" class="form-control" id="entryBreak" min="0" value="0">
+                                            <label for="entryBreak" class="form-label">Break (minutes) *</label>
+                                            <input type="number" class="form-control" id="entryBreak" min="0" value="0" required>
                                         </div>
                                         <div class="mb-3">
                                             <label for="entryNotes" class="form-label">Notes</label>
@@ -625,11 +629,11 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label for="reportDateFrom" class="form-label">From</label>
-                                        <input type="date" class="form-control" id="reportDateFrom">
+                                        <input type="date" class="form-control" id="reportDateFrom" pattern="\d{4}-\d{2}-\d{2}">
                                     </div>
                                     <div class="col-md-4">
                                         <label for="reportDateTo" class="form-label">To</label>
-                                        <input type="date" class="form-control" id="reportDateTo">
+                                        <input type="date" class="form-control" id="reportDateTo" pattern="\d{4}-\d{2}-\d{2}">
                                     </div>
                                 </div>
                                 <button class="btn btn-primary mb-3" id="generateReportButton">Generate Report</button>
@@ -1214,11 +1218,15 @@
                 return;
             }
             
+            if (!name || !email) {
+                alert('Name and email are required');
+                return;
+            }
+            
             showLoading(true);
             
             auth.createUserWithEmailAndPassword(email, password)
                 .then((userCredential) => {
-                    // Save additional user data
                     const user = userCredential.user;
                     return database.ref('users/' + user.uid).set({
                         name: name,
@@ -1414,15 +1422,11 @@
             document.getElementById('installButton').textContent = lang.install;
             document.querySelector('#installPrompt .toast-body .btn-secondary').textContent = lang.notNow;
         }
+
         // Show loading spinner
         function showLoading(show) {
             document.getElementById('loadingSpinner').style.display = show ? 'flex' : 'none';
         }
-        
-        // Global data holders
-        let projects = [];
-        let timeEntries = [];
-        let teamMembers = [];
         
         // Load dashboard data
         function loadDashboardData() {
@@ -1516,107 +1520,17 @@
             });
         }
         
-        // Improved loadProjects function
-        function loadProjects() {
-            if (!currentUser || !projects) return;
-            
-            showLoading(true);
-            
-            try {
-                const tableBody = document.querySelector('#projectsTable tbody');
-                tableBody.innerHTML = '';
-                
-                projects.forEach(project => {
-                    // Calculate total time for this project
-                    let totalMinutes = 0;
-                    timeEntries.forEach(entry => {
-                        if (entry.projectId === project.id) {
-                            const start = new Date(entry.date + 'T' + entry.startTime);
-                            const end = new Date(entry.date + 'T' + entry.endTime);
-                            const duration = (end - start) / (1000 * 60) - (entry.break || 0);
-                            totalMinutes += duration;
-                        }
-                    });
-                    
-                    // Create project row
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${project.name}</td>
-                        <td>${project.client || ''}</td>
-                        <td><span class="badge ${getStatusBadgeClass(project.status)}">
-                            ${translations[currentLanguage][project.status] || project.status}
-                        </span></td>
-                        <td>${formatHoursMinutes(totalMinutes)}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary edit-project" data-id="${project.id}">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger delete-project" data-id="${project.id}">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-                
-                // Add event listeners
-                document.querySelectorAll('.edit-project').forEach(btn => {
-                    btn.addEventListener('click', () => editProject(btn.dataset.id));
-                });
-                
-                document.querySelectorAll('.delete-project').forEach(btn => {
-                    btn.addEventListener('click', () => deleteProject(btn.dataset.id));
-                });
-                
-                showLoading(false);
-            } catch (error) {
-                showLoading(false);
-                console.error('Error loading projects:', error);
-                alert('Error loading projects: ' + error.message);
-            }
-        }
-                        
-                        // Calculate today's time
-                        if (entryDate.toDateString() === today.toDateString()) {
-                            const start = new Date(entry.date + 'T' + entry.startTime);
-                            const end = new Date(entry.date + 'T' + entry.endTime);
-                            const duration = (end - start) / (1000 * 60) - (entry.break || 0);
-                            todayTotalMinutes += duration;
-                        }
-                        
-                        // Calculate this week's time
-                        if (entryDate >= weekStart) {
-                            const start = new Date(entry.date + 'T' + entry.startTime);
-                            const end = new Date(entry.date + 'T' + entry.endTime);
-                            const duration = (end - start) / (1000 * 60) - (entry.break || 0);
-                            weekTotalMinutes += duration;
-                        }
-                    });
-                    
-                    // Update UI
-                    document.getElementById('todayTime').textContent = formatHoursMinutes(todayTotalMinutes);
-                    document.getElementById('weekTime').textContent = formatHoursMinutes(weekTotalMinutes);
-                    
-                    // Update recent entries table
-                    updateRecentEntriesTable();
-                    
-                    // Create charts
-                    createWeeklyChart();
-                    createProjectsChart();
-                    
-                    showLoading(false);
-                })
-                .catch(error => {
-                    showLoading(false);
-                    console.error('Error loading dashboard data:', error);
-                });
-        }
-
         // Format minutes as hours and minutes
         function formatHoursMinutes(minutes) {
             const hours = Math.floor(minutes / 60);
             const mins = Math.round(minutes % 60);
             return `${hours}h ${mins}m`;
+        }
+
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString(currentLanguage);
         }
 
         // Update recent entries table
@@ -1647,12 +1561,6 @@
                 `;
                 tableBody.appendChild(row);
             });
-        }
-
-        // Format date for display
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString(currentLanguage);
         }
 
         // Create weekly chart
@@ -1921,19 +1829,34 @@
         // Save project
         function saveProject() {
             const projectId = document.getElementById('projectId').value;
-            const projectData = {
-                name: document.getElementById('projectName').value,
-                client: document.getElementById('projectClient').value,
-                description: document.getElementById('projectDescription').value,
-                status: document.getElementById('projectStatus').value,
-                color: document.getElementById('projectColor').value,
-                updatedAt: firebase.database.ServerValue.TIMESTAMP
-            };
+            const projectName = document.getElementById('projectName').value;
+            const projectStatus = document.getElementById('projectStatus').value;
+            const projectColor = document.getElementById('projectColor').value;
             
-            if (!projectData.name) {
+            // Validate project data according to Firebase rules
+            if (!projectName || !projectName.trim()) {
                 alert('Project name is required');
                 return;
             }
+            
+            if (!['active', 'on-hold', 'completed'].includes(projectStatus)) {
+                alert('Invalid project status');
+                return;
+            }
+            
+            if (!/^#[0-9a-fA-F]{6}$/.test(projectColor)) {
+                alert('Invalid color format. Use #RRGGBB.');
+                return;
+            }
+            
+            const projectData = {
+                name: projectName,
+                status: projectStatus,
+                color: projectColor,
+                client: document.getElementById('projectClient').value || null,
+                description: document.getElementById('projectDescription').value || null,
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+            };
             
             showLoading(true);
             
@@ -1950,6 +1873,7 @@
                     .catch(error => {
                         showLoading(false);
                         console.error('Error updating project:', error);
+                        alert('Error: ' + error.message);
                     });
             } else {
                 // Add new project
@@ -1964,6 +1888,7 @@
                     .catch(error => {
                         showLoading(false);
                         console.error('Error adding project:', error);
+                        alert('Error: ' + error.message);
                     });
             }
         }
@@ -2160,29 +2085,52 @@
         // Save time entry
         function saveTimeEntry() {
             const entryId = document.getElementById('timeEntryId').value;
-            const entryData = {
-                date: document.getElementById('entryDate').value,
-                projectId: document.getElementById('entryProject').value,
-                startTime: document.getElementById('entryStartTime').value,
-                endTime: document.getElementById('entryEndTime').value,
-                break: parseInt(document.getElementById('entryBreak').value) || 0,
-                notes: document.getElementById('entryNotes').value,
-                updatedAt: firebase.database.ServerValue.TIMESTAMP
-            };
+            const entryDate = document.getElementById('entryDate').value;
+            const projectId = document.getElementById('entryProject').value;
+            const startTime = document.getElementById('entryStartTime').value;
+            const endTime = document.getElementById('entryEndTime').value;
+            const breakMinutes = parseInt(document.getElementById('entryBreak').value) || 0;
             
-            // Validate
-            if (!entryData.date || !entryData.projectId || !entryData.startTime || !entryData.endTime) {
+            // Validate required fields
+            if (!entryDate || !projectId || !startTime || !endTime) {
                 alert('Please fill in all required fields');
                 return;
             }
             
-            const start = new Date(entryData.date + 'T' + entryData.startTime);
-            const end = new Date(entryData.date + 'T' + entryData.endTime);
+            // Validate date format (YYYY-MM-DD)
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(entryDate)) {
+                alert('Invalid date format. Use YYYY-MM-DD.');
+                return;
+            }
             
-            if (end <= start) {
+            // Validate time format (HH:MM)
+            const timeRegex = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
+            if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+                alert('Invalid time format. Use HH:MM in 24-hour format.');
+                return;
+            }
+            
+            // Validate end time after start time
+            if (endTime <= startTime) {
                 alert('End time must be after start time');
                 return;
             }
+            
+            // Validate break minutes
+            if (isNaN(breakMinutes) || breakMinutes < 0) {
+                alert('Break minutes must be a non-negative number');
+                return;
+            }
+            
+            const entryData = {
+                date: entryDate,
+                projectId: projectId,
+                startTime: startTime,
+                endTime: endTime,
+                break: breakMinutes,
+                notes: document.getElementById('entryNotes').value || null,
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+            };
             
             showLoading(true);
             
@@ -2199,6 +2147,7 @@
                     .catch(error => {
                         showLoading(false);
                         console.error('Error updating time entry:', error);
+                        alert('Error: ' + error.message);
                     });
             } else {
                 // Add new entry
@@ -2214,6 +2163,7 @@
                     .catch(error => {
                         showLoading(false);
                         console.error('Error adding time entry:', error);
+                        alert('Error: ' + error.message);
                     });
             }
         }
