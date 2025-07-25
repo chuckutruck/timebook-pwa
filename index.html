@@ -686,7 +686,7 @@
         const firebaseConfig = {
             apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
             authDomain: "tidbok-df555.firebaseapp.com",
-            databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app",
+            databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app/",
             projectId: "tidbok-df555",
             storageBucket: "tidbok-df555.appspot.com",
             messagingSenderId: "467331966400",
@@ -1418,66 +1418,167 @@
             document.getElementById('installButton').textContent = lang.install;
             document.querySelector('#installPrompt .toast-body .btn-secondary').textContent = lang.notNow;
         }
-
         // Show loading spinner
         function showLoading(show) {
             document.getElementById('loadingSpinner').style.display = show ? 'flex' : 'none';
         }
-
+        
+        // Global data holders
+        let projects = [];
+        let timeEntries = [];
+        let teamMembers = [];
+        
         // Load dashboard data
         function loadDashboardData() {
             if (!currentUser) return;
             
             showLoading(true);
             
-            // Load today's time
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            
-            // Load this week's time
             const weekStart = new Date(today);
             weekStart.setDate(weekStart.getDate() - weekStart.getDay());
             
-            // Load projects count
-            database.ref('projects/' + currentUser.uid).once('value')
-                .then(snapshot => {
-                    projects = [];
-                    snapshot.forEach(childSnapshot => {
-                        projects.push({
-                            id: childSnapshot.key,
-                            ...childSnapshot.val()
-                        });
+            // Load all necessary data in parallel for better performance
+            Promise.all([
+                // Load projects
+                database.ref('projects/' + currentUser.uid).once('value'),
+                // Load team members
+                database.ref('teams/' + currentUser.uid).once('value'),
+                // Load time entries
+                database.ref('timeEntries/' + currentUser.uid).orderByChild('date').once('value')
+            ])
+            .then(([projectsSnapshot, teamSnapshot, timeEntriesSnapshot]) => {
+                // Process projects
+                projects = [];
+                projectsSnapshot.forEach(childSnapshot => {
+                    projects.push({
+                        id: childSnapshot.key,
+                        ...childSnapshot.val()
+                    });
+                });
+                
+                // Update projects count
+                document.getElementById('activeProjects').textContent = 
+                    projects.filter(p => p.status === 'active').length;
+                
+                // Process team members
+                teamMembers = [];
+                teamSnapshot.forEach(childSnapshot => {
+                    teamMembers.push(childSnapshot.val());
+                });
+                document.getElementById('teamMembers').textContent = teamMembers.length;
+                
+                // Process time entries
+                timeEntries = [];
+                let todayTotalMinutes = 0;
+                let weekTotalMinutes = 0;
+                
+                timeEntriesSnapshot.forEach(childSnapshot => {
+                    const entry = {
+                        id: childSnapshot.key,
+                        ...childSnapshot.val()
+                    };
+                    timeEntries.push(entry);
+                    
+                    const entryDate = new Date(entry.date);
+                    const start = new Date(entry.date + 'T' + entry.startTime);
+                    const end = new Date(entry.date + 'T' + entry.endTime);
+                    const duration = (end - start) / (1000 * 60) - (entry.break || 0);
+                    
+                    // Today's time
+                    if (entryDate.toDateString() === today.toDateString()) {
+                        todayTotalMinutes += duration;
+                    }
+                    
+                    // This week's time
+                    if (entryDate >= weekStart) {
+                        weekTotalMinutes += duration;
+                    }
+                });
+                
+                // Update UI
+                document.getElementById('todayTime').textContent = formatHoursMinutes(todayTotalMinutes);
+                document.getElementById('weekTime').textContent = formatHoursMinutes(weekTotalMinutes);
+                
+                // Update recent entries and charts
+                updateRecentEntriesTable();
+                createWeeklyChart();
+                createProjectsChart();
+                
+                showLoading(false);
+                
+                // If we're on the projects screen, refresh it
+                if (document.getElementById('projectsScreen').style.display !== 'none') {
+                    loadProjects();
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                console.error('Error loading dashboard data:', error);
+                alert('Error loading data: ' + error.message);
+            });
+        }
+        
+        // Improved loadProjects function
+        function loadProjects() {
+            if (!currentUser || !projects) return;
+            
+            showLoading(true);
+            
+            try {
+                const tableBody = document.querySelector('#projectsTable tbody');
+                tableBody.innerHTML = '';
+                
+                projects.forEach(project => {
+                    // Calculate total time for this project
+                    let totalMinutes = 0;
+                    timeEntries.forEach(entry => {
+                        if (entry.projectId === project.id) {
+                            const start = new Date(entry.date + 'T' + entry.startTime);
+                            const end = new Date(entry.date + 'T' + entry.endTime);
+                            const duration = (end - start) / (1000 * 60) - (entry.break || 0);
+                            totalMinutes += duration;
+                        }
                     });
                     
-                    document.getElementById('activeProjects').textContent = projects.filter(p => p.status === 'active').length;
-                    
-                    // Load team members count
-                    return database.ref('teams/' + currentUser.uid).once('value');
-                })
-                .then(snapshot => {
-                    teamMembers = [];
-                    snapshot.forEach(childSnapshot => {
-                        teamMembers.push(childSnapshot.val());
-                    });
-                    
-                    document.getElementById('teamMembers').textContent = teamMembers.length;
-                    
-                    // Load time entries for today and this week
-                    return database.ref('timeEntries/' + currentUser.uid).orderByChild('date').once('value');
-                })
-                .then(snapshot => {
-                    timeEntries = [];
-                    let todayTotalMinutes = 0;
-                    let weekTotalMinutes = 0;
-                    
-                    snapshot.forEach(childSnapshot => {
-                        const entry = {
-                            id: childSnapshot.key,
-                            ...childSnapshot.val()
-                        };
-                        timeEntries.push(entry);
-                        
-                        const entryDate = new Date(entry.date);
+                    // Create project row
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${project.name}</td>
+                        <td>${project.client || ''}</td>
+                        <td><span class="badge ${getStatusBadgeClass(project.status)}">
+                            ${translations[currentLanguage][project.status] || project.status}
+                        </span></td>
+                        <td>${formatHoursMinutes(totalMinutes)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary edit-project" data-id="${project.id}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-project" data-id="${project.id}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                // Add event listeners
+                document.querySelectorAll('.edit-project').forEach(btn => {
+                    btn.addEventListener('click', () => editProject(btn.dataset.id));
+                });
+                
+                document.querySelectorAll('.delete-project').forEach(btn => {
+                    btn.addEventListener('click', () => deleteProject(btn.dataset.id));
+                });
+                
+                showLoading(false);
+            } catch (error) {
+                showLoading(false);
+                console.error('Error loading projects:', error);
+                alert('Error loading projects: ' + error.message);
+            }
+        }
                         
                         // Calculate today's time
                         if (entryDate.toDateString() === today.toDateString()) {
