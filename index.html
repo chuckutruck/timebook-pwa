@@ -1,2447 +1,2106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimeBook - Time Tracking PWA</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
-    <style>
-        :root {
-            --primary-color: #4e73df;
-            --secondary-color: #858796;
-            --success-color: #1cc88a;
-            --info-color: #36b9cc;
-            --warning-color: #f6c23e;
-            --danger-color: #e74a3b;
-            --light-color: #f8f9fc;
-            --dark-color: #5a5c69;
-            --body-bg: #f8f9fc;
-            --card-bg: #ffffff;
-            --text-color: #5a5c69;
-            --border-color: #e3e6f0;
-        }
-
-        [data-bs-theme="dark"] {
-            --primary-color: #4e73df;
-            --secondary-color: #858796;
-            --success-color: #1cc88a;
-            --info-color: #36b9cc;
-            --warning-color: #f6c23e;
-            --danger-color: #e74a3b;
-            --light-color: #5a5c69;
-            --dark-color: #f8f9fc;
-            --body-bg: #2a3042;
-            --card-bg: #3a3f51;
-            --text-color: #f8f9fc;
-            --border-color: #4a4f61;
-        }
-
-        body {
-            background-color: var(--body-bg);
-            color: var(--text-color);
-            transition: all 0.3s;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border-color: var(--border-color);
-        }
-
-        .navbar, .dropdown-menu {
-            background-color: var(--card-bg) !important;
-            border-color: var(--border-color) !important;
-        }
-
-        .form-control, .form-select {
-            background-color: var(--card-bg);
-            color: var(--text-color);
-            border-color: var(--border-color);
-        }
-
-        .btn-outline-secondary {
-            border-color: var(--border-color);
-            color: var(--text-color);
-        }
-
-        .table {
-            color: var(--text-color);
-        }
-
-        .loading-spinner {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .spinner-border {
-            width: 3rem;
-            height: 3rem;
-        }
-
-        .sidebar {
-            min-height: calc(100vh - 56px);
-            background-color: var(--card-bg);
-            border-right: 1px solid var(--border-color);
-        }
-
-        .sidebar .nav-link {
-            color: var(--text-color);
-        }
-
-        .sidebar .nav-link.active {
-            color: var(--primary-color);
-            font-weight: bold;
-        }
-
-        .sidebar .nav-link:hover {
-            color: var(--primary-color);
-        }
-
-        .chart-container {
-            position: relative;
-            height: 300px;
-            width: 100%;
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                min-height: auto;
-                border-right: none;
-                border-bottom: 1px solid var(--border-color);
-            }
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TimeBook - Time Tracking Application</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-database-compat.js"></script>
+  <style>
+    :root {
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --secondary: #10b981;
+      --secondary-dark: #059669;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --light: #f3f4f6;
+      --dark: #1f2937;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f9fafb;
+    }
+    
+    .card {
+      border-radius: 8px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      background-color: white;
+      overflow: hidden;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+    }
+    
+    .btn-secondary {
+      background-color: var(--secondary);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .btn-secondary:hover {
+      background-color: var(--secondary-dark);
+    }
+    
+    .btn-outline {
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .btn-outline:hover {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      transition: border-color 0.15s ease-in-out;
+    }
+    
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #374151;
+    }
+    
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: 0.375rem;
+      margin-bottom: 1rem;
+    }
+    
+    .alert-success {
+      background-color: #ecfdf5;
+      color: #064e3b;
+      border: 1px solid #a7f3d0;
+    }
+    
+    .alert-danger {
+      background-color: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+    
+    .tab-active {
+      border-bottom: 2px solid var(--primary);
+      color: var(--primary);
+      font-weight: 600;
+    }
+    
+    .entries-container .entry {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0.75rem 0;
+    }
+    
+    .entries-container .entry:last-child {
+      border-bottom: none;
+    }
+    
+    .stat-card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .week-separator {
+      background-color: #f3f4f6;
+      padding: 0.5rem 1rem;
+      font-weight: 600;
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .auth-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(255, 255, 255, 0.9);
+      z-index: 1000;
+    }
+    
+    .auth-card {
+      max-width: 400px;
+      width: 100%;
+      padding: 2rem;
+    }
+    
+    .auth-tabs {
+      display: flex;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 1.5rem;
+    }
+    
+    .auth-tab {
+      flex: 1;
+      text-align: center;
+      padding: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .auth-tab.active {
+      border-bottom: 2px solid var(--primary);
+      color: var(--primary);
+      font-weight: 600;
+    }
+    
+    .auth-form {
+      display: none;
+    }
+    
+    .auth-form.active {
+      display: block;
+    }
+    
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-left-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
-<body>
-    <!-- Loading Spinner -->
-    <div class="loading-spinner" id="loadingSpinner">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-    </div>
+<body class="min-h-screen">
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="spinner"></div>
+  </div>
 
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">TimeBook</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+  <!-- Authentication Container -->
+  <div id="auth-container" class="auth-container">
+    <div class="card auth-card">
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">
+          <i class="fas fa-clock mr-2 text-blue-500"></i> TimeBook
+        </h1>
+        <p class="text-gray-600 mt-2">Track your work hours efficiently</p>
+      </div>
+      
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-tab="login">Login</div>
+        <div class="auth-tab" data-tab="signup">Sign Up</div>
+      </div>
+      
+      <!-- Login Form -->
+      <form id="login-form" class="auth-form active">
+        <div class="form-group">
+          <label for="login-email" class="form-label">Email</label>
+          <input type="email" id="login-email" class="form-control" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="login-password" class="form-label">Password</label>
+          <input type="password" id="login-password" class="form-control" required>
+        </div>
+        
+        <div class="form-group text-right">
+          <a href="#" class="text-sm text-blue-500 hover:text-blue-700" id="forgot-password">Forgot password?</a>
+        </div>
+        
+        <button type="submit" class="btn-primary w-full mt-2">Login</button>
+      </form>
+      
+      <!-- Signup Form -->
+      <form id="signup-form" class="auth-form">
+        <div class="form-group">
+          <label for="signup-first-name" class="form-label">First Name</label>
+          <input type="text" id="signup-first-name" class="form-control" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="signup-last-name" class="form-label">Last Name</label>
+          <input type="text" id="signup-last-name" class="form-control" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="signup-email" class="form-label">Email</label>
+          <input type="email" id="signup-email" class="form-control" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="signup-password" class="form-label">Password</label>
+          <input type="password" id="signup-password" class="form-control" required minlength="6">
+        </div>
+        
+        <div class="form-group">
+          <label for="signup-confirm-password" class="form-label">Confirm Password</label>
+          <input type="password" id="signup-confirm-password" class="form-control" required>
+        </div>
+        
+        <button type="submit" class="btn-primary w-full mt-2">Sign Up</button>
+      </form>
+      
+      <div id="auth-alert" class="alert mt-4 hidden"></div>
+    </div>
+  </div>
+
+  <!-- Main Application -->
+  <div id="app" class="hidden">
+    <!-- Alert Container -->
+    <div id="alert-container" class="fixed top-4 right-4 z-50 max-w-sm"></div>
+    
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+      <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">
+          <i class="fas fa-clock mr-2 text-blue-500"></i> TimeBook
+        </h1>
+        
+        <div class="flex items-center space-x-4">
+          <!-- User info -->
+          <div class="text-right hidden md:block">
+            <div class="font-medium" id="header-user-name"></div>
+            <div class="text-sm text-gray-600" id="header-user-email"></div>
+          </div>
+          
+          <!-- User avatar -->
+          <div class="relative">
+            <button id="user-menu-btn" class="flex items-center focus:outline-none">
+              <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold" id="user-avatar">
+                U
+              </div>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#" id="dashboardLink">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="projectsLink">Projects</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="timeEntriesLink">Time Entries</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="reportsLink">Reports</a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-translate"></i> Language
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item language-option" href="#" data-lang="en">English</a></li>
-                            <li><a class="dropdown-item language-option" href="#" data-lang="es">Español</a></li>
-                            <li><a class="dropdown-item language-option" href="#" data-lang="sv">Svenska</a></li>
-                            <li><a class="dropdown-item language-option" href="#" data-lang="ru">Русский</a></li>
-                            <li><a class="dropdown-item language-option" href="#" data-lang="pl">Polski</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="themeDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-palette"></i> Theme
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item theme-option" href="#" data-theme="light">Light</a></li>
-                            <li><a class="dropdown-item theme-option" href="#" data-theme="dark">Dark</a></li>
-                            <li><a class="dropdown-item theme-option" href="#" data-theme="auto">Auto</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle"></i>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#" id="profileLink">Profile</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#" id="logoutLink">Logout</a></li>
-                        </ul>
-                    </li>
-                </ul>
+            
+            <!-- User dropdown menu -->
+            <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden z-50">
+              <div class="px-4 py-2 border-b">
+                <div class="font-medium" id="dropdown-user-name"></div>
+                <div class="text-sm text-gray-600 truncate" id="dropdown-user-email"></div>
+              </div>
+              <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" id="edit-profile-btn">
+                <i class="fas fa-user-edit mr-2"></i> Edit Profile
+              </a>
+              <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" id="logout-btn">
+                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+              </a>
             </div>
+          </div>
         </div>
-    </nav>
-
+      </div>
+    </header>
+    
     <!-- Main Content -->
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-lg-2 col-md-3 d-none d-md-block sidebar py-3">
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#" id="sidebarDashboard">
-                            <i class="bi bi-speedometer2 me-2"></i>Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="sidebarProjects">
-                            <i class="bi bi-folder me-2"></i>Projects
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="sidebarTimeEntries">
-                            <i class="bi bi-clock me-2"></i>Time Entries
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="sidebarReports">
-                            <i class="bi bi-graph-up me-2"></i>Reports
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="sidebarTeam">
-                            <i class="bi bi-people me-2"></i>Team
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="sidebarSettings">
-                            <i class="bi bi-gear me-2"></i>Settings
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Main Content Area -->
-            <div class="col-lg-10 col-md-9 ms-sm-auto px-4 py-3" id="mainContent">
-                <!-- Auth Screens -->
-                <div id="authScreen">
-                    <div class="row justify-content-center">
-                        <div class="col-md-6 col-lg-4">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h3 class="card-title text-center mb-4" id="authTitle">Login</h3>
-                                    <div id="loginForm">
-                                        <div class="mb-3">
-                                            <label for="loginEmail" class="form-label">Email</label>
-                                            <input type="email" class="form-control" id="loginEmail" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="loginPassword" class="form-label">Password</label>
-                                            <input type="password" class="form-control" id="loginPassword" required>
-                                        </div>
-                                        <div class="d-grid gap-2">
-                                            <button class="btn btn-primary" id="loginButton">Login</button>
-                                            <button class="btn btn-link" id="showRegisterButton">Create new account</button>
-                                        </div>
-                                    </div>
-                                    <div id="registerForm" style="display: none;">
-                                        <div class="mb-3">
-                                            <label for="registerName" class="form-label">Name</label>
-                                            <input type="text" class="form-control" id="registerName" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="registerEmail" class="form-label">Email</label>
-                                            <input type="email" class="form-control" id="registerEmail" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="registerPassword" class="form-label">Password</label>
-                                            <input type="password" class="form-control" id="registerPassword" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="registerConfirmPassword" class="form-label">Confirm Password</label>
-                                            <input type="password" class="form-control" id="registerConfirmPassword" required>
-                                        </div>
-                                        <div class="d-grid gap-2">
-                                            <button class="btn btn-primary" id="registerButton">Register</button>
-                                            <button class="btn btn-link" id="showLoginButton">Already have an account? Login</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    <main class="container mx-auto px-4 py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column (1/3) -->
+        <div class="lg:col-span-1 space-y-6">
+          <!-- Time Entry Form Card -->
+          <div class="card p-4">
+            <h2 class="text-xl font-semibold mb-4">Register Hours</h2>
+            
+            <form id="time-entry-form">
+              <div class="form-group">
+                <label for="entry-date" class="form-label">Date</label>
+                <input type="date" id="entry-date" class="form-control" required>
+              </div>
+              
+              <div class="form-group">
+                <div class="flex justify-between items-center mb-2">
+                  <label for="project" class="form-label mb-0">Project</label>
+                  <button id="manage-projects" type="button" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-cog"></i>
+                  </button>
                 </div>
-
-                <!-- App Screens -->
-                <div id="appScreens" style="display: none;">
-                    <!-- Dashboard Screen -->
-                    <div id="dashboardScreen">
-                        <h2 class="mb-4">Dashboard</h2>
-                        <div class="row">
-                            <div class="col-md-6 col-lg-3 mb-4">
-                                <div class="card border-left-primary h-100">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                                    Today's Time</div>
-                                                <div class="h5 mb-0 font-weight-bold" id="todayTime">0h 0m</div>
-                                            </div>
-                                            <div class="icon-circle bg-primary">
-                                                <i class="bi bi-clock text-white"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-3 mb-4">
-                                <div class="card border-left-success h-100">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                    Week's Time</div>
-                                                <div class="h5 mb-0 font-weight-bold" id="weekTime">0h 0m</div>
-                                            </div>
-                                            <div class="icon-circle bg-success">
-                                                <i class="bi bi-calendar-week text-white"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-3 mb-4">
-                                <div class="card border-left-info h-100">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                                    Active Projects</div>
-                                                <div class="h5 mb-0 font-weight-bold" id="activeProjects">0</div>
-                                            </div>
-                                            <div class="icon-circle bg-info">
-                                                <i class="bi bi-folder text-white"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-3 mb-4">
-                                <div class="card border-left-warning h-100">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                                    Team Members</div>
-                                                <div class="h5 mb-0 font-weight-bold" id="teamMembers">0</div>
-                                            </div>
-                                            <div class="icon-circle bg-warning">
-                                                <i class="bi bi-people text-white"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-lg-8 mb-4">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h6 class="m-0 font-weight-bold">Weekly Time Summary</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="chart-container">
-                                            <canvas id="weeklyChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-4 mb-4">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h6 class="m-0 font-weight-bold">Projects Distribution</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="chart-container">
-                                            <canvas id="projectsChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h6 class="m-0 font-weight-bold">Recent Time Entries</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="table-responsive">
-                                            <table class="table table-hover" id="recentEntriesTable">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Date</th>
-                                                        <th>Project</th>
-                                                        <th>Start Time</th>
-                                                        <th>End Time</th>
-                                                        <th>Duration</th>
-                                                        <th>Notes</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <!-- Filled by JavaScript -->
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Projects Screen -->
-                    <div id="projectsScreen" style="display: none;">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h2>Projects</h2>
-                            <button class="btn btn-primary" id="addProjectButton">
-                                <i class="bi bi-plus-lg me-1"></i>Add Project
-                            </button>
-                        </div>
-
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-hover" id="projectsTable">
-                                        <thead>
-                                            <tr>
-                                                <th>Name</th>
-                                                <th>Client</th>
-                                                <th>Status</th>
-                                                <th>Total Time</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <!-- Filled by JavaScript -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Add/Edit Project Modal -->
-                    <div class="modal fade" id="projectModal" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="projectModalTitle">Add Project</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <form id="projectForm">
-                                        <input type="hidden" id="projectId">
-                                        <div class="mb-3">
-                                            <label for="projectName" class="form-label">Project Name *</label>
-                                            <input type="text" class="form-control" id="projectName" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="projectClient" class="form-label">Client</label>
-                                            <input type="text" class="form-control" id="projectClient">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="projectDescription" class="form-label">Description</label>
-                                            <textarea class="form-control" id="projectDescription" rows="3"></textarea>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="projectStatus" class="form-label">Status *</label>
-                                            <select class="form-select" id="projectStatus" required>
-                                                <option value="active">Active</option>
-                                                <option value="on-hold">On Hold</option>
-                                                <option value="completed">Completed</option>
-                                            </select>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="projectColor" class="form-label">Color *</label>
-                                            <input type="color" class="form-control form-control-color" id="projectColor" value="#4e73df" required>
-                                        </div>
-                                    </form>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="button" class="btn btn-primary" id="saveProjectButton">Save</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Time Entries Screen -->
-                    <div id="timeEntriesScreen" style="display: none;">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h2>Time Entries</h2>
-                            <div>
-                                <button class="btn btn-primary me-2" id="addTimeEntryButton">
-                                    <i class="bi bi-plus-lg me-1"></i>Add Entry
-                                </button>
-                                <div class="btn-group">
-                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="timeFilterDropdown" data-bs-toggle="dropdown">
-                                        <span id="currentFilter">This Week</span>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item filter-option" href="#" data-filter="today">Today</a></li>
-                                        <li><a class="dropdown-item filter-option" href="#" data-filter="week">This Week</a></li>
-                                        <li><a class="dropdown-item filter-option" href="#" data-filter="month">This Month</a></li>
-                                        <li><a class="dropdown-item filter-option" href="#" data-filter="year">This Year</a></li>
-                                        <li><a class="dropdown-item filter-option" href="#" data-filter="all">All Time</a></li>
-                                        <li><a class="dropdown-item filter-option" href="#" data-filter="custom">Custom Range</a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-hover" id="timeEntriesTable">
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Project</th>
-                                                <th>Start Time</th>
-                                                <th>End Time</th>
-                                                <th>Duration</th>
-                                                <th>Notes</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <!-- Filled by JavaScript -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Add/Edit Time Entry Modal -->
-                    <div class="modal fade" id="timeEntryModal" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="timeEntryModalTitle">Add Time Entry</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <form id="timeEntryForm">
-                                        <input type="hidden" id="timeEntryId">
-                                        <div class="mb-3">
-                                            <label for="entryDate" class="form-label">Date *</label>
-                                            <input type="date" class="form-control" id="entryDate" required pattern="\d{4}-\d{2}-\d{2}">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="entryProject" class="form-label">Project *</label>
-                                            <select class="form-select" id="entryProject" required>
-                                                <option value="">Select a project</option>
-                                                <!-- Filled by JavaScript -->
-                                            </select>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label for="entryStartTime" class="form-label">Start Time *</label>
-                                                <input type="time" class="form-control" id="entryStartTime" required pattern="[0-9]{2}:[0-9]{2}">
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label for="entryEndTime" class="form-label">End Time *</label>
-                                                <input type="time" class="form-control" id="entryEndTime" required pattern="[0-9]{2}:[0-9]{2}">
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="entryBreak" class="form-label">Break (minutes) *</label>
-                                            <input type="number" class="form-control" id="entryBreak" min="0" value="0" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="entryNotes" class="form-label">Notes</label>
-                                            <textarea class="form-control" id="entryNotes" rows="3"></textarea>
-                                        </div>
-                                    </form>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="button" class="btn btn-primary" id="saveTimeEntryButton">Save</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Reports Screen -->
-                    <div id="reportsScreen" style="display: none;">
-                        <h2 class="mb-4">Reports</h2>
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h6 class="m-0 font-weight-bold">Time by Project</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="chart-container">
-                                            <canvas id="reportsProjectsChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h6 class="m-0 font-weight-bold">Monthly Summary</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="chart-container">
-                                            <canvas id="monthlySummaryChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-header">
-                                <h6 class="m-0 font-weight-bold">Detailed Report</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-3">
-                                    <div class="col-md-4">
-                                        <label for="reportProjectFilter" class="form-label">Project</label>
-                                        <select class="form-select" id="reportProjectFilter">
-                                            <option value="">All Projects</option>
-                                            <!-- Filled by JavaScript -->
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="reportDateFrom" class="form-label">From</label>
-                                        <input type="date" class="form-control" id="reportDateFrom" pattern="\d{4}-\d{2}-\d{2}">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="reportDateTo" class="form-label">To</label>
-                                        <input type="date" class="form-control" id="reportDateTo" pattern="\d{4}-\d{2}-\d{2}">
-                                    </div>
-                                </div>
-                                <button class="btn btn-primary mb-3" id="generateReportButton">Generate Report</button>
-                                <div class="table-responsive">
-                                    <table class="table table-hover" id="reportTable">
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Project</th>
-                                                <th>Start Time</th>
-                                                <th>End Time</th>
-                                                <th>Duration</th>
-                                                <th>Notes</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <!-- Filled by JavaScript -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <select id="project" class="form-control" required>
+                  <option value="">Select a project</option>
+                  <!-- Projects will be loaded dynamically -->
+                </select>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-group">
+                  <label for="start-time" class="form-label">Start Time</label>
+                  <input type="time" id="start-time" class="form-control" required>
                 </div>
+                
+                <div class="form-group">
+                  <label for="end-time" class="form-label">End Time</label>
+                  <input type="time" id="end-time" class="form-control" required>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="break-time" class="form-label">Break Time (minutes)</label>
+                <input type="number" id="break-time" class="form-control" min="0" value="30" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="notes" class="form-label">Notes</label>
+                <textarea id="notes" class="form-control" rows="3"></textarea>
+              </div>
+              
+              <div class="form-group">
+                <label for="coworkers" class="form-label">Coworkers</label>
+                <input type="text" id="coworkers" class="form-control" placeholder="John, Jane, etc.">
+              </div>
+              
+              <div class="flex justify-between mt-6">
+                <button type="button" id="reset-form" class="btn-outline">Cancel</button>
+                <button type="submit" id="save-record-btn" class="btn-primary">Save Record</button>
+              </div>
+            </form>
+          </div>
+          
+          <!-- Records History -->
+          <div class="card">
+            <div class="p-4 border-b flex justify-between items-center">
+              <h2 class="text-xl font-semibold">Records History</h2>
+              <button class="text-gray-500 hover:text-gray-700" id="toggle-records">
+                <i class="fas fa-chevron-down"></i>
+              </button>
             </div>
+            
+            <div id="records-content" class="p-4">
+              <!-- Filters -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label for="year-filter" class="form-label">Year</label>
+                  <select id="year-filter" class="form-control">
+                    <!-- Years will be added dynamically -->
+                  </select>
+                </div>
+                
+                <div>
+                  <label for="month-filter" class="form-label">Month</label>
+                  <select id="month-filter" class="form-control">
+                    <option value="all">All Months</option>
+                    <!-- Months will be added dynamically -->
+                  </select>
+                </div>
+                
+                <div>
+                  <label for="week-filter" class="form-label">Week</label>
+                  <select id="week-filter" class="form-control">
+                    <option value="all">All Weeks</option>
+                    <!-- Weeks will be added dynamically -->
+                  </select>
+                </div>
+              </div>
+              
+              <!-- Entries Container -->
+              <div id="entries-container" class="mt-4">
+                <!-- Entries will be added dynamically -->
+                <div class="text-gray-500 text-center py-6">No records found</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Import/Export Section -->
+          <div class="card p-4">
+            <h3 class="text-lg font-semibold mb-4">Import / Export</h3>
+            
+            <div class="flex flex-wrap gap-2">
+              <button id="export-pdf" class="btn-outline text-sm">
+                <i class="fas fa-file-pdf mr-1"></i> Export PDF
+              </button>
+              
+              <button id="export-json" class="btn-outline text-sm">
+                <i class="fas fa-file-code mr-1"></i> Export JSON
+              </button>
+              
+              <button id="import-json" class="btn-outline text-sm">
+                <i class="fas fa-file-import mr-1"></i> Import JSON
+              </button>
+              <input type="file" id="import-file" accept=".json" class="hidden">
+            </div>
+          </div>
         </div>
-    </div>
-
-    <!-- PWA Installation Prompt -->
-    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-        <div id="installPrompt" class="toast" role="alert" aria-live="assertive" aria-atomic="true" style="display: none;">
-            <div class="toast-header">
-                <strong class="me-auto">Install TimeBook</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        
+        <!-- Right Column (2/3) -->
+        <div class="lg:col-span-2 space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- User Info Card -->
+            <div class="md:col-span-1 card p-4">
+              <h3 class="text-lg font-semibold mb-3">User Info</h3>
+              
+              <div>
+                <p class="font-medium" id="user-name"></p>
+                <p class="text-sm text-gray-600 mt-1" id="user-email"></p>
+                <p class="text-sm text-gray-600" id="user-phone"></p>
+              </div>
+              
+              <button id="edit-user-btn" class="btn-outline w-full mt-4 text-sm">
+                <i class="fas fa-user-edit mr-1"></i> Edit User
+              </button>
             </div>
-            <div class="toast-body">
-                Add TimeBook to your home screen for a better experience!
-                <div class="mt-2 pt-2 border-top">
-                    <button type="button" class="btn btn-primary btn-sm" id="installButton">Install</button>
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="toast">Not Now</button>
+            
+            <!-- Quick Stats Cards -->
+            <div class="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="stat-card">
+                <div class="text-sm text-gray-500 mb-1">Total Hours</div>
+                <div class="text-xl font-bold" id="total-hours">0</div>
+              </div>
+              
+              <div class="stat-card">
+                <div class="text-sm text-gray-500 mb-1">Total Days</div>
+                <div class="text-xl font-bold" id="total-days">0</div>
+              </div>
+              
+              <div class="stat-card">
+                <div class="text-sm text-gray-500 mb-1">Current Week Hours</div>
+                <div class="text-xl font-bold" id="week-hours">0</div>
+              </div>
+              
+              <div class="stat-card">
+                <div class="text-sm text-gray-500 mb-1">Current Month Hours</div>
+                <div class="text-xl font-bold" id="month-hours">0</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Visual Statistics -->
+          <div class="card p-4">
+            <h3 class="text-lg font-semibold mb-4">Visual Statistics</h3>
+            
+            <div class="mb-6">
+              <div class="flex justify-between items-center mb-3">
+                <h4 class="font-medium">Hours per Week</h4>
+                <div class="flex gap-2">
+                  <button class="text-sm px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 view-toggle active" data-view="monthly">Monthly</button>
+                  <button class="text-sm px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 view-toggle" data-view="quarterly">Quarterly</button>
                 </div>
+              </div>
+              <div class="h-64">
+                <canvas id="weekly-chart"></canvas>
+              </div>
             </div>
+            
+            <div>
+              <h4 class="font-medium mb-3">Project Distribution</h4>
+              <div class="h-64">
+                <canvas id="project-chart"></canvas>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Hours Summary Table -->
+          <div class="card p-4">
+            <h3 class="text-lg font-semibold mb-4">Hours Summary</h3>
+            
+            <div class="overflow-x-auto">
+              <table class="w-full" id="resumenHoras">
+                <thead>
+                  <tr class="bg-gray-50 border-b">
+                    <th class="py-2 px-3 text-left">Date</th>
+                    <th class="py-2 px-3 text-left">Week</th>
+                    <th class="py-2 px-3 text-left">Project</th>
+                    <th class="py-2 px-3 text-right">Worked Hours</th>
+                    <th class="py-2 px-3 text-right">Break</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Records will be added dynamically -->
+                </tbody>
+                <tfoot>
+                  <tr class="font-semibold">
+                    <td colspan="3" class="py-2 px-3 text-right">Total:</td>
+                    <td class="py-2 px-3 text-right" id="total-mes">0</td>
+                    <td class="py-2 px-3"></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
         </div>
+      </div>
+    </main>
+    
+    <!-- Project Management Modal -->
+    <div id="project-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center">
+          <h3 class="text-xl font-semibold">Project Management</h3>
+          <button id="close-project-modal" class="text-gray-500 hover:text-gray-700">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="p-4">
+          <!-- Tabs -->
+          <div class="flex border-b mb-4">
+            <button class="px-4 py-2 tab-active" id="projects-tab">View Projects</button>
+            <button class="px-4 py-2" id="add-project-tab">Add Project</button>
+          </div>
+          
+          <!-- View Projects Tab -->
+          <div id="view-projects-content">
+            <div id="projects-list" class="space-y-2">
+              <!-- Projects will be added dynamically -->
+            </div>
+          </div>
+          
+          <!-- Add Project Tab -->
+          <div id="add-project-content" class="hidden">
+            <form id="add-project-form">
+              <div class="form-group">
+                <label for="new-project-name" class="form-label">Project Name</label>
+                <input type="text" id="new-project-name" class="form-control" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="new-project-code" class="form-label">Project Code</label>
+                <input type="text" id="new-project-code" class="form-control" required>
+              </div>
+              
+              <button type="submit" id="add-project-btn" class="btn-primary w-full mt-4">Add Project</button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
+    
+    <!-- Edit User Modal -->
+    <div id="edit-user-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg max-w-md w-full">
+        <div class="p-4 border-b flex justify-between items-center">
+          <h3 class="text-xl font-semibold">Edit Profile</h3>
+          <button id="close-edit-user-modal" class="text-gray-500 hover:text-gray-700">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="p-4">
+          <form id="edit-user-form">
+            <div class="form-group">
+              <label for="edit-first-name" class="form-label">First Name</label>
+              <input type="text" id="edit-first-name" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="edit-last-name" class="form-label">Last Name</label>
+              <input type="text" id="edit-last-name" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="edit-phone" class="form-label">Phone</label>
+              <input type="tel" id="edit-phone" class="form-control">
+            </div>
+            
+            <div class="flex justify-between mt-6">
+              <button type="button" id="cancel-edit-user" class="btn-outline">Cancel</button>
+              <button type="submit" class="btn-primary">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Edit Record Modal -->
+    <div id="edit-record-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg max-w-lg w-full">
+        <div class="p-4 border-b flex justify-between items-center">
+          <h3 class="text-xl font-semibold">Edit Record</h3>
+          <button id="close-edit-record-modal" class="text-gray-500 hover:text-gray-700">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="p-4">
+          <form id="edit-record-form">
+            <input type="hidden" id="edit-record-id">
+            
+            <div class="form-group">
+              <label for="edit-entry-date" class="form-label">Date</label>
+              <input type="date" id="edit-entry-date" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="edit-project" class="form-label">Project</label>
+              <select id="edit-project" class="form-control" required>
+                <!-- Projects will be loaded dynamically -->
+              </select>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="form-group">
+                <label for="edit-start-time" class="form-label">Start Time</label>
+                <input type="time" id="edit-start-time" class="form-control" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="edit-end-time" class="form-label">End Time</label>
+                <input type="time" id="edit-end-time" class="form-control" required>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="edit-break-time" class="form-label">Break Time (minutes)</label>
+              <input type="number" id="edit-break-time" class="form-control" min="0" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="edit-notes" class="form-label">Notes</label>
+              <textarea id="edit-notes" class="form-control" rows="3"></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label for="edit-coworkers" class="form-label">Coworkers</label>
+              <input type="text" id="edit-coworkers" class="form-control">
+            </div>
+            
+            <div class="flex justify-between mt-6">
+              <button type="button" id="delete-record" class="text-red-500 hover:text-red-700">
+                <i class="fas fa-trash mr-1"></i> Delete
+              </button>
+              <div>
+                <button type="button" id="cancel-edit-record" class="btn-outline">Cancel</button>
+                <button type="submit" class="btn-primary ml-2">Save</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
-            authDomain: "tidbok-df555.firebaseapp.com",
-            databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app/",
-            projectId: "tidbok-df555",
-            storageBucket: "tidbok-df555.appspot.com",
-            messagingSenderId: "467331966400",
-            appId: "1:467331966400:web:abb6949a76918f2eb8d425"
-        };
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAI-VxrbSC-d1WscOkpY9d8NaEUgdjneeE",
+      authDomain: "tidbok-df555.firebaseapp.com",
+      databaseURL: "https://tidbok-df555-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "tidbok-df555",
+      storageBucket: "tidbok-df555.firebasestorage.app",
+      messagingSenderId: "467331966400",
+      appId: "1:467331966400:web:abb6949a76918f2eb8d425"
+    };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const database = firebase.database();
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
 
-        // Global variables
-        let currentUser = null;
-        let deferredPrompt = null;
-        let projects = [];
-        let timeEntries = [];
-        let teamMembers = [];
-        let currentLanguage = 'en';
-        let currentTheme = 'light';
-        let translations = {
-            en: {
-                login: "Login",
-                register: "Register",
-                email: "Email",
-                password: "Password",
-                name: "Name",
-                confirmPassword: "Confirm Password",
-                createAccount: "Create new account",
-                alreadyHaveAccount: "Already have an account? Login",
-                dashboard: "Dashboard",
-                projects: "Projects",
-                timeEntries: "Time Entries",
-                reports: "Reports",
-                team: "Team",
-                settings: "Settings",
-                todayTime: "Today's Time",
-                weekTime: "Week's Time",
-                activeProjects: "Active Projects",
-                teamMembers: "Team Members",
-                weeklySummary: "Weekly Time Summary",
-                projectsDistribution: "Projects Distribution",
-                recentEntries: "Recent Time Entries",
-                date: "Date",
-                project: "Project",
-                startTime: "Start Time",
-                endTime: "End Time",
-                duration: "Duration",
-                notes: "Notes",
-                actions: "Actions",
-                addProject: "Add Project",
-                client: "Client",
-                status: "Status",
-                totalTime: "Total Time",
-                projectName: "Project Name",
-                description: "Description",
-                color: "Color",
-                cancel: "Cancel",
-                save: "Save",
-                addEntry: "Add Entry",
-                thisWeek: "This Week",
-                today: "Today",
-                thisMonth: "This Month",
-                thisYear: "This Year",
-                allTime: "All Time",
-                customRange: "Custom Range",
-                break: "Break (minutes)",
-                timeByProject: "Time by Project",
-                monthlySummary: "Monthly Summary",
-                detailedReport: "Detailed Report",
-                from: "From",
-                to: "To",
-                generateReport: "Generate Report",
-                allProjects: "All Projects",
-                installPrompt: "Add TimeBook to your home screen for a better experience!",
-                install: "Install",
-                notNow: "Not Now",
-                active: "Active",
-                onHold: "On Hold",
-                completed: "Completed",
-                language: "Language",
-                theme: "Theme",
-                light: "Light",
-                dark: "Dark",
-                auto: "Auto",
-                profile: "Profile",
-                logout: "Logout"
-            },
-            es: {
-                login: "Iniciar sesión",
-                register: "Registrarse",
-                email: "Correo electrónico",
-                password: "Contraseña",
-                name: "Nombre",
-                confirmPassword: "Confirmar contraseña",
-                createAccount: "Crear nueva cuenta",
-                alreadyHaveAccount: "¿Ya tienes una cuenta? Inicia sesión",
-                dashboard: "Panel",
-                projects: "Proyectos",
-                timeEntries: "Registros de tiempo",
-                reports: "Informes",
-                team: "Equipo",
-                settings: "Configuración",
-                todayTime: "Tiempo de hoy",
-                weekTime: "Tiempo de la semana",
-                activeProjects: "Proyectos activos",
-                teamMembers: "Miembros del equipo",
-                weeklySummary: "Resumen semanal",
-                projectsDistribution: "Distribución de proyectos",
-                recentEntries: "Registros recientes",
-                date: "Fecha",
-                project: "Proyecto",
-                startTime: "Hora de inicio",
-                endTime: "Hora de finalización",
-                duration: "Duración",
-                notes: "Notas",
-                actions: "Acciones",
-                addProject: "Añadir proyecto",
-                client: "Cliente",
-                status: "Estado",
-                totalTime: "Tiempo total",
-                projectName: "Nombre del proyecto",
-                description: "Descripción",
-                color: "Color",
-                cancel: "Cancelar",
-                save: "Guardar",
-                addEntry: "Añadir registro",
-                thisWeek: "Esta semana",
-                today: "Hoy",
-                thisMonth: "Este mes",
-                thisYear: "Este año",
-                allTime: "Todo el tiempo",
-                customRange: "Rango personalizado",
-                break: "Descanso (minutos)",
-                timeByProject: "Tiempo por proyecto",
-                monthlySummary: "Resumen mensual",
-                detailedReport: "Informe detallado",
-                from: "Desde",
-                to: "Hasta",
-                generateReport: "Generar informe",
-                allProjects: "Todos los proyectos",
-                installPrompt: "¡Añade TimeBook a tu pantalla de inicio para una mejor experiencia!",
-                install: "Instalar",
-                notNow: "Ahora no",
-                active: "Activo",
-                onHold: "En espera",
-                completed: "Completado",
-                language: "Idioma",
-                theme: "Tema",
-                light: "Claro",
-                dark: "Oscuro",
-                auto: "Automático",
-                profile: "Perfil",
-                logout: "Cerrar sesión"
-            },
-            sv: {
-                login: "Logga in",
-                register: "Registrera",
-                email: "E-post",
-                password: "Lösenord",
-                name: "Namn",
-                confirmPassword: "Bekräfta lösenord",
-                createAccount: "Skapa nytt konto",
-                alreadyHaveAccount: "Har du redan ett konto? Logga in",
-                dashboard: "Instrumentpanel",
-                projects: "Projekt",
-                timeEntries: "Tidsregistreringar",
-                reports: "Rapporter",
-                team: "Team",
-                settings: "Inställningar",
-                todayTime: "Dagens tid",
-                weekTime: "Veckans tid",
-                activeProjects: "Aktiva projekt",
-                teamMembers: "Teammedlemmar",
-                weeklySummary: "Veckosammanfattning",
-                projectsDistribution: "Projektfördelning",
-                recentEntries: "Senaste registreringar",
-                date: "Datum",
-                project: "Projekt",
-                startTime: "Starttid",
-                endTime: "Sluttid",
-                duration: "Varaktighet",
-                notes: "Anteckningar",
-                actions: "Åtgärder",
-                addProject: "Lägg till projekt",
-                client: "Klient",
-                status: "Status",
-                totalTime: "Total tid",
-                projectName: "Projektnamn",
-                description: "Beskrivning",
-                color: "Färg",
-                cancel: "Avbryt",
-                save: "Spara",
-                addEntry: "Lägg till post",
-                thisWeek: "Denna vecka",
-                today: "Idag",
-                thisMonth: "Denna månad",
-                thisYear: "Detta år",
-                allTime: "Hela tiden",
-                customRange: "Anpassat intervall",
-                break: "Rast (minuter)",
-                timeByProject: "Tid per projekt",
-                monthlySummary: "Månatlig sammanfattning",
-                detailedReport: "Detaljerad rapport",
-                from: "Från",
-                to: "Till",
-                generateReport: "Generera rapport",
-                allProjects: "Alla projekt",
-                installPrompt: "Lägg till TimeBook på din hemskärm för en bättre upplevelse!",
-                install: "Installera",
-                notNow: "Inte nu",
-                active: "Aktiv",
-                onHold: "Pausad",
-                completed: "Avslutad",
-                language: "Språk",
-                theme: "Tema",
-                light: "Ljust",
-                dark: "Mörkt",
-                auto: "Auto",
-                profile: "Profil",
-                logout: "Logga ut"
-            },
-            ru: {
-                login: "Войти",
-                register: "Зарегистрироваться",
-                email: "Электронная почта",
-                password: "Пароль",
-                name: "Имя",
-                confirmPassword: "Подтвердите пароль",
-                createAccount: "Создать новый аккаунт",
-                alreadyHaveAccount: "Уже есть аккаунт? Войти",
-                dashboard: "Панель управления",
-                projects: "Проекты",
-                timeEntries: "Учет времени",
-                reports: "Отчеты",
-                team: "Команда",
-                settings: "Настройки",
-                todayTime: "Время за сегодня",
-                weekTime: "Время за неделю",
-                activeProjects: "Активные проекты",
-                teamMembers: "Участники команды",
-                weeklySummary: "Еженедельная сводка",
-                projectsDistribution: "Распределение по проектам",
-                recentEntries: "Последние записи",
-                date: "Дата",
-                project: "Проект",
-                startTime: "Время начала",
-                endTime: "Время окончания",
-                duration: "Продолжительность",
-                notes: "Заметки",
-                actions: "Действия",
-                addProject: "Добавить проект",
-                client: "Клиент",
-                status: "Статус",
-                totalTime: "Общее время",
-                projectName: "Название проекта",
-                description: "Описание",
-                color: "Цвет",
-                cancel: "Отмена",
-                save: "Сохранить",
-                addEntry: "Добавить запись",
-                thisWeek: "Эта неделя",
-                today: "Сегодня",
-                thisMonth: "Этот месяц",
-                thisYear: "Этот год",
-                allTime: "Все время",
-                customRange: "Произвольный диапазон",
-                break: "Перерыв (минуты)",
-                timeByProject: "Время по проектам",
-                monthlySummary: "Ежемесячная сводка",
-                detailedReport: "Подробный отчет",
-                from: "С",
-                to: "По",
-                generateReport: "Сформировать отчет",
-                allProjects: "Все проекты",
-                installPrompt: "Добавьте TimeBook на главный экран для большего удобства!",
-                install: "Установить",
-                notNow: "Не сейчас",
-                active: "Активный",
-                onHold: "На паузе",
-                completed: "Завершен",
-                language: "Язык",
-                theme: "Тема",
-                light: "Светлая",
-                dark: "Темная",
-                auto: "Авто",
-                profile: "Профиль",
-                logout: "Выйти"
-            },
-            pl: {
-                login: "Zaloguj się",
-                register: "Zarejestruj się",
-                email: "Email",
-                password: "Hasło",
-                name: "Imię",
-                confirmPassword: "Potwierdź hasło",
-                createAccount: "Utwórz nowe konto",
-                alreadyHaveAccount: "Masz już konto? Zaloguj się",
-                dashboard: "Panel",
-                projects: "Projekty",
-                timeEntries: "Wpisy czasu",
-                reports: "Raporty",
-                team: "Zespół",
-                settings: "Ustawienia",
-                todayTime: "Dzisiejszy czas",
-                weekTime: "Czas tygodnia",
-                activeProjects: "Aktywne projekty",
-                teamMembers: "Członkowie zespołu",
-                weeklySummary: "Podsumowanie tygodnia",
-                projectsDistribution: "Rozkład projektów",
-                recentEntries: "Ostatnie wpisy",
-                date: "Data",
-                project: "Projekt",
-                startTime: "Czas rozpoczęcia",
-                endTime: "Czas zakończenia",
-                duration: "Czas trwania",
-                notes: "Notatki",
-                actions: "Akcje",
-                addProject: "Dodaj projekt",
-                client: "Klient",
-                status: "Status",
-                totalTime: "Całkowity czas",
-                projectName: "Nazwa projektu",
-                description: "Opis",
-                color: "Kolor",
-                cancel: "Anuluj",
-                save: "Zapisz",
-                addEntry: "Dodaj wpis",
-                thisWeek: "Ten tydzień",
-                today: "Dzisiaj",
-                thisMonth: "Ten miesiąc",
-                thisYear: "Ten rok",
-                allTime: "Cały czas",
-                customRange: "Niestandardowy zakres",
-                break: "Przerwa (minuty)",
-                timeByProject: "Czas według projektu",
-                monthlySummary: "Podsumowanie miesięczne",
-                detailedReport: "Szczegółowy raport",
-                from: "Od",
-                to: "Do",
-                generateReport: "Generuj raport",
-                allProjects: "Wszystkie projekty",
-                installPrompt: "Dodaj TimeBook na ekran główny dla lepszego doświadczenia!",
-                install: "Zainstaluj",
-                notNow: "Nie teraz",
-                active: "Aktywny",
-                onHold: "Wstrzymany",
-                completed: "Zakończony",
-                language: "Język",
-                theme: "Motyw",
-                light: "Jasny",
-                dark: "Ciemny",
-                auto: "Auto",
-                profile: "Profil",
-                logout: "Wyloguj się"
-            }
-        };
+    // Application state
+    const state = {
+      user: null,
+      projects: [],
+      records: [],
+      weeklyChart: null,
+      projectChart: null,
+      currentYearFilter: new Date().getFullYear(),
+      currentMonthFilter: 'all',
+      currentWeekFilter: 'all'
+    };
 
-        // Initialize the application when the DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
+    // DOM ready
+    document.addEventListener('DOMContentLoaded', () => {
+      initApp();
+      setupEventListeners();
+    });
+
+    // Initialize application
+    function initApp() {
+      // Check if user is logged in
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          // User is signed in
+          state.user = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            phone: user.phoneNumber
+          };
+          
+          showApp();
+          loadUserProfile();
+          loadDataFromFirebase();
+        } else {
+          // No user is signed in
+          showAuthScreen();
+        }
+      });
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+      // Auth tabs
+      document.querySelectorAll('.auth-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+          document.getElementById(`${tab.dataset.tab}-form`).classList.add('active');
         });
+      });
+      
+      // Login form
+      document.getElementById('login-form').addEventListener('submit', handleLogin);
+      
+      // Signup form
+      document.getElementById('signup-form').addEventListener('submit', handleSignup);
+      
+      // Logout button
+      document.getElementById('logout-btn').addEventListener('click', handleLogout);
+      
+      // Edit profile button
+      document.getElementById('edit-user-btn').addEventListener('click', openEditUserModal);
+      document.getElementById('edit-profile-btn').addEventListener('click', openEditUserModal);
+      
+      // User menu
+      document.getElementById('user-menu-btn').addEventListener('click', toggleUserDropdown);
+      
+      // Time entry form
+      document.getElementById('time-entry-form').addEventListener('submit', handleTimeEntrySubmit);
+      document.getElementById('reset-form').addEventListener('click', resetTimeEntryForm);
+      document.getElementById('entry-date').addEventListener('change', suggestTimesByDay);
+      
+      // Records history
+      document.getElementById('toggle-records').addEventListener('click', toggleRecordsVisibility);
+      document.getElementById('year-filter').addEventListener('change', filterRecords);
+      document.getElementById('month-filter').addEventListener('change', filterRecords);
+      document.getElementById('week-filter').addEventListener('change', filterRecords);
+      
+      // Project management
+      document.getElementById('manage-projects').addEventListener('click', openProjectModal);
+      document.getElementById('close-project-modal').addEventListener('click', closeProjectModal);
+      document.getElementById('projects-tab').addEventListener('click', switchToProjectsTab);
+      document.getElementById('add-project-tab').addEventListener('click', switchToAddProjectTab);
+      document.getElementById('add-project-form').addEventListener('submit', handleAddProject);
+      
+      // User management
+      document.getElementById('close-edit-user-modal').addEventListener('click', closeEditUserModal);
+      document.getElementById('cancel-edit-user').addEventListener('click', closeEditUserModal);
+      document.getElementById('edit-user-form').addEventListener('submit', handleEditUser);
+      
+      // Record editing
+      document.getElementById('close-edit-record-modal').addEventListener('click', closeEditRecordModal);
+      document.getElementById('cancel-edit-record').addEventListener('click', closeEditRecordModal);
+      document.getElementById('edit-record-form').addEventListener('submit', handleEditRecord);
+      document.getElementById('delete-record').addEventListener('click', handleDeleteRecord);
+      
+      // Import/Export
+      document.getElementById('export-pdf').addEventListener('click', exportToPDF);
+      document.getElementById('export-json').addEventListener('click', exportToJSON);
+      document.getElementById('import-json').addEventListener('click', () => document.getElementById('import-file').click());
+      document.getElementById('import-file').addEventListener('change', importFromJSON);
+    }
 
-        // Initialize the application
-        function initializeApp() {
-            // Initialize Bootstrap tooltips
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
+    // Handle login
+    function handleLogin(e) {
+      e.preventDefault();
+      showLoading(true);
+      
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      
+      auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          // Signed in
+          state.user = {
+            uid: userCredential.user.uid,
+            email: userCredential.user.email,
+            displayName: userCredential.user.displayName,
+            phone: userCredential.user.phoneNumber
+          };
+          
+          showApp();
+          loadUserProfile();
+          loadDataFromFirebase();
+          showLoading(false);
+        })
+        .catch((error) => {
+          showLoading(false);
+          showAuthAlert(error.message, 'error');
+        });
+    }
 
-            // Set up event listeners
-            setupEventListeners();
+    // Handle signup
+    function handleSignup(e) {
+      e.preventDefault();
+      showLoading(true);
+      
+      const firstName = document.getElementById('signup-first-name').value;
+      const lastName = document.getElementById('signup-last-name').value;
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      const confirmPassword = document.getElementById('signup-confirm-password').value;
+      
+      if (password !== confirmPassword) {
+        showLoading(false);
+        showAuthAlert('Passwords do not match', 'error');
+        return;
+      }
+      
+      auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          // Signed up
+          state.user = {
+            uid: userCredential.user.uid,
+            email: userCredential.user.email,
+            displayName: `${firstName} ${lastName}`,
+            phone: ''
+          };
+          
+          // Update user profile
+          return userCredential.user.updateProfile({
+            displayName: `${firstName} ${lastName}`
+          });
+        })
+        .then(() => {
+          // Save additional user data to database
+          const userData = {
+            firstName,
+            lastName,
+            email,
+            phone: ''
+          };
+          
+          return database.ref(`users/${state.user.uid}`).set(userData);
+        })
+        .then(() => {
+          // Add default projects
+          const defaultProjects = [
+            { id: '1', name: 'Construction Site Alpha', code: 'CSA-01' },
+            { id: '2', name: 'Office Renovation', code: 'ORN-22' },
+            { id: '3', name: 'Bridge Maintenance', code: 'BRM-45' },
+            { id: '4', name: 'Highway Extension', code: 'HWY-12' }
+          ];
+          
+          return database.ref(`users/${state.user.uid}/projects`).set(defaultProjects);
+        })
+        .then(() => {
+          showApp();
+          loadUserProfile();
+          loadDataFromFirebase();
+          showLoading(false);
+        })
+        .catch((error) => {
+          showLoading(false);
+          showAuthAlert(error.message, 'error');
+        });
+    }
 
-            // Check for PWA installation
-            setupPWAInstallPrompt();
+    // Handle logout
+    function handleLogout(e) {
+      e.preventDefault();
+      auth.signOut().then(() => {
+        state.user = null;
+        state.projects = [];
+        state.records = [];
+        showAuthScreen();
+      });
+    }
 
-            // Check auth state
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    currentUser = user;
-                    loadUserPreferences();
-                    showAppScreens();
-                    loadDashboardData();
-                } else {
-                    currentUser = null;
-                    showAuthScreen();
-                }
-            });
+    // Show authentication screen
+    function showAuthScreen() {
+      document.getElementById('app').classList.add('hidden');
+      document.getElementById('auth-container').classList.remove('hidden');
+      document.getElementById('auth-alert').classList.add('hidden');
+      document.getElementById('login-form').reset();
+      document.getElementById('signup-form').reset();
+    }
+
+    // Show main application
+    function showApp() {
+      document.getElementById('auth-container').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      document.getElementById('app').classList.add('fade-in');
+      
+      // Set today's date in time entry form
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('entry-date').value = today;
+      suggestTimesByDay();
+    }
+
+    // Load user profile from Firebase
+    function loadUserProfile() {
+      return database.ref(`users/${state.user.uid}`).once('value').then(snapshot => {
+        const userData = snapshot.val();
+        if (userData) {
+          state.user = {
+            ...state.user,
+            ...userData,
+            firstName: userData.firstName || '',
+            lastName: userData.lastName || '',
+            phone: userData.phone || ''
+          };
+          
+          updateUserInfo();
         }
+      });
+    }
 
-        // Set up event listeners
-        function setupEventListeners() {
-            // Auth screen
-            document.getElementById('loginButton').addEventListener('click', loginUser);
-            document.getElementById('registerButton').addEventListener('click', registerUser);
-            document.getElementById('showRegisterButton').addEventListener('click', showRegisterForm);
-            document.getElementById('showLoginButton').addEventListener('click', showLoginForm);
-            document.getElementById('logoutLink').addEventListener('click', logoutUser);
+    // Load data from Firebase
+    function loadDataFromFirebase() {
+      showLoading(true);
+      
+      // Load projects
+      database.ref(`users/${state.user.uid}/projects`).once('value').then(snapshot => {
+        state.projects = snapshot.val() || [];
+        loadProjects();
+        
+        // Load records
+        return database.ref(`users/${state.user.uid}/records`).once('value');
+      }).then(snapshot => {
+        state.records = snapshot.val() || [];
+        loadRecords();
+        updateStatistics();
+        initCharts();
+        showLoading(false);
+      }).catch(error => {
+        showLoading(false);
+        showAlert('Error loading data: ' + error.message, 'error');
+      });
+    }
 
-            // Navigation
-            document.getElementById('dashboardLink').addEventListener('click', () => showScreen('dashboardScreen'));
-            document.getElementById('projectsLink').addEventListener('click', () => showScreen('projectsScreen'));
-            document.getElementById('timeEntriesLink').addEventListener('click', () => showScreen('timeEntriesScreen'));
-            document.getElementById('reportsLink').addEventListener('click', () => showScreen('reportsScreen'));
-            document.getElementById('sidebarDashboard').addEventListener('click', () => showScreen('dashboardScreen'));
-            document.getElementById('sidebarProjects').addEventListener('click', () => showScreen('projectsScreen'));
-            document.getElementById('sidebarTimeEntries').addEventListener('click', () => showScreen('timeEntriesScreen'));
-            document.getElementById('sidebarReports').addEventListener('click', () => showScreen('reportsScreen'));
-            document.getElementById('sidebarTeam').addEventListener('click', () => showScreen('teamScreen'));
-            document.getElementById('sidebarSettings').addEventListener('click', () => showScreen('settingsScreen'));
+    // Save data to Firebase
+    function saveDataToFirebase() {
+      showLoading(true);
+      
+      // Save projects
+      database.ref(`users/${state.user.uid}/projects`).set(state.projects)
+        .then(() => {
+          // Save records
+          return database.ref(`users/${state.user.uid}/records`).set(state.records);
+        })
+        .then(() => {
+          showLoading(false);
+        })
+        .catch(error => {
+          showLoading(false);
+          showAlert('Error saving data: ' + error.message, 'error');
+        });
+    }
 
-            // Projects
-            document.getElementById('addProjectButton').addEventListener('click', () => showProjectModal());
-            document.getElementById('saveProjectButton').addEventListener('click', saveProject);
+    // Update user information display
+    function updateUserInfo() {
+      if (!state.user) return;
+      
+      const fullName = `${state.user.firstName} ${state.user.lastName}`;
+      
+      document.getElementById('user-name').textContent = fullName;
+      document.getElementById('user-email').textContent = state.user.email || '';
+      document.getElementById('user-phone').textContent = state.user.phone || '';
+      
+      document.getElementById('header-user-name').textContent = fullName;
+      document.getElementById('header-user-email').textContent = state.user.email || '';
+      
+      document.getElementById('dropdown-user-name').textContent = fullName;
+      document.getElementById('dropdown-user-email').textContent = state.user.email || '';
+      
+      // Update user avatar
+      const avatar = document.getElementById('user-avatar');
+      const initials = state.user.firstName && state.user.lastName 
+        ? `${state.user.firstName.charAt(0)}${state.user.lastName.charAt(0)}` 
+        : 'U';
+      avatar.textContent = initials;
+      
+      // Also update the edit form
+      document.getElementById('edit-first-name').value = state.user.firstName || '';
+      document.getElementById('edit-last-name').value = state.user.lastName || '';
+      document.getElementById('edit-phone').value = state.user.phone || '';
+    }
 
-            // Time entries
-            document.getElementById('addTimeEntryButton').addEventListener('click', () => showTimeEntryModal());
-            document.getElementById('saveTimeEntryButton').addEventListener('click', saveTimeEntry);
-            document.querySelectorAll('.filter-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    const filter = this.getAttribute('data-filter');
-                    applyTimeEntriesFilter(filter);
-                });
-            });
+    // Toggle user dropdown
+    function toggleUserDropdown() {
+      const dropdown = document.getElementById('user-dropdown');
+      dropdown.classList.toggle('hidden');
+    }
 
-            // Reports
-            document.getElementById('generateReportButton').addEventListener('click', generateReport);
+    // Handle edit user
+    function handleEditUser(e) {
+      e.preventDefault();
+      showLoading(true);
+      
+      state.user.firstName = document.getElementById('edit-first-name').value;
+      state.user.lastName = document.getElementById('edit-last-name').value;
+      state.user.phone = document.getElementById('edit-phone').value;
+      
+      // Update Firebase user profile
+      auth.currentUser.updateProfile({
+        displayName: `${state.user.firstName} ${state.user.lastName}`
+      }).then(() => {
+        // Save additional user data to database
+        const userData = {
+          firstName: state.user.firstName,
+          lastName: state.user.lastName,
+          email: state.user.email,
+          phone: state.user.phone
+        };
+        
+        return database.ref(`users/${state.user.uid}`).set(userData);
+      }).then(() => {
+        updateUserInfo();
+        closeEditUserModal();
+        showLoading(false);
+        showAlert('Profile updated successfully', 'success');
+      }).catch(error => {
+        showLoading(false);
+        showAlert('Error updating profile: ' + error.message, 'error');
+      });
+    }
 
-            // Language and theme
-            document.querySelectorAll('.language-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    const lang = this.getAttribute('data-lang');
-                    setLanguage(lang);
-                });
-            });
+    // Show/hide loading overlay
+    function showLoading(show) {
+      const overlay = document.getElementById('loading-overlay');
+      if (show) {
+        overlay.classList.remove('hidden');
+      } else {
+        overlay.classList.add('hidden');
+      }
+    }
 
-            document.querySelectorAll('.theme-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    const theme = this.getAttribute('data-theme');
-                    setTheme(theme);
-                });
-            });
+    // Show auth alert
+    function showAuthAlert(message, type) {
+      const alert = document.getElementById('auth-alert');
+      alert.textContent = message;
+      alert.className = `alert alert-${type === 'error' ? 'danger' : 'success'} fade-in`;
+      alert.classList.remove('hidden');
+      
+      // Auto-remove after 5 seconds
+      setTimeout(() => {
+        alert.classList.add('hidden');
+      }, 5000);
+    }
 
-            // PWA installation
-            document.getElementById('installButton').addEventListener('click', installPWA);
-        }
+    // Show alert
+    function showAlert(message, type) {
+      const alertContainer = document.getElementById('alert-container');
+      const alert = document.createElement('div');
+      
+      alert.className = `alert alert-${type === 'error' ? 'danger' : 'success'} fade-in`;
+      alert.innerHTML = `
+        <div class="flex items-center">
+          <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'} mr-2"></i>
+          <span>${message}</span>
+        </div>
+      `;
+      
+      alertContainer.appendChild(alert);
+      
+      // Auto-remove after 3 seconds
+      setTimeout(() => {
+        alert.style.opacity = '0';
+        setTimeout(() => {
+          alertContainer.removeChild(alert);
+        }, 300);
+      }, 3000);
+    }
 
-        // Show authentication screen
-        function showAuthScreen() {
-            document.getElementById('authScreen').style.display = 'block';
-            document.getElementById('appScreens').style.display = 'none';
-            showLoginForm();
-        }
+    // Load projects from state
+    function loadProjects() {
+      const projectSelect = document.getElementById('project');
+      const editProjectSelect = document.getElementById('edit-project');
+      const projectsList = document.getElementById('projects-list');
+      
+      // Clear existing options/items
+      projectSelect.innerHTML = '';
+      editProjectSelect.innerHTML = '';
+      projectsList.innerHTML = '';
+      
+      // Add default option
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = 'Select a project';
+      projectSelect.appendChild(defaultOption);
+      
+      const editDefaultOption = document.createElement('option');
+      editDefaultOption.value = '';
+      editDefaultOption.textContent = 'Select a project';
+      editProjectSelect.appendChild(editDefaultOption);
+      
+      // Add projects
+      state.projects.forEach(project => {
+        // Add to select
+        const option = document.createElement('option');
+        option.value = project.id;
+        option.textContent = `${project.code} - ${project.name}`;
+        projectSelect.appendChild(option);
+        
+        // Add to edit select
+        const editOption = option.cloneNode(true);
+        editProjectSelect.appendChild(editOption);
+        
+        // Add to projects list
+        const projectItem = document.createElement('div');
+        projectItem.className = 'flex justify-between items-center p-2 border-b';
+        projectItem.innerHTML = `
+          <div>
+            <span class="font-medium">${project.name}</span>
+            <span class="text-sm text-gray-500 ml-2">${project.code}</span>
+          </div>
+          <div>
+            <button class="text-gray-500 hover:text-gray-700 mr-2 edit-project" data-id="${project.id}">
+              <i class="fas fa-pencil-alt"></i>
+            </button>
+            <button class="text-red-500 hover:text-red-700 delete-project" data-id="${project.id}">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
+        projectsList.appendChild(projectItem);
+      });
+      
+      // Add event listeners to edit/delete buttons
+      document.querySelectorAll('.edit-project').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const projectId = btn.dataset.id;
+          const project = state.projects.find(p => p.id === projectId);
+          
+          if (project) {
+            document.getElementById('new-project-name').value = project.name;
+            document.getElementById('new-project-code').value = project.code;
+            switchToAddProjectTab();
+          }
+        });
+      });
+      
+      document.querySelectorAll('.delete-project').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const projectId = btn.dataset.id;
+          state.projects = state.projects.filter(p => p.id !== projectId);
+          saveDataToFirebase();
+          loadProjects();
+        });
+      });
+    }
 
-        // Show login form
-        function showLoginForm() {
-            document.getElementById('loginForm').style.display = 'block';
-            document.getElementById('registerForm').style.display = 'none';
-            document.getElementById('authTitle').textContent = translations[currentLanguage].login;
-        }
+    // Handle time entry submission
+    function handleTimeEntrySubmit(e) {
+      e.preventDefault();
+      
+      // Validate form
+      const date = document.getElementById('entry-date').value;
+      const project = document.getElementById('project').value;
+      const startTime = document.getElementById('start-time').value;
+      const endTime = document.getElementById('end-time').value;
+      const breakTime = parseInt(document.getElementById('break-time').value);
+      
+      if (!date || !project || !startTime || !endTime) {
+        showAlert('Please fill in all required fields', 'error');
+        return;
+      }
+      
+      // Create new record
+      const newRecord = {
+        id: Date.now().toString(),
+        date,
+        projectId: project,
+        startTime,
+        endTime,
+        breakTime,
+        notes: document.getElementById('notes').value,
+        coworkers: document.getElementById('coworkers').value
+      };
+      
+      // Add to state
+      state.records.push(newRecord);
+      
+      // Save to Firebase
+      saveDataToFirebase();
+      
+      // Update UI
+      loadRecords();
+      updateStatistics();
+      initCharts();
+      
+      // Reset form
+      resetTimeEntryForm();
+      
+      // Show success message
+      showAlert('Record saved successfully', 'success');
+    }
 
-        // Show register form
-        function showRegisterForm() {
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('registerForm').style.display = 'block';
-            document.getElementById('authTitle').textContent = translations[currentLanguage].register;
-        }
+    // Reset time entry form
+    function resetTimeEntryForm() {
+      document.getElementById('time-entry-form').reset();
+      // Set today's date
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('entry-date').value = today;
+      suggestTimesByDay();
+    }
 
-        // Show app screens
-        function showAppScreens() {
-            document.getElementById('authScreen').style.display = 'none';
-            document.getElementById('appScreens').style.display = 'block';
-            showScreen('dashboardScreen');
-        }
+    // Suggest times based on the day of the week
+    function suggestTimesByDay() {
+      const dateInput = document.getElementById('entry-date');
+      if (!dateInput.value) return;
+      
+      const date = new Date(dateInput.value);
+      const day = date.getDay(); // 0 is Sunday, 1 is Monday, etc.
+      
+      let startTime, endTime;
+      
+      if (day >= 1 && day <= 4) { // Monday to Thursday
+        startTime = '06:30';
+        endTime = '16:00';
+      } else if (day === 5) { // Friday
+        startTime = '06:30';
+        endTime = '13:00';
+      } else { // Weekend
+        startTime = '08:00';
+        endTime = '12:00';
+      }
+      
+      document.getElementById('start-time').value = startTime;
+      document.getElementById('end-time').value = endTime;
+    }
 
-        // Show specific screen
-        function showScreen(screenId) {
-            // Hide all screens
-            document.querySelectorAll('#appScreens > div').forEach(screen => {
-                screen.style.display = 'none';
-            });
-            
-            // Show the requested screen
-            document.getElementById(screenId).style.display = 'block';
-            
-            // Load data if needed
-            switch(screenId) {
-                case 'dashboardScreen':
-                    loadDashboardData();
-                    break;
-                case 'projectsScreen':
-                    loadProjects();
-                    break;
-                case 'timeEntriesScreen':
-                    loadTimeEntries();
-                    break;
-                case 'reportsScreen':
-                    loadReports();
-                    break;
-            }
-        }
+    // Load and display records
+    function loadRecords() {
+      populateYearFilter();
+      filterRecords();
+    }
 
-        // Login user
-        function loginUser() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            showLoading(true);
-            
-            auth.signInWithEmailAndPassword(email, password)
-                .then(() => {
-                    showLoading(false);
-                })
-                .catch(error => {
-                    showLoading(false);
-                    alert(error.message);
-                });
-        }
+    // Populate year filter
+    function populateYearFilter() {
+      const yearFilter = document.getElementById('year-filter');
+      yearFilter.innerHTML = '';
+      
+      // Get unique years from records
+      const years = [...new Set(state.records.map(record => new Date(record.date).getFullYear()))];
+      
+      // If no records yet, add current year
+      if (years.length === 0) {
+        years.push(new Date().getFullYear());
+      }
+      
+      // Sort years in descending order
+      years.sort((a, b) => b - a);
+      
+      // Add years to filter
+      years.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearFilter.appendChild(option);
+      });
+      
+      // Select current year filter
+      yearFilter.value = state.currentYearFilter;
+      
+      // Populate month filter
+      const monthFilter = document.getElementById('month-filter');
+      monthFilter.innerHTML = '';
+      
+      const allMonthsOption = document.createElement('option');
+      allMonthsOption.value = 'all';
+      allMonthsOption.textContent = 'All Months';
+      monthFilter.appendChild(allMonthsOption);
+      
+      // Add months (1-12)
+      for (let i = 1; i <= 12; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = new Date(2023, i - 1, 1).toLocaleString('default', { month: 'long' });
+        monthFilter.appendChild(option);
+      }
+      
+      // Populate week filter
+      const weekFilter = document.getElementById('week-filter');
+      weekFilter.innerHTML = '';
+      
+      const allWeeksOption = document.createElement('option');
+      allWeeksOption.value = 'all';
+      allWeeksOption.textContent = 'All Weeks';
+      weekFilter.appendChild(allWeeksOption);
+      
+      // Add weeks (1-52)
+      for (let i = 1; i <= 52; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = `Week ${i}`;
+        weekFilter.appendChild(option);
+      }
+    }
 
-        // Register user
-        function registerUser() {
-            const name = document.getElementById('registerName').value;
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-            const confirmPassword = document.getElementById('registerConfirmPassword').value;
-            
-            if (password !== confirmPassword) {
-                alert(translations[currentLanguage].passwordMismatch);
-                return;
-            }
-            
-            if (!name || !email) {
-                alert('Name and email are required');
-                return;
-            }
-            
-            showLoading(true);
-            
-            auth.createUserWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    const user = userCredential.user;
-                    return database.ref('users/' + user.uid).set({
-                        name: name,
-                        email: email,
-                        language: 'en',
-                        theme: 'light',
-                        createdAt: firebase.database.ServerValue.TIMESTAMP
-                    });
-                })
-                .then(() => {
-                    showLoading(false);
-                })
-                .catch(error => {
-                    showLoading(false);
-                    alert(error.message);
-                });
-        }
-
-        // Logout user
-        function logoutUser() {
-            showLoading(true);
-            auth.signOut()
-                .then(() => {
-                    showLoading(false);
-                })
-                .catch(error => {
-                    showLoading(false);
-                    alert(error.message);
-                });
-        }
-
-        // Load user preferences
-        function loadUserPreferences() {
-            database.ref('users/' + currentUser.uid).once('value')
-                .then(snapshot => {
-                    const userData = snapshot.val();
-                    if (userData) {
-                        if (userData.language) {
-                            setLanguage(userData.language);
-                        }
-                        if (userData.theme) {
-                            setTheme(userData.theme);
-                        }
-                    }
-                });
-        }
-
-        // Set application language
-        function setLanguage(lang) {
-            currentLanguage = lang;
-            
-            // Save to database
-            if (currentUser) {
-                database.ref('users/' + currentUser.uid).update({
-                    language: lang
-                });
-            }
-            
-            // Update UI translations
-            updateTranslations();
-        }
-
-        // Set application theme
-        function setTheme(theme) {
-            currentTheme = theme;
-            
-            // Handle auto theme
-            if (theme === 'auto') {
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                theme = prefersDark ? 'dark' : 'light';
-            }
-            
-            // Apply theme
-            document.documentElement.setAttribute('data-bs-theme', theme);
-            
-            // Save to database
-            if (currentUser) {
-                database.ref('users/' + currentUser.uid).update({
-                    theme: currentTheme
-                });
-            }
-            
-            // Update theme dropdown
-            document.querySelectorAll('.theme-option').forEach(option => {
-                if (option.getAttribute('data-theme') === currentTheme) {
-                    document.getElementById('currentFilter').textContent = option.textContent;
-                }
-            });
-        }
-
-        // Update all translations in the UI
-        function updateTranslations() {
-            const lang = translations[currentLanguage];
-            
-            // Auth screen
-            document.getElementById('authTitle').textContent = document.getElementById('loginForm').style.display === 'block' ? lang.login : lang.register;
-            document.getElementById('loginButton').textContent = lang.login;
-            document.getElementById('registerButton').textContent = lang.register;
-            document.getElementById('showRegisterButton').textContent = lang.createAccount;
-            document.getElementById('showLoginButton').textContent = lang.alreadyHaveAccount;
-            document.getElementById('loginEmail').placeholder = lang.email;
-            document.getElementById('loginPassword').placeholder = lang.password;
-            document.getElementById('registerName').placeholder = lang.name;
-            document.getElementById('registerEmail').placeholder = lang.email;
-            document.getElementById('registerPassword').placeholder = lang.password;
-            document.getElementById('registerConfirmPassword').placeholder = lang.confirmPassword;
-            
-            // Navigation
-            document.getElementById('dashboardLink').textContent = lang.dashboard;
-            document.getElementById('projectsLink').textContent = lang.projects;
-            document.getElementById('timeEntriesLink').textContent = lang.timeEntries;
-            document.getElementById('reportsLink').textContent = lang.reports;
-            document.getElementById('sidebarDashboard').innerHTML = `<i class="bi bi-speedometer2 me-2"></i>${lang.dashboard}`;
-            document.getElementById('sidebarProjects').innerHTML = `<i class="bi bi-folder me-2"></i>${lang.projects}`;
-            document.getElementById('sidebarTimeEntries').innerHTML = `<i class="bi bi-clock me-2"></i>${lang.timeEntries}`;
-            document.getElementById('sidebarReports').innerHTML = `<i class="bi bi-graph-up me-2"></i>${lang.reports}`;
-            document.getElementById('sidebarTeam').innerHTML = `<i class="bi bi-people me-2"></i>${lang.team}`;
-            document.getElementById('sidebarSettings').innerHTML = `<i class="bi bi-gear me-2"></i>${lang.settings}`;
-            document.getElementById('profileLink').textContent = lang.profile;
-            document.getElementById('logoutLink').textContent = lang.logout;
-            
-            // Dashboard
-            document.querySelector('.card-header h6').textContent = lang.weeklySummary;
-            document.querySelectorAll('#recentEntriesTable th')[0].textContent = lang.date;
-            document.querySelectorAll('#recentEntriesTable th')[1].textContent = lang.project;
-            document.querySelectorAll('#recentEntriesTable th')[2].textContent = lang.startTime;
-            document.querySelectorAll('#recentEntriesTable th')[3].textContent = lang.endTime;
-            document.querySelectorAll('#recentEntriesTable th')[4].textContent = lang.duration;
-            document.querySelectorAll('#recentEntriesTable th')[5].textContent = lang.notes;
-            
-            // Projects
-            document.getElementById('addProjectButton').innerHTML = `<i class="bi bi-plus-lg me-1"></i>${lang.addProject}`;
-            document.querySelectorAll('#projectsTable th')[0].textContent = lang.projectName;
-            document.querySelectorAll('#projectsTable th')[1].textContent = lang.client;
-            document.querySelectorAll('#projectsTable th')[2].textContent = lang.status;
-            document.querySelectorAll('#projectsTable th')[3].textContent = lang.totalTime;
-            document.querySelectorAll('#projectsTable th')[4].textContent = lang.actions;
-            
-            // Project modal
-            document.getElementById('projectModalTitle').textContent = lang.addProject;
-            document.querySelector('#projectForm label[for="projectName"]').textContent = lang.projectName;
-            document.querySelector('#projectForm label[for="projectClient"]').textContent = lang.client;
-            document.querySelector('#projectForm label[for="projectDescription"]').textContent = lang.description;
-            document.querySelector('#projectForm label[for="projectStatus"]').textContent = lang.status;
-            document.querySelector('#projectForm label[for="projectColor"]').textContent = lang.color;
-            document.getElementById('saveProjectButton').textContent = lang.save;
-            
-            // Time entries
-            document.getElementById('addTimeEntryButton').innerHTML = `<i class="bi bi-plus-lg me-1"></i>${lang.addEntry}`;
-            document.getElementById('currentFilter').textContent = lang.thisWeek;
-            document.querySelectorAll('.filter-option')[0].textContent = lang.today;
-            document.querySelectorAll('.filter-option')[1].textContent = lang.thisWeek;
-            document.querySelectorAll('.filter-option')[2].textContent = lang.thisMonth;
-            document.querySelectorAll('.filter-option')[3].textContent = lang.thisYear;
-            document.querySelectorAll('.filter-option')[4].textContent = lang.allTime;
-            document.querySelectorAll('.filter-option')[5].textContent = lang.customRange;
-            document.querySelectorAll('#timeEntriesTable th')[0].textContent = lang.date;
-            document.querySelectorAll('#timeEntriesTable th')[1].textContent = lang.project;
-            document.querySelectorAll('#timeEntriesTable th')[2].textContent = lang.startTime;
-            document.querySelectorAll('#timeEntriesTable th')[3].textContent = lang.endTime;
-            document.querySelectorAll('#timeEntriesTable th')[4].textContent = lang.duration;
-            document.querySelectorAll('#timeEntriesTable th')[5].textContent = lang.notes;
-            document.querySelectorAll('#timeEntriesTable th')[6].textContent = lang.actions;
-            
-            // Time entry modal
-            document.getElementById('timeEntryModalTitle').textContent = lang.addEntry;
-            document.querySelector('#timeEntryForm label[for="entryDate"]').textContent = lang.date;
-            document.querySelector('#timeEntryForm label[for="entryProject"]').textContent = lang.project;
-            document.querySelector('#timeEntryForm label[for="entryStartTime"]').textContent = lang.startTime;
-            document.querySelector('#timeEntryForm label[for="entryEndTime"]').textContent = lang.endTime;
-            document.querySelector('#timeEntryForm label[for="entryBreak"]').textContent = lang.break;
-            document.querySelector('#timeEntryForm label[for="entryNotes"]').textContent = lang.notes;
-            document.getElementById('saveTimeEntryButton').textContent = lang.save;
-            
-            // Reports
-            document.querySelector('#reportsScreen .card-header h6').textContent = lang.timeByProject;
-            document.querySelector('#reportsScreen .card-body .row .card .card-header h6').textContent = lang.monthlySummary;
-            document.querySelector('#reportsScreen .card-body .card .card-header h6').textContent = lang.detailedReport;
-            document.querySelector('#reportProjectFilter').previousElementSibling.textContent = lang.project;
-            document.querySelector('#reportDateFrom').previousElementSibling.textContent = lang.from;
-            document.querySelector('#reportDateTo').previousElementSibling.textContent = lang.to;
-            document.getElementById('generateReportButton').textContent = lang.generateReport;
-            document.querySelector('#reportTable th:nth-child(1)').textContent = lang.date;
-            document.querySelector('#reportTable th:nth-child(2)').textContent = lang.project;
-            document.querySelector('#reportTable th:nth-child(3)').textContent = lang.startTime;
-            document.querySelector('#reportTable th:nth-child(4)').textContent = lang.endTime;
-            document.querySelector('#reportTable th:nth-child(5)').textContent = lang.duration;
-            document.querySelector('#reportTable th:nth-child(6)').textContent = lang.notes;
-            
-            // Install prompt
-            document.querySelector('#installPrompt .toast-header strong').textContent = lang.install;
-            document.querySelector('#installPrompt .toast-body').textContent = lang.installPrompt;
-            document.getElementById('installButton').textContent = lang.install;
-            document.querySelector('#installPrompt .toast-body .btn-secondary').textContent = lang.notNow;
-        }
-
-        // Show loading spinner
-        function showLoading(show) {
-            document.getElementById('loadingSpinner').style.display = show ? 'flex' : 'none';
+    // Filter records based on selected filters
+    function filterRecords() {
+      const yearFilter = document.getElementById('year-filter');
+      const monthFilter = document.getElementById('month-filter');
+      const weekFilter = document.getElementById('week-filter');
+      
+      state.currentYearFilter = parseInt(yearFilter.value);
+      state.currentMonthFilter = monthFilter.value;
+      state.currentWeekFilter = weekFilter.value;
+      
+      // Filter records based on selection
+      let filteredRecords = state.records.filter(record => {
+        const recordDate = new Date(record.date);
+        const recordYear = recordDate.getFullYear();
+        
+        if (recordYear !== state.currentYearFilter) {
+          return false;
         }
         
-        // Load dashboard data
-        function loadDashboardData() {
-            if (!currentUser) return;
-            
-            showLoading(true);
-            
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const weekStart = new Date(today);
-            weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-            
-            // Load all necessary data in parallel for better performance
-            Promise.all([
-                // Load projects
-                database.ref('projects/' + currentUser.uid).once('value'),
-                // Load team members
-                database.ref('teams/' + currentUser.uid).once('value'),
-                // Load time entries
-                database.ref('timeEntries/' + currentUser.uid).orderByChild('date').once('value')
-            ])
-            .then(([projectsSnapshot, teamSnapshot, timeEntriesSnapshot]) => {
-                // Process projects
-                projects = [];
-                projectsSnapshot.forEach(childSnapshot => {
-                    projects.push({
-                        id: childSnapshot.key,
-                        ...childSnapshot.val()
-                    });
-                });
-                
-                // Update projects count
-                document.getElementById('activeProjects').textContent = 
-                    projects.filter(p => p.status === 'active').length;
-                
-                // Process team members
-                teamMembers = [];
-                teamSnapshot.forEach(childSnapshot => {
-                    teamMembers.push(childSnapshot.val());
-                });
-                document.getElementById('teamMembers').textContent = teamMembers.length;
-                
-                // Process time entries
-                timeEntries = [];
-                let todayTotalMinutes = 0;
-                let weekTotalMinutes = 0;
-                
-                timeEntriesSnapshot.forEach(childSnapshot => {
-                    const entry = {
-                        id: childSnapshot.key,
-                        ...childSnapshot.val()
-                    };
-                    timeEntries.push(entry);
-                    
-                    const entryDate = new Date(entry.date);
-                    const start = new Date(entry.date + 'T' + entry.startTime);
-                    const end = new Date(entry.date + 'T' + entry.endTime);
-                    const duration = (end - start) / (1000 * 60) - (entry.break || 0);
-                    
-                    // Today's time
-                    if (entryDate.toDateString() === today.toDateString()) {
-                        todayTotalMinutes += duration;
-                    }
-                    
-                    // This week's time
-                    if (entryDate >= weekStart) {
-                        weekTotalMinutes += duration;
-                    }
-                });
-                
-                // Update UI
-                document.getElementById('todayTime').textContent = formatHoursMinutes(todayTotalMinutes);
-                document.getElementById('weekTime').textContent = formatHoursMinutes(weekTotalMinutes);
-                
-                // Update recent entries and charts
-                updateRecentEntriesTable();
-                createWeeklyChart();
-                createProjectsChart();
-                
-                showLoading(false);
-                
-                // If we're on the projects screen, refresh it
-                if (document.getElementById('projectsScreen').style.display !== 'none') {
-                    loadProjects();
-                }
-            })
-            .catch(error => {
-                showLoading(false);
-                console.error('Error loading dashboard data:', error);
-                alert('Error loading data: ' + error.message);
-            });
+        if (state.currentMonthFilter !== 'all') {
+          const recordMonth = recordDate.getMonth() + 1; // getMonth() returns 0-11
+          if (parseInt(state.currentMonthFilter) !== recordMonth) {
+            return false;
+          }
         }
         
-        // Format minutes as hours and minutes
-        function formatHoursMinutes(minutes) {
-            const hours = Math.floor(minutes / 60);
-            const mins = Math.round(minutes % 60);
-            return `${hours}h ${mins}m`;
+        if (state.currentWeekFilter !== 'all') {
+          // Get ISO week number (1-53)
+          const recordWeek = getWeekNumber(recordDate);
+          if (parseInt(state.currentWeekFilter) !== recordWeek) {
+            return false;
+          }
         }
+        
+        return true;
+      });
+      
+      // Sort records by date (newest first)
+      filteredRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      // Display filtered records
+      displayRecords(filteredRecords);
+      updateSummaryTable(filteredRecords);
+    }
 
-        // Format date for display
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString(currentLanguage);
-        }
+    // Get ISO week number
+    function getWeekNumber(date) {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+      const week1 = new Date(d.getFullYear(), 0, 4);
+      return 1 + Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    }
 
-        // Update recent entries table
-        function updateRecentEntriesTable() {
-            const tableBody = document.querySelector('#recentEntriesTable tbody');
-            tableBody.innerHTML = '';
-            
-            // Sort by date (newest first)
-            const sortedEntries = [...timeEntries].sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            // Show only the last 5 entries
-            const recentEntries = sortedEntries.slice(0, 5);
-            
-            recentEntries.forEach(entry => {
-                const project = projects.find(p => p.id === entry.projectId) || { name: 'Unknown' };
-                const start = new Date(entry.date + 'T' + entry.startTime);
-                const end = new Date(entry.date + 'T' + entry.endTime);
-                const duration = (end - start) / (1000 * 60) - (entry.break || 0);
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${formatDate(entry.date)}</td>
-                    <td>${project.name}</td>
-                    <td>${entry.startTime}</td>
-                    <td>${entry.endTime}</td>
-                    <td>${formatHoursMinutes(duration)}</td>
-                    <td>${entry.notes || ''}</td>
-                `;
-                tableBody.appendChild(row);
-            });
+    // Display filtered records
+    function displayRecords(records) {
+      const entriesContainer = document.getElementById('entries-container');
+      entriesContainer.innerHTML = '';
+      
+      if (records.length === 0) {
+        entriesContainer.innerHTML = `
+          <div class="text-gray-500 text-center py-6">
+            No records found
+          </div>
+        `;
+        return;
+      }
+      
+      // Group records by week
+      const recordsByWeek = {};
+      records.forEach(record => {
+        const date = new Date(record.date);
+        const week = getWeekNumber(date);
+        
+        if (!recordsByWeek[week]) {
+          recordsByWeek[week] = [];
         }
+        
+        recordsByWeek[week].push(record);
+      });
+      
+      // Display records grouped by week
+      Object.keys(recordsByWeek).sort((a, b) => b - a).forEach(week => {
+        const weekRecords = recordsByWeek[week];
+        
+        // Add week separator
+        const weekSeparator = document.createElement('div');
+        weekSeparator.className = 'week-separator';
+        weekSeparator.textContent = `Week ${week}`;
+        entriesContainer.appendChild(weekSeparator);
+        
+        // Group records by date within the week
+        const recordsByDate = {};
+        weekRecords.forEach(record => {
+          if (!recordsByDate[record.date]) {
+            recordsByDate[record.date] = [];
+          }
+          
+          recordsByDate[record.date].push(record);
+        });
+        
+        // Display records grouped by date
+        Object.keys(recordsByDate).sort((a, b) => new Date(b) - new Date(a)).forEach(date => {
+          const dateRecords = recordsByDate[date];
+          const formattedDate = formatDate(date);
+          
+          // Add date separator
+          const dateSeparator = document.createElement('div');
+          dateSeparator.className = 'text-sm font-medium text-gray-700 p-2 bg-gray-50';
+          dateSeparator.textContent = formattedDate;
+          entriesContainer.appendChild(dateSeparator);
+          
+          // Add records for this date
+          dateRecords.forEach(record => {
+            const project = state.projects.find(p => p.id === record.projectId) || { name: 'Unknown', code: '?' };
+            
+            // Calculate hours worked
+            const startTime = record.startTime.split(':');
+            const endTime = record.endTime.split(':');
+            const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
+            const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
+            const workedMinutes = endMinutes - startMinutes - record.breakTime;
+            const workedHours = (workedMinutes / 60).toFixed(2);
+            
+            // Create record element
+            const recordElement = document.createElement('div');
+            recordElement.className = 'entry p-2 hover:bg-gray-50';
+            recordElement.innerHTML = `
+              <div class="flex justify-between items-center">
+                <div>
+                  <div class="font-medium">${record.startTime} - ${record.endTime} (${workedHours} h)</div>
+                  <div class="text-sm text-gray-600">${project.code} - ${project.name}</div>
+                  ${record.notes ? `<div class="text-sm italic mt-1">${record.notes}</div>` : ''}
+                  ${record.coworkers ? `<div class="text-xs text-gray-500 mt-1"><i class="fas fa-users mr-1"></i> ${record.coworkers}</div>` : ''}
+                </div>
+                <div>
+                  <button class="text-gray-500 hover:text-gray-700 mr-2 edit-record" data-id="${record.id}">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="text-red-500 hover:text-red-700 delete-record" data-id="${record.id}">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            `;
+            entriesContainer.appendChild(recordElement);
+          });
+        });
+      });
+      
+      // Add event listeners to edit/delete buttons
+      document.querySelectorAll('.edit-record').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const recordId = btn.dataset.id;
+          openEditRecordModal(recordId);
+        });
+      });
+      
+      document.querySelectorAll('.delete-record').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const recordId = btn.dataset.id;
+          if (confirm('Are you sure you want to delete this record?')) {
+            deleteRecord(recordId);
+          }
+        });
+      });
+    }
 
-        // Create weekly chart
-        function createWeeklyChart() {
-            const ctx = document.getElementById('weeklyChart').getContext('2d');
-            
-            // Group entries by day of week
-            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const dayTotals = [0, 0, 0, 0, 0, 0, 0];
-            
-            const today = new Date();
-            const weekStart = new Date(today);
-            weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-            
-            timeEntries.forEach(entry => {
-                const entryDate = new Date(entry.date);
-                if (entryDate >= weekStart) {
-                    const dayOfWeek = entryDate.getDay();
-                    const start = new Date(entry.date + 'T' + entry.startTime);
-                    const end = new Date(entry.date + 'T' + entry.endTime);
-                    const duration = (end - start) / (1000 * 60) - (entry.break || 0);
-                    dayTotals[dayOfWeek] += duration;
-                }
-            });
-            
-            // Convert minutes to hours
-            const dayHours = dayTotals.map(minutes => (minutes / 60).toFixed(1));
-            
-            if (window.weeklyChart) {
-                window.weeklyChart.destroy();
-            }
-            
-            window.weeklyChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: days,
-                    datasets: [{
-                        label: 'Hours',
-                        data: dayHours,
-                        backgroundColor: 'rgba(78, 115, 223, 0.5)',
-                        borderColor: 'rgba(78, 115, 223, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Hours'
-                            }
-                        }
-                    }
-                }
-            });
-        }
+    // Format date for display
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+    }
 
-        // Create projects chart
-        function createProjectsChart() {
-            const ctx = document.getElementById('projectsChart').getContext('2d');
-            
-            // Group entries by project
-            const projectTotals = {};
-            
-            projects.forEach(project => {
-                projectTotals[project.id] = {
-                    name: project.name,
-                    minutes: 0,
-                    color: project.color || '#4e73df'
-                };
-            });
-            
-            timeEntries.forEach(entry => {
-                if (projectTotals[entry.projectId]) {
-                    const start = new Date(entry.date + 'T' + entry.startTime);
-                    const end = new Date(entry.date + 'T' + entry.endTime);
-                    const duration = (end - start) / (1000 * 60) - (entry.break || 0);
-                    projectTotals[entry.projectId].minutes += duration;
-                }
-            });
-            
-            // Filter out projects with no time
-            const activeProjects = Object.values(projectTotals).filter(p => p.minutes > 0);
-            
-            // Prepare data for chart
-            const labels = activeProjects.map(p => p.name);
-            const data = activeProjects.map(p => (p.minutes / 60).toFixed(1));
-            const backgroundColors = activeProjects.map(p => p.color);
-            
-            if (window.projectsChart) {
-                window.projectsChart.destroy();
-            }
-            
-            window.projectsChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: backgroundColors,
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right'
-                        }
-                    }
-                }
-            });
-        }
+    // Update summary table
+    function updateSummaryTable(records) {
+      const tableBody = document.getElementById('resumenHoras').querySelector('tbody');
+      tableBody.innerHTML = '';
+      
+      let totalHours = 0;
+      
+      // Sort records by date (oldest first)
+      records.sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      records.forEach(record => {
+        const project = state.projects.find(p => p.id === record.projectId) || { name: 'Unknown', code: '?' };
+        
+        // Calculate hours worked
+        const startTime = record.startTime.split(':');
+        const endTime = record.endTime.split(':');
+        const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
+        const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
+        const workedMinutes = endMinutes - startMinutes - record.breakTime;
+        const workedHours = workedMinutes / 60;
+        
+        totalHours += workedHours;
+        
+        // Create row
+        const row = document.createElement('tr');
+        row.className = 'border-b hover:bg-gray-50';
+        
+        // Get week number
+        const date = new Date(record.date);
+        const week = getWeekNumber(date);
+        
+        row.innerHTML = `
+          <td class="py-2 px-3">${formatDate(record.date)}</td>
+          <td class="py-2 px-3">${week}</td>
+          <td class="py-2 px-3">${project.code} - ${project.name}</td>
+          <td class="py-2 px-3 text-right">${workedHours.toFixed(2)}</td>
+          <td class="py-2 px-3 text-right">${record.breakTime} min</td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+      
+      // Update total
+      document.getElementById('total-mes').textContent = totalHours.toFixed(2);
+    }
 
-        // Load projects
-        function loadProjects() {
-            if (!currentUser) return;
-            
-            showLoading(true);
-            
-            database.ref('projects/' + currentUser.uid).once('value')
-                .then(snapshot => {
-                    projects = [];
-                    const tableBody = document.querySelector('#projectsTable tbody');
-                    tableBody.innerHTML = '';
-                    
-                    snapshot.forEach(childSnapshot => {
-                        const project = {
-                            id: childSnapshot.key,
-                            ...childSnapshot.val()
-                        };
-                        projects.push(project);
-                        
-                        // Calculate total time for this project
-                        let totalMinutes = 0;
-                        timeEntries.forEach(entry => {
-                            if (entry.projectId === project.id) {
-                                const start = new Date(entry.date + 'T' + entry.startTime);
-                                const end = new Date(entry.date + 'T' + entry.endTime);
-                                const duration = (end - start) / (1000 * 60) - (entry.break || 0);
-                                totalMinutes += duration;
-                            }
-                        });
-                        
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${project.name}</td>
-                            <td>${project.client || ''}</td>
-                            <td><span class="badge ${getStatusBadgeClass(project.status)}">${translations[currentLanguage][project.status] || project.status}</span></td>
-                            <td>${formatHoursMinutes(totalMinutes)}</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary edit-project" data-id="${project.id}">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger delete-project" data-id="${project.id}">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
-                    
-                    // Add event listeners to edit and delete buttons
-                    document.querySelectorAll('.edit-project').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const projectId = this.getAttribute('data-id');
-                            editProject(projectId);
-                        });
-                    });
-                    
-                    document.querySelectorAll('.delete-project').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const projectId = this.getAttribute('data-id');
-                            deleteProject(projectId);
-                        });
-                    });
-                    
-                    showLoading(false);
-                })
-                .catch(error => {
-                    showLoading(false);
-                    console.error('Error loading projects:', error);
-                });
-        }
+    // Initialize charts
+    function initCharts() {
+      initWeeklyChart();
+      initProjectChart();
+    }
 
-        // Get badge class based on status
-        function getStatusBadgeClass(status) {
-            switch(status) {
-                case 'active': return 'bg-success';
-                case 'on-hold': return 'bg-warning';
-                case 'completed': return 'bg-secondary';
-                default: return 'bg-primary';
+    // Initialize weekly hours chart
+    function initWeeklyChart() {
+      const ctx = document.getElementById('weekly-chart').getContext('2d');
+      
+      // Destroy existing chart if it exists
+      if (state.weeklyChart) {
+        state.weeklyChart.destroy();
+      }
+      
+      // Prepare data for monthly view (default)
+      const { labels, data } = prepareWeeklyChartData('monthly');
+      
+      state.weeklyChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Hours per Week',
+            data,
+            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Worked Hours'
+              }
             }
+          }
         }
+      });
+    }
 
-        // Show project modal
-        function showProjectModal(project = null) {
-            const modal = new bootstrap.Modal(document.getElementById('projectModal'));
-            const form = document.getElementById('projectForm');
-            
-            if (project) {
-                // Edit mode
-                document.getElementById('projectModalTitle').textContent = 'Edit Project';
-                document.getElementById('projectId').value = project.id;
-                document.getElementById('projectName').value = project.name;
-                document.getElementById('projectClient').value = project.client || '';
-                document.getElementById('projectDescription').value = project.description || '';
-                document.getElementById('projectStatus').value = project.status || 'active';
-                document.getElementById('projectColor').value = project.color || '#4e73df';
-            } else {
-                // Add mode
-                document.getElementById('projectModalTitle').textContent = translations[currentLanguage].addProject;
-                form.reset();
-                document.getElementById('projectId').value = '';
-                document.getElementById('projectStatus').value = 'active';
-                document.getElementById('projectColor').value = '#4e73df';
-            }
-            
-            modal.show();
+    // Prepare data for weekly chart
+    function prepareWeeklyChartData(view) {
+      const currentYear = new Date().getFullYear();
+      
+      let labels = [];
+      let data = [];
+      
+      if (view === 'monthly') {
+        // Last 4 weeks
+        for (let i = 3; i >= 0; i--) {
+          const weekNumber = getWeekNumber(new Date()) - i;
+          labels.push(`Week ${weekNumber}`);
+          
+          // Calculate hours for this week
+          const weekHours = calculateHoursForWeek(currentYear, weekNumber);
+          data.push(weekHours);
         }
+      } else {
+        // Quarterly view - last 12 weeks
+        for (let i = 11; i >= 0; i--) {
+          const weekNumber = getWeekNumber(new Date()) - i;
+          labels.push(`Week ${weekNumber}`);
+          
+          // Calculate hours for this week
+          const weekHours = calculateHoursForWeek(currentYear, weekNumber);
+          data.push(weekHours);
+        }
+      }
+      
+      return { labels, data };
+    }
 
-        // Edit project
-        function editProject(projectId) {
-            const project = projects.find(p => p.id === projectId);
-            if (project) {
-                showProjectModal(project);
-            }
+    // Calculate hours for a specific week
+    function calculateHoursForWeek(year, week) {
+      let totalHours = 0;
+      
+      state.records.forEach(record => {
+        const recordDate = new Date(record.date);
+        const recordYear = recordDate.getFullYear();
+        const recordWeek = getWeekNumber(recordDate);
+        
+        if (recordYear === year && recordWeek === week) {
+          // Calculate hours worked
+          const startTime = record.startTime.split(':');
+          const endTime = record.endTime.split(':');
+          const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
+          const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
+          const workedMinutes = endMinutes - startMinutes - record.breakTime;
+          const workedHours = workedMinutes / 60;
+          
+          totalHours += workedHours;
         }
+      });
+      
+      return totalHours;
+    }
 
-        // Delete project
-        function deleteProject(projectId) {
-            if (confirm('Are you sure you want to delete this project?')) {
-                showLoading(true);
-                
-                database.ref('projects/' + currentUser.uid + '/' + projectId).remove()
-                    .then(() => {
-                        // Also delete all time entries for this project
-                        return database.ref('timeEntries/' + currentUser.uid).orderByChild('projectId').equalTo(projectId).once('value');
-                    })
-                    .then(snapshot => {
-                        const updates = {};
-                        snapshot.forEach(childSnapshot => {
-                            updates['timeEntries/' + currentUser.uid + '/' + childSnapshot.key] = null;
-                        });
-                        
-                        if (Object.keys(updates).length > 0) {
-                            return database.ref().update(updates);
-                        }
-                    })
-                    .then(() => {
-                        showLoading(false);
-                        loadProjects();
-                        loadDashboardData(); // Refresh dashboard
-                    })
-                    .catch(error => {
-                        showLoading(false);
-                        console.error('Error deleting project:', error);
-                    });
-            }
+    // Initialize project distribution chart
+    function initProjectChart() {
+      const ctx = document.getElementById('project-chart').getContext('2d');
+      
+      // Destroy existing chart if it exists
+      if (state.projectChart) {
+        state.projectChart.destroy();
+      }
+      
+      // Calculate hours per project
+      const projectHours = {};
+      state.projects.forEach(project => {
+        projectHours[project.id] = 0;
+      });
+      
+      state.records.forEach(record => {
+        if (projectHours[record.projectId] !== undefined) {
+          // Calculate hours worked
+          const startTime = record.startTime.split(':');
+          const endTime = record.endTime.split(':');
+          const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
+          const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
+          const workedMinutes = endMinutes - startMinutes - record.breakTime;
+          const workedHours = workedMinutes / 60;
+          
+          projectHours[record.projectId] += workedHours;
         }
+      });
+      
+      // Prepare chart data
+      const labels = [];
+      const data = [];
+      const backgroundColor = [];
+      const colors = [
+        'rgba(59, 130, 246, 0.7)',
+        'rgba(16, 185, 129, 0.7)',
+        'rgba(245, 158, 11, 0.7)',
+        'rgba(239, 68, 68, 0.7)',
+        'rgba(139, 92, 246, 0.7)',
+        'rgba(236, 72, 153, 0.7)',
+        'rgba(37, 99, 235, 0.7)',
+        'rgba(5, 150, 105, 0.7)'
+      ];
+      
+      let colorIndex = 0;
+      Object.entries(projectHours).forEach(([projectId, hours]) => {
+        const project = state.projects.find(p => p.id === projectId);
+        if (project && hours > 0) {
+          labels.push(`${project.code} - ${project.name}`);
+          data.push(hours);
+          backgroundColor.push(colors[colorIndex % colors.length]);
+          colorIndex++;
+        }
+      });
+      
+      state.projectChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data,
+            backgroundColor,
+            borderColor: 'white',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+            }
+          }
+        }
+      });
+    }
 
-        // Save project
-        function saveProject() {
-            const projectId = document.getElementById('projectId').value;
-            const projectName = document.getElementById('projectName').value;
-            const projectStatus = document.getElementById('projectStatus').value;
-            const projectColor = document.getElementById('projectColor').value;
-            
-            // Validate project data according to Firebase rules
-            if (!projectName || !projectName.trim()) {
-                alert('Project name is required');
-                return;
-            }
-            
-            if (!['active', 'on-hold', 'completed'].includes(projectStatus)) {
-                alert('Invalid project status');
-                return;
-            }
-            
-            if (!/^#[0-9a-fA-F]{6}$/.test(projectColor)) {
-                alert('Invalid color format. Use #RRGGBB.');
-                return;
-            }
-            
-            const projectData = {
-                name: projectName,
-                status: projectStatus,
-                color: projectColor,
-                client: document.getElementById('projectClient').value || null,
-                description: document.getElementById('projectDescription').value || null,
-                updatedAt: firebase.database.ServerValue.TIMESTAMP
-            };
-            
-            showLoading(true);
-            
-            if (projectId) {
-                // Update existing project
-                database.ref('projects/' + currentUser.uid + '/' + projectId).update(projectData)
-                    .then(() => {
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('projectModal'));
-                        modal.hide();
-                        loadProjects();
-                        loadDashboardData(); // Refresh dashboard
-                        showLoading(false);
-                    })
-                    .catch(error => {
-                        showLoading(false);
-                        console.error('Error updating project:', error);
-                        alert('Error: ' + error.message);
-                    });
-            } else {
-                // Add new project
-                projectData.createdAt = firebase.database.ServerValue.TIMESTAMP;
-                database.ref('projects/' + currentUser.uid).push(projectData)
-                    .then(() => {
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('projectModal'));
-                        modal.hide();
-                        loadProjects();
-                        showLoading(false);
-                    })
-                    .catch(error => {
-                        showLoading(false);
-                        console.error('Error adding project:', error);
-                        alert('Error: ' + error.message);
-                    });
-            }
-        }
+    // Toggle chart view (monthly/quarterly)
+    function toggleChartView(e) {
+      const view = e.target.dataset.view;
+      
+      // Update active class
+      document.querySelectorAll('.view-toggle').forEach(btn => {
+        btn.classList.remove('active', 'bg-blue-100');
+      });
+      e.target.classList.add('active', 'bg-blue-100');
+      
+      // Update chart data
+      const { labels, data } = prepareWeeklyChartData(view);
+      
+      state.weeklyChart.data.labels = labels;
+      state.weeklyChart.data.datasets[0].data = data;
+      state.weeklyChart.update();
+    }
 
-        // Load time entries
-        function loadTimeEntries(filter = 'week') {
-            if (!currentUser) return;
-            
-            showLoading(true);
-            
-            // Get date range based on filter
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            let startDate, endDate;
-            
-            switch(filter) {
-                case 'today':
-                    startDate = new Date(today);
-                    endDate = new Date(today);
-                    endDate.setDate(endDate.getDate() + 1);
-                    document.getElementById('currentFilter').textContent = translations[currentLanguage].today;
-                    break;
-                case 'month':
-                    startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-                    endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                    document.getElementById('currentFilter').textContent = translations[currentLanguage].thisMonth;
-                    break;
-                case 'year':
-                    startDate = new Date(today.getFullYear(), 0, 1);
-                    endDate = new Date(today.getFullYear(), 11, 31);
-                    document.getElementById('currentFilter').textContent = translations[currentLanguage].thisYear;
-                    break;
-                case 'all':
-                    startDate = null;
-                    endDate = null;
-                    document.getElementById('currentFilter').textContent = translations[currentLanguage].allTime;
-                    break;
-                case 'week':
-                default:
-                    startDate = new Date(today);
-                    startDate.setDate(startDate.getDate() - startDate.getDay());
-                    endDate = new Date(startDate);
-                    endDate.setDate(endDate.getDate() + 6);
-                    document.getElementById('currentFilter').textContent = translations[currentLanguage].thisWeek;
-                    break;
-            }
-            
-            let query = database.ref('timeEntries/' + currentUser.uid).orderByChild('date');
-            
-            if (startDate) {
-                query = query.startAt(formatDateForFirebase(startDate));
-            }
-            
-            if (endDate) {
-                query = query.endAt(formatDateForFirebase(endDate));
-            }
-            
-            query.once('value')
-                .then(snapshot => {
-                    timeEntries = [];
-                    const tableBody = document.querySelector('#timeEntriesTable tbody');
-                    tableBody.innerHTML = '';
-                    
-                    snapshot.forEach(childSnapshot => {
-                        const entry = {
-                            id: childSnapshot.key,
-                            ...childSnapshot.val()
-                        };
-                        timeEntries.push(entry);
-                        
-                        const project = projects.find(p => p.id === entry.projectId) || { name: 'Unknown' };
-                        const start = new Date(entry.date + 'T' + entry.startTime);
-                        const end = new Date(entry.date + 'T' + entry.endTime);
-                        const duration = (end - start) / (1000 * 60) - (entry.break || 0);
-                        
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${formatDate(entry.date)}</td>
-                            <td>${project.name}</td>
-                            <td>${entry.startTime}</td>
-                            <td>${entry.endTime}</td>
-                            <td>${formatHoursMinutes(duration)}</td>
-                            <td>${entry.notes || ''}</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary edit-entry" data-id="${entry.id}">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger delete-entry" data-id="${entry.id}">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
-                    
-                    // Add event listeners to edit and delete buttons
-                    document.querySelectorAll('.edit-entry').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const entryId = this.getAttribute('data-id');
-                            editTimeEntry(entryId);
-                        });
-                    });
-                    
-                    document.querySelectorAll('.delete-entry').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const entryId = this.getAttribute('data-id');
-                            deleteTimeEntry(entryId);
-                        });
-                    });
-                    
-                    showLoading(false);
-                })
-                .catch(error => {
-                    showLoading(false);
-                    console.error('Error loading time entries:', error);
-                });
+    // Update statistics
+    function updateStatistics() {
+      // Calculate total hours
+      let totalHours = 0;
+      let totalDays = new Set();
+      let weekHours = 0;
+      let monthHours = 0;
+      
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth();
+      const currentWeek = getWeekNumber(currentDate);
+      
+      state.records.forEach(record => {
+        const recordDate = new Date(record.date);
+        const recordYear = recordDate.getFullYear();
+        const recordMonth = recordDate.getMonth();
+        const recordWeek = getWeekNumber(recordDate);
+        
+        // Calculate hours worked
+        const startTime = record.startTime.split(':');
+        const endTime = record.endTime.split(':');
+        const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
+        const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
+        const workedMinutes = endMinutes - startMinutes - record.breakTime;
+        const workedHours = workedMinutes / 60;
+        
+        // Total hours and days
+        totalHours += workedHours;
+        totalDays.add(record.date);
+        
+        // Current week hours
+        if (recordYear === currentYear && recordWeek === currentWeek) {
+          weekHours += workedHours;
         }
+        
+        // Current month hours
+        if (recordYear === currentYear && recordMonth === currentMonth) {
+          monthHours += workedHours;
+        }
+      });
+      
+      // Update UI
+      document.getElementById('total-hours').textContent = totalHours.toFixed(2);
+      document.getElementById('total-days').textContent = totalDays.size;
+      document.getElementById('week-hours').textContent = weekHours.toFixed(2);
+      document.getElementById('month-hours').textContent = monthHours.toFixed(2);
+    }
 
-        // Format date for Firebase query
-        function formatDateForFirebase(date) {
-            return date.toISOString().split('T')[0];
-        }
+    // Handle add project
+    function handleAddProject(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById('new-project-name').value;
+      const code = document.getElementById('new-project-code').value;
+      
+      if (!name || !code) {
+        showAlert('Please fill in all required fields', 'error');
+        return;
+      }
+      
+      const newProject = {
+        id: Date.now().toString(),
+        name,
+        code
+      };
+      
+      // Add to state
+      state.projects.push(newProject);
+      
+      // Save to Firebase
+      saveDataToFirebase();
+      
+      // Update UI
+      loadProjects();
+      
+      // Reset form and switch to projects tab
+      document.getElementById('add-project-form').reset();
+      switchToProjectsTab();
+      
+      // Show success message
+      showAlert('Project added successfully', 'success');
+    }
 
-        // Apply time entries filter
-        function applyTimeEntriesFilter(filter) {
-            loadTimeEntries(filter);
-        }
+    // Open project management modal
+    function openProjectModal() {
+      document.getElementById('project-modal').classList.remove('hidden');
+      document.getElementById('project-modal').classList.add('flex');
+    }
 
-        // Show time entry modal
-        function showTimeEntryModal(entry = null) {
-            const modal = new bootstrap.Modal(document.getElementById('timeEntryModal'));
-            const form = document.getElementById('timeEntryForm');
-            
-            // Populate projects dropdown
-            const projectSelect = document.getElementById('entryProject');
-            projectSelect.innerHTML = '<option value="">Select a project</option>';
-            
-            projects.forEach(project => {
-                const option = document.createElement('option');
-                option.value = project.id;
-                option.textContent = project.name;
-                projectSelect.appendChild(option);
-            });
-            
-            if (entry) {
-                // Edit mode
-                document.getElementById('timeEntryModalTitle').textContent = 'Edit Time Entry';
-                document.getElementById('timeEntryId').value = entry.id;
-                document.getElementById('entryDate').value = entry.date;
-                document.getElementById('entryProject').value = entry.projectId;
-                document.getElementById('entryStartTime').value = entry.startTime;
-                document.getElementById('entryEndTime').value = entry.endTime;
-                document.getElementById('entryBreak').value = entry.break || 0;
-                document.getElementById('entryNotes').value = entry.notes || '';
-            } else {
-                // Add mode
-                document.getElementById('timeEntryModalTitle').textContent = translations[currentLanguage].addEntry;
-                form.reset();
-                document.getElementById('timeEntryId').value = '';
-                document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
-                document.getElementById('entryBreak').value = 0;
-            }
-            
-            modal.show();
-        }
+    // Close project management modal
+    function closeProjectModal() {
+      document.getElementById('project-modal').classList.add('hidden');
+      document.getElementById('project-modal').classList.remove('flex');
+    }
 
-        // Edit time entry
-        function editTimeEntry(entryId) {
-            const entry = timeEntries.find(e => e.id === entryId);
-            if (entry) {
-                showTimeEntryModal(entry);
-            }
-        }
+    // Switch to projects tab
+    function switchToProjectsTab() {
+      document.getElementById('projects-tab').classList.add('tab-active');
+      document.getElementById('add-project-tab').classList.remove('tab-active');
+      document.getElementById('view-projects-content').classList.remove('hidden');
+      document.getElementById('add-project-content').classList.add('hidden');
+    }
 
-        // Delete time entry
-        function deleteTimeEntry(entryId) {
-            if (confirm('Are you sure you want to delete this time entry?')) {
-                showLoading(true);
-                
-                database.ref('timeEntries/' + currentUser.uid + '/' + entryId).remove()
-                    .then(() => {
-                        showLoading(false);
-                        loadTimeEntries();
-                        loadDashboardData(); // Refresh dashboard
-                    })
-                    .catch(error => {
-                        showLoading(false);
-                        console.error('Error deleting time entry:', error);
-                    });
-            }
-        }
+    // Switch to add project tab
+    function switchToAddProjectTab() {
+      document.getElementById('add-project-tab').classList.add('tab-active');
+      document.getElementById('projects-tab').classList.remove('tab-active');
+      document.getElementById('add-project-content').classList.remove('hidden');
+      document.getElementById('view-projects-content').classList.add('hidden');
+    }
 
-        // Save time entry
-        function saveTimeEntry() {
-            const entryId = document.getElementById('timeEntryId').value;
-            const entryDate = document.getElementById('entryDate').value;
-            const projectId = document.getElementById('entryProject').value;
-            const startTime = document.getElementById('entryStartTime').value;
-            const endTime = document.getElementById('entryEndTime').value;
-            const breakMinutes = parseInt(document.getElementById('entryBreak').value) || 0;
-            
-            // Validate required fields
-            if (!entryDate || !projectId || !startTime || !endTime) {
-                alert('Please fill in all required fields');
-                return;
-            }
-            
-            // Validate date format (YYYY-MM-DD)
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(entryDate)) {
-                alert('Invalid date format. Use YYYY-MM-DD.');
-                return;
-            }
-            
-            // Validate time format (HH:MM)
-            const timeRegex = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
-            if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
-                alert('Invalid time format. Use HH:MM in 24-hour format.');
-                return;
-            }
-            
-            // Validate end time after start time
-            if (endTime <= startTime) {
-                alert('End time must be after start time');
-                return;
-            }
-            
-            // Validate break minutes
-            if (isNaN(breakMinutes) || breakMinutes < 0) {
-                alert('Break minutes must be a non-negative number');
-                return;
-            }
-            
-            const entryData = {
-                date: entryDate,
-                projectId: projectId,
-                startTime: startTime,
-                endTime: endTime,
-                break: breakMinutes,
-                notes: document.getElementById('entryNotes').value || null,
-                updatedAt: firebase.database.ServerValue.TIMESTAMP
-            };
-            
-            showLoading(true);
-            
-            if (entryId) {
-                // Update existing entry
-                database.ref('timeEntries/' + currentUser.uid + '/' + entryId).update(entryData)
-                    .then(() => {
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('timeEntryModal'));
-                        modal.hide();
-                        loadTimeEntries();
-                        loadDashboardData(); // Refresh dashboard
-                        showLoading(false);
-                    })
-                    .catch(error => {
-                        showLoading(false);
-                        console.error('Error updating time entry:', error);
-                        alert('Error: ' + error.message);
-                    });
-            } else {
-                // Add new entry
-                entryData.createdAt = firebase.database.ServerValue.TIMESTAMP;
-                database.ref('timeEntries/' + currentUser.uid).push(entryData)
-                    .then(() => {
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('timeEntryModal'));
-                        modal.hide();
-                        loadTimeEntries();
-                        loadDashboardData(); // Refresh dashboard
-                        showLoading(false);
-                    })
-                    .catch(error => {
-                        showLoading(false);
-                        console.error('Error adding time entry:', error);
-                        alert('Error: ' + error.message);
-                    });
-            }
-        }
+    // Open edit user modal
+    function openEditUserModal() {
+      document.getElementById('edit-user-modal').classList.remove('hidden');
+      document.getElementById('edit-user-modal').classList.add('flex');
+      
+      // Fill form with current user data
+      document.getElementById('edit-first-name').value = state.user.firstName || '';
+      document.getElementById('edit-last-name').value = state.user.lastName || '';
+      document.getElementById('edit-phone').value = state.user.phone || '';
+    }
 
-        // Load reports
-        function loadReports() {
-            if (!currentUser) return;
-            
-            showLoading(true);
-            
-            // Load projects for filter dropdown
-            const projectSelect = document.getElementById('reportProjectFilter');
-            projectSelect.innerHTML = '<option value="">All Projects</option>';
-            
-            projects.forEach(project => {
-                const option = document.createElement('option');
-                option.value = project.id;
-                option.textContent = project.name;
-                projectSelect.appendChild(option);
-            });
-            
-            // Set default date range (last 30 days)
-            const endDate = new Date();
-            const startDate = new Date();
-            startDate.setDate(endDate.getDate() - 30);
-            
-            document.getElementById('reportDateFrom').value = startDate.toISOString().split('T')[0];
-            document.getElementById('reportDateTo').value = endDate.toISOString().split('T')[0];
-            
-            // Generate initial report
-            generateReport();
-            
-            // Create charts
-            createReportsProjectsChart();
-            createMonthlySummaryChart();
-        }
+    // Close edit user modal
+    function closeEditUserModal() {
+      document.getElementById('edit-user-modal').classList.add('hidden');
+      document.getElementById('edit-user-modal').classList.remove('flex');
+    }
 
-        // Generate report
-        function generateReport() {
-            const projectId = document.getElementById('reportProjectFilter').value;
-            const dateFrom = document.getElementById('reportDateFrom').value;
-            const dateTo = document.getElementById('reportDateTo').value;
-            
-            let query = database.ref('timeEntries/' + currentUser.uid).orderByChild('date');
-            
-            if (dateFrom) {
-                query = query.startAt(dateFrom);
-            }
-            
-            if (dateTo) {
-                query = query.endAt(dateTo);
-            }
-            
-            showLoading(true);
-            
-            query.once('value')
-                .then(snapshot => {
-                    const tableBody = document.querySelector('#reportTable tbody');
-                    tableBody.innerHTML = '';
-                    
-                    let filteredEntries = [];
-                    
-                    snapshot.forEach(childSnapshot => {
-                        const entry = {
-                            id: childSnapshot.key,
-                            ...childSnapshot.val()
-                        };
-                        
-                        // Filter by project if specified
-                        if (!projectId || entry.projectId === projectId) {
-                            filteredEntries.push(entry);
-                        }
-                    });
-                    
-                    // Sort by date (newest first)
-                    filteredEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    
-                    // Populate table
-                    filteredEntries.forEach(entry => {
-                        const project = projects.find(p => p.id === entry.projectId) || { name: 'Unknown' };
-                        const start = new Date(entry.date + 'T' + entry.startTime);
-                        const end = new Date(entry.date + 'T' + entry.endTime);
-                        const duration = (end - start) / (1000 * 60) - (entry.break || 0);
-                        
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${formatDate(entry.date)}</td>
-                            <td>${project.name}</td>
-                            <td>${entry.startTime}</td>
-                            <td>${entry.endTime}</td>
-                            <td>${formatHoursMinutes(duration)}</td>
-                            <td>${entry.notes || ''}</td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
-                    
-                    showLoading(false);
-                })
-                .catch(error => {
-                    showLoading(false);
-                    console.error('Error generating report:', error);
-                });
-        }
+    // Open edit record modal
+    function openEditRecordModal(recordId) {
+      const record = state.records.find(r => r.id === recordId);
+      if (!record) return;
+      
+      document.getElementById('edit-record-id').value = record.id;
+      document.getElementById('edit-entry-date').value = record.date;
+      document.getElementById('edit-project').value = record.projectId;
+      document.getElementById('edit-start-time').value = record.startTime;
+      document.getElementById('edit-end-time').value = record.endTime;
+      document.getElementById('edit-break-time').value = record.breakTime;
+      document.getElementById('edit-notes').value = record.notes;
+      document.getElementById('edit-coworkers').value = record.coworkers;
+      
+      document.getElementById('edit-record-modal').classList.remove('hidden');
+      document.getElementById('edit-record-modal').classList.add('flex');
+    }
 
-        // Create reports projects chart
-        function createReportsProjectsChart() {
-            const ctx = document.getElementById('reportsProjectsChart').getContext('2d');
-            
-            // Group entries by project
-            const projectTotals = {};
-            
-            projects.forEach(project => {
-                projectTotals[project.id] = {
-                    name: project.name,
-                    minutes: 0,
-                    color: project.color || '#4e73df'
-                };
-            });
-            
-            timeEntries.forEach(entry => {
-                if (projectTotals[entry.projectId]) {
-                    const start = new Date(entry.date + 'T' + entry.startTime);
-                    const end = new Date(entry.date + 'T' + entry.endTime);
-                    const duration = (end - start) / (1000 * 60) - (entry.break || 0);
-                    projectTotals[entry.projectId].minutes += duration;
-                }
-            });
-            
-            // Filter out projects with no time
-            const activeProjects = Object.values(projectTotals).filter(p => p.minutes > 0);
-            
-            // Sort by time (descending)
-            activeProjects.sort((a, b) => b.minutes - a.minutes);
-            
-            // Prepare data for chart
-            const labels = activeProjects.map(p => p.name);
-            const data = activeProjects.map(p => (p.minutes / 60).toFixed(1));
-            const backgroundColors = activeProjects.map(p => p.color);
-            
-            if (window.reportsProjectsChart) {
-                window.reportsProjectsChart.destroy();
-            }
-            
-            window.reportsProjectsChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Hours',
-                        data: data,
-                        backgroundColor: backgroundColors,
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Hours'
-                            }
-                        }
-                    }
-                }
-            });
-        }
+    // Close edit record modal
+    function closeEditRecordModal() {
+      document.getElementById('edit-record-modal').classList.add('hidden');
+      document.getElementById('edit-record-modal').classList.remove('flex');
+    }
 
-        // Create monthly summary chart
-        function createMonthlySummaryChart() {
-            const ctx = document.getElementById('monthlySummaryChart').getContext('2d');
-            
-            // Group entries by month
-            const monthTotals = {};
-            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            
-            timeEntries.forEach(entry => {
-                const date = new Date(entry.date);
-                const monthYear = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
-                
-                if (!monthTotals[monthYear]) {
-                    monthTotals[monthYear] = 0;
-                }
-                
-                const start = new Date(entry.date + 'T' + entry.startTime);
-                const end = new Date(entry.date + 'T' + entry.endTime);
-                const duration = (end - start) / (1000 * 60) - (entry.break || 0);
-                monthTotals[monthYear] += duration;
-            });
-            
-            // Convert to arrays
-            const labels = Object.keys(monthTotals);
-            const data = Object.values(monthTotals).map(minutes => (minutes / 60).toFixed(1));
-            
-            if (window.monthlySummaryChart) {
-                window.monthlySummaryChart.destroy();
-            }
-            
-            window.monthlySummaryChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Hours',
-                        data: data,
-                        backgroundColor: 'rgba(78, 115, 223, 0.05)',
-                        borderColor: 'rgba(78, 115, 223, 1)',
-                        borderWidth: 2,
-                        pointBackgroundColor: 'rgba(78, 115, 223, 1)',
-                        pointBorderColor: '#fff',
-                        pointHoverRadius: 5,
-                        pointHoverBackgroundColor: 'rgba(78, 115, 223, 1)',
-                        pointHoverBorderColor: '#fff',
-                        pointHitRadius: 10,
-                        pointBorderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Hours'
-                            }
-                        }
-                    }
-                }
-            });
-        }
+    // Handle edit record
+    function handleEditRecord(e) {
+      e.preventDefault();
+      
+      const recordId = document.getElementById('edit-record-id').value;
+      const recordIndex = state.records.findIndex(r => r.id === recordId);
+      
+      if (recordIndex === -1) return;
+      
+      // Update record
+      state.records[recordIndex] = {
+        id: recordId,
+        date: document.getElementById('edit-entry-date').value,
+        projectId: document.getElementById('edit-project').value,
+        startTime: document.getElementById('edit-start-time').value,
+        endTime: document.getElementById('edit-end-time').value,
+        breakTime: parseInt(document.getElementById('edit-break-time').value),
+        notes: document.getElementById('edit-notes').value,
+        coworkers: document.getElementById('edit-coworkers').value
+      };
+      
+      // Save to Firebase
+      saveDataToFirebase();
+      
+      // Update UI
+      loadRecords();
+      updateStatistics();
+      initCharts();
+      
+      // Close modal
+      closeEditRecordModal();
+      
+      // Show success message
+      showAlert('Record updated successfully', 'success');
+    }
 
-        // Set up PWA installation prompt
-        function setupPWAInstallPrompt() {
-            window.addEventListener('beforeinstallprompt', (e) => {
-                // Prevent the mini-infobar from appearing on mobile
-                e.preventDefault();
-                // Stash the event so it can be triggered later
-                deferredPrompt = e;
-                // Show the install button
-                const installPrompt = document.getElementById('installPrompt');
-                installPrompt.style.display = 'block';
-                const toast = new bootstrap.Toast(installPrompt);
-                toast.show();
-            });
-        }
+    // Handle delete record
+    function handleDeleteRecord() {
+      const recordId = document.getElementById('edit-record-id').value;
+      deleteRecord(recordId);
+      closeEditRecordModal();
+    }
 
-        // Install PWA
-        function installPWA() {
-            if (deferredPrompt) {
-                // Show the install prompt
-                deferredPrompt.prompt();
-                // Wait for the user to respond to the prompt
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                    } else {
-                        console.log('User dismissed the install prompt');
-                    }
-                    // Clear the deferredPrompt variable
-                    deferredPrompt = null;
-                });
-            }
-        }
+    // Delete record
+    function deleteRecord(recordId) {
+      // Remove record from state
+      state.records = state.records.filter(r => r.id !== recordId);
+      
+      // Save to Firebase
+      saveDataToFirebase();
+      
+      // Update UI
+      loadRecords();
+      updateStatistics();
+      initCharts();
+      
+      // Show success message
+      showAlert('Record deleted successfully', 'success');
+    }
 
-        // Service Worker Registration for PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').then(registration => {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                }, err => {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-            });
+    // Export to PDF
+    function exportToPDF() {
+      showAlert('PDF export functionality will be implemented in future versions', 'info');
+    }
+
+    // Export to JSON
+    function exportToJSON() {
+      const data = {
+        user: state.user,
+        projects: state.projects,
+        records: state.records
+      };
+      
+      const dataStr = JSON.stringify(data);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      
+      const exportFileDefaultName = 'timebook-export.json';
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+      
+      showAlert('Data exported successfully', 'success');
+    }
+
+    // Import from JSON
+    function importFromJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      
+      reader.onload = function(event) {
+        try {
+          const data = JSON.parse(event.target.result);
+          
+          // Validate data structure
+          if (data.projects && data.records) {
+            // Import data
+            state.projects = data.projects;
+            state.records = data.records;
+            
+            // Save to Firebase
+            saveDataToFirebase();
+            
+            // Update UI
+            loadProjects();
+            loadRecords();
+            updateStatistics();
+            initCharts();
+            
+            showAlert('Data imported successfully', 'success');
+          } else {
+            showAlert('Invalid data format', 'error');
+          }
+        } catch (error) {
+          showAlert('Error importing data', 'error');
         }
-    </script>
+      };
+      
+      reader.readAsText(file);
+      
+      // Reset file input
+      e.target.value = '';
+    }
+
+    // Toggle records visibility
+    function toggleRecordsVisibility() {
+      const recordsContent = document.getElementById('records-content');
+      const toggleButton = document.getElementById('toggle-records');
+      
+      if (recordsContent.classList.contains('hidden')) {
+        recordsContent.classList.remove('hidden');
+        toggleButton.innerHTML = '<i class="fas fa-chevron-up"></i>';
+      } else {
+        recordsContent.classList.add('hidden');
+        toggleButton.innerHTML = '<i class="fas fa-chevron-down"></i>';
+      }
+    }
+  </script>
 </body>
 </html>
