@@ -281,115 +281,206 @@
       100% { opacity: 1; }
     }
     
-  <div id="pdf-export" style="position: absolute; left: -9999px; top: 0; width: 800px; background: white; padding: 30px; box-sizing: border-box;">
-    <!-- Encabezado de empresa -->
-    <div class="text-sm leading-tight mb-6">
-      <p>Köpmangatan 5, plan 10</p>
-      <p>151 71 Södertälje</p>
-  <div id="pdf-export" style="position: absolute; left: -9999px; top: 0; width: 800px; background: white; padding: 30px; box-sizing: border-box;">
-    <!-- Encabezado -->
-    <div class="text-sm leading-tight mb-6">
-      <p>Köpmangatan 5, plan 10</p>
-      <p>151 71 Södertälje</p>
-      <p>Tel: 079-079 00 45</p>
-      <p>Organisationsnummer: 559096-5983</p>
-      <p class="mt-2 font-semibold">Mätningsingenjör: Vinicio Atiencia</p>
-    </div>
-  
-    <!-- Título -->
-    <div class="text-center mb-6">
-      <h1 class="text-2xl font-bold">Tidrapport</h1>
-    </div>
-  
-    <!-- Datos del usuario y período -->
-    <div class="flex justify-between mb-4 text-sm border-b pb-2">
-      <div>
-        <p class="font-semibold" id="pdf-user-name">[Namn]</p>
-        <p id="pdf-user-email">[Email]</p>
+    #pdf-export {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      width: 800px;
+      background: white;
+      padding: 30px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Sync indicator -->
+  <div id="sync-indicator" class="sync-indicator synced">
+    <div class="dot"></div>
+    <span>Sincronizado</span>
+  </div>
+
+  <!-- PDF Export Container (hidden) -->
+  <div id="pdf-export">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold">Informe de Horas Trabajadas</h1>
+      <div class="flex justify-center items-center mt-4">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzNiODJmNiIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cGF0aCBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwUzE3LjUyIDIgMTIgMnptLTIgMTVIOHYtMmgydjJ6bTAtNGgtMlY3aDJ2NnoiLz48L3N2Zz4=" alt="Logo" class="w-12 h-12 mr-3">
+        <div>
+          <h2 class="text-xl font-semibold">TimeBook Pro</h2>
+          <p class="text-gray-600">Sistema de Gestión de Horas</p>
+        </div>
       </div>
-      <div class="text-right">
-        <p>Datum för generering: <span id="pdf-gen-date">[YYYY-MM-DD]</span></p>
-        <p>Period: <span id="pdf-period">[Period]</span></p>
+    </div>
+    
+    <div class="mb-6">
+      <div class="flex justify-between items-end border-b pb-2 mb-4">
+        <div>
+          <p class="font-semibold" id="pdf-user-name"></p>
+          <p class="text-sm text-gray-600" id="pdf-user-email"></p>
+        </div>
+        <div class="text-right">
+          <p class="text-sm">Fecha de generación: <span id="pdf-gen-date"></span></p>
+          <p class="text-sm">Período: <span id="pdf-period"></span></p>
+        </div>
       </div>
     </div>
-  
-    <!-- Tabla de registros -->
-    <table class="w-full border-collapse text-sm mb-8" id="pdf-summary-table">
-      <thead class="bg-gray-100">
-        <tr>
-          <th class="border py-1 px-2 text-left">Datum</th>
-          <th class="border py-1 px-2 text-left">Dag</th>
-          <th class="border py-1 px-2 text-left">Från</th>
-          <th class="border py-1 px-2 text-left">Till</th>
-          <th class="border py-1 px-2 text-left">Rast (min)</th>
-          <th class="border py-1 px-2 text-left">Tim</th>
-          <th class="border py-1 px-2 text-left">Projektnamn</th>
-          <th class="border py-1 px-2 text-left">Arbetsbeskrivning</th>
+    
+    <h3 class="text-lg font-semibold mb-4">Resumen de Horas</h3>
+    <table class="w-full border-collapse mb-8" id="pdf-summary-table">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="border py-2 px-3 text-left">Fecha</th>
+          <th class="border py-2 px-3 text-left">Semana</th>
+          <th class="border py-2 px-3 text-left">Proyecto</th>
+          <th class="border py-2 px-3 text-right">Horas Trabajadas</th>
+          <th class="border py-2 px-3 text-right">Descanso</th>
         </tr>
       </thead>
       <tbody>
-        <!-- Filas generadas por JS -->
       </tbody>
       <tfoot>
         <tr class="font-semibold">
-          <td colspan="5" class="border py-1 px-2 text-right">Totalt:</td>
-          <td class="border py-1 px-2 text-left" id="pdf-total-hours">0</td>
-          <td class="border py-1 px-2" colspan="2"></td>
+          <td colspan="3" class="border py-2 px-3 text-right">Total:</td>
+          <td class="border py-2 px-3 text-right" id="pdf-total-hours"></td>
+          <td class="border py-2 px-3"></td>
         </tr>
       </tfoot>
     </table>
-  
-    <!-- Footer -->
-    <div class="text-center text-xs text-gray-500 mt-10">
-      <p>Detta rapport genererades automatiskt av TimeBook Pro</p>
-      <p>© 2025 TimeBook Pro – Alla rättigheter förbehållna</p>
+    
+    <div class="grid grid-cols-2 gap-8 mb-8">
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Distribución por Proyecto</h3>
+        <canvas id="pdf-project-chart" height="300"></canvas>
+      </div>
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Horas por Semana</h3>
+        <canvas id="pdf-weekly-chart" height="300"></canvas>
+      </div>
+    </div>
+    
+    <div class="text-center text-sm text-gray-500 mt-12">
+      <p>Este informe fue generado automáticamente por TimeBook Pro</p>
+      <p>© 2023 TimeBook Pro - Todos los derechos reservados</p>
     </div>
   </div>
-  
-      <!-- Main Application -->
-    <div id="app" class="hidden">
-      <!-- Alert Container -->
-      <div id="alert-container" class="fixed top-4 right-4 z-50 max-w-sm"></div>
+
+  <!-- Authentication Container -->
+  <div id="auth-container" class="auth-container">
+    <div class="card auth-card">
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">
+          <i class="fas fa-clock mr-2 text-blue-500"></i> TimeBook Pro
+        </h1>
+        <p class="text-gray-600 mt-2">Sincronización en tiempo real - Accede desde cualquier dispositivo</p>
+      </div>
       
-      <!-- Header -->
-      <header class="bg-white shadow-sm">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 class="text-2xl font-bold text-gray-800">
-            <i class="fas fa-clock mr-2 text-blue-500"></i> TimeBook Pro
-          </h1>
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-tab="login">Iniciar Sesión</div>
+        <div class="auth-tab" data-tab="signup">Registrarse</div>
+      </div>
+      
+      <!-- Login Form -->
+      <form id="login-form" class="auth-form active">
+        <div class="form-group">
+          <label for="login-email" class="form-label">Email</label>
+          <input type="email" id="login-email" class="form-control" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="login-password" class="form-label">Contraseña</label>
+          <input type="password" id="login-password" class="form-control" required>
+        </div>
+        
+        <div class="form-group text-right">
+          <a href="#" class="text-sm text-blue-500 hover:text-blue-700" id="forgot-password">¿Olvidó su contraseña?</a>
+        </div>
+        
+        <button type="submit" class="btn-primary w-full mt-2">Iniciar Sesión</button>
+      </form>
+      
+      <!-- Signup Form -->
+      <form id="signup-form" class="auth-form">
+        <div class="form-group">
+          <label for="signup-first-name" class="form-label">Nombre</label>
+          <input type="text" id="signup-first-name" class="form-control" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="signup-last-name" class="form-label">Apellido</label>
+          <input type="text" id="signup-last-name" class="form-control" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="signup-email" class="form-label">Email</label>
+          <input type="email" id="signup-email" class="form-control" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="signup-password" class="form-label">Contraseña</label>
+          <input type="password" id="signup-password" class="form-control" required minlength="6">
+        </div>
+        
+        <div class="form-group">
+          <label for="signup-confirm-password" class="form-label">Confirmar Contraseña</label>
+          <input type="password" id="signup-confirm-password" class="form-control" required>
+        </div>
+        
+        <button type="submit" class="btn-primary w-full mt-2">Registrarse</button>
+      </form>
+      
+      <div id="auth-alert" class="alert mt-4 hidden"></div>
+    </div>
+  </div>
+
+  <!-- Main Application -->
+  <div id="app" class="hidden">
+    <!-- Alert Container -->
+    <div id="alert-container" class="fixed top-4 right-4 z-50 max-w-sm"></div>
+    
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+      <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">
+          <i class="fas fa-clock mr-2 text-blue-500"></i> TimeBook Pro
+        </h1>
+        
+        <div class="flex items-center space-x-4">
+          <!-- User info -->
+          <div class="text-right hidden md:block">
+            <div class="font-medium" id="header-user-name"></div>
+            <div class="text-sm text-gray-600" id="header-user-email"></div>
+          </div>
           
-          <div class="flex items-center space-x-4">
-            <!-- User info -->
-            <div class="text-right hidden md:block">
-              <div class="font-medium" id="header-user-name"></div>
-              <div class="text-sm text-gray-600" id="header-user-email"></div>
-            </div>
-            
-            <!-- User avatar -->
-            <div class="relative">
-              <button id="user-menu-btn" class="flex items-center focus:outline-none">
-                <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold" id="user-avatar">
-                  U
-                </div>
-              </button>
-              
-              <!-- User dropdown menu -->
-              <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden z-50">
-                <div class="px-4 py-2 border-b">
-                  <div class="font-medium" id="dropdown-user-name"></div>
-                  <div class="text-sm text-gray-600 truncate" id="dropdown-user-email"></div>
-                </div>
-                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" id="edit-profile-btn">
-                  <i class="fas fa-user-edit mr-2"></i> Editar Perfil
-                </a>
-                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" id="logout-btn">
-                  <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
-                </a>
+          <!-- User avatar -->
+          <div class="relative">
+            <button id="user-menu-btn" class="flex items-center focus:outline-none">
+              <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold" id="user-avatar">
+                U
               </div>
+            </button>
+            
+            <!-- User dropdown menu -->
+            <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden z-50">
+              <div class="px-4 py-2 border-b">
+                <div class="font-medium" id="dropdown-user-name"></div>
+                <div class="text-sm text-gray-600 truncate" id="dropdown-user-email"></div>
+              </div>
+              <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" id="edit-profile-btn">
+                <i class="fas fa-user-edit mr-2"></i> Editar Perfil
+              </a>
+              <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" id="logout-btn">
+                <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+              </a>
             </div>
           </div>
         </div>
-      </header>
+      </div>
+    </header>
     
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-8">
@@ -807,36 +898,28 @@
       setupConnectionMonitoring();
     });
 
-   // Initialize application
-function initApp() {
-  // Check if user is logged in
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      // User is signed in
-      state.user = {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        phone: user.phoneNumber
-      };
-
-      // Mostrar UID para depuración
-      const uidContainer = document.getElementById('debug-uid');
-      if (uidContainer) {
-        uidContainer.textContent = `UID: ${user.uid}`;
-        uidContainer.classList.remove('hidden');
-      }
-
-      showApp();
-      loadUserProfile();
-      setupRealtimeListeners();
-    } else {
-      // No user is signed in
-      showAuthScreen();
+    // Initialize application
+    function initApp() {
+      // Check if user is logged in
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          // User is signed in
+          state.user = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            phone: user.phoneNumber
+          };
+          
+          showApp();
+          loadUserProfile();
+          setupRealtimeListeners();
+        } else {
+          // No user is signed in
+          showAuthScreen();
+        }
+      });
     }
-  });
-}
-
 
     // Setup event listeners
     function setupEventListeners() {
@@ -2382,4 +2465,3 @@ function initApp() {
   </script>
 </body>
 </html>
-
