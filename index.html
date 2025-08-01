@@ -304,6 +304,8 @@
     <span>Sincronizado</span>
   </div>
 
+  <div id="debug-uid" class="text-xs text-gray-500 mt-2"></div>
+
   <!-- PDF Export Container (hidden) -->
   <div id="pdf-export">
     <div class="text-center mb-8">
@@ -898,28 +900,36 @@
       setupConnectionMonitoring();
     });
 
-    // Initialize application
-    function initApp() {
-      // Check if user is logged in
-      auth.onAuthStateChanged(user => {
-        if (user) {
-          // User is signed in
-          state.user = {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName,
-            phone: user.phoneNumber
-          };
-          
-          showApp();
-          loadUserProfile();
-          setupRealtimeListeners();
-        } else {
-          // No user is signed in
-          showAuthScreen();
-        }
-      });
+   // Initialize application
+function initApp() {
+  // Check if user is logged in
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      // User is signed in
+      state.user = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        phone: user.phoneNumber
+      };
+
+      // Mostrar UID para depuración
+      const uidContainer = document.getElementById('debug-uid');
+      if (uidContainer) {
+        uidContainer.textContent = `UID: ${user.uid}`;
+        uidContainer.classList.remove('hidden');
+      }
+
+      showApp();
+      loadUserProfile();
+      setupRealtimeListeners();
+    } else {
+      // No user is signed in
+      showAuthScreen();
     }
+  });
+}
+
 
     // Setup event listeners
     function setupEventListeners() {
