@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TimeBook - Time Tracking Application</title>
+  <title>TimeBook Pro - Time Tracking Application</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -11,6 +11,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"></script>
   <style>
     :root {
       --primary: #3b82f6;
@@ -237,6 +240,56 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+    
+    .sync-indicator {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 8px 12px;
+      border-radius: 20px;
+      background-color: white;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      z-index: 100;
+    }
+    
+    .sync-indicator .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    
+    .syncing .dot {
+      background-color: #f59e0b;
+      animation: pulse 1.5s infinite;
+    }
+    
+    .synced .dot {
+      background-color: #10b981;
+    }
+    
+    .offline .dot {
+      background-color: #ef4444;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+    
+    #pdf-export {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      width: 800px;
+      background: white;
+      padding: 30px;
+      box-sizing: border-box;
+    }
   </style>
 </head>
 <body class="min-h-screen">
@@ -245,19 +298,90 @@
     <div class="spinner"></div>
   </div>
 
+  <!-- Sync indicator -->
+  <div id="sync-indicator" class="sync-indicator synced">
+    <div class="dot"></div>
+    <span>Sincronizado</span>
+  </div>
+
+  <!-- PDF Export Container (hidden) -->
+  <div id="pdf-export">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold">Informe de Horas Trabajadas</h1>
+      <div class="flex justify-center items-center mt-4">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzNiODJmNiIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cGF0aCBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwUzE3LjUyIDIgMTIgMnptLTIgMTVIOHYtMmgydjJ6bTAtNGgtMlY3aDJ2NnoiLz48L3N2Zz4=" alt="Logo" class="w-12 h-12 mr-3">
+        <div>
+          <h2 class="text-xl font-semibold">TimeBook Pro</h2>
+          <p class="text-gray-600">Sistema de Gestión de Horas</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mb-6">
+      <div class="flex justify-between items-end border-b pb-2 mb-4">
+        <div>
+          <p class="font-semibold" id="pdf-user-name"></p>
+          <p class="text-sm text-gray-600" id="pdf-user-email"></p>
+        </div>
+        <div class="text-right">
+          <p class="text-sm">Fecha de generación: <span id="pdf-gen-date"></span></p>
+          <p class="text-sm">Período: <span id="pdf-period"></span></p>
+        </div>
+      </div>
+    </div>
+    
+    <h3 class="text-lg font-semibold mb-4">Resumen de Horas</h3>
+    <table class="w-full border-collapse mb-8" id="pdf-summary-table">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="border py-2 px-3 text-left">Fecha</th>
+          <th class="border py-2 px-3 text-left">Semana</th>
+          <th class="border py-2 px-3 text-left">Proyecto</th>
+          <th class="border py-2 px-3 text-right">Horas Trabajadas</th>
+          <th class="border py-2 px-3 text-right">Descanso</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+      <tfoot>
+        <tr class="font-semibold">
+          <td colspan="3" class="border py-2 px-3 text-right">Total:</td>
+          <td class="border py-2 px-3 text-right" id="pdf-total-hours"></td>
+          <td class="border py-2 px-3"></td>
+        </tr>
+      </tfoot>
+    </table>
+    
+    <div class="grid grid-cols-2 gap-8 mb-8">
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Distribución por Proyecto</h3>
+        <canvas id="pdf-project-chart" height="300"></canvas>
+      </div>
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Horas por Semana</h3>
+        <canvas id="pdf-weekly-chart" height="300"></canvas>
+      </div>
+    </div>
+    
+    <div class="text-center text-sm text-gray-500 mt-12">
+      <p>Este informe fue generado automáticamente por TimeBook Pro</p>
+      <p>© 2023 TimeBook Pro - Todos los derechos reservados</p>
+    </div>
+  </div>
+
   <!-- Authentication Container -->
   <div id="auth-container" class="auth-container">
     <div class="card auth-card">
       <div class="text-center mb-6">
         <h1 class="text-2xl font-bold text-gray-800">
-          <i class="fas fa-clock mr-2 text-blue-500"></i> TimeBook
+          <i class="fas fa-clock mr-2 text-blue-500"></i> TimeBook Pro
         </h1>
-        <p class="text-gray-600 mt-2">Track your work hours efficiently</p>
+        <p class="text-gray-600 mt-2">Sincronización en tiempo real - Accede desde cualquier dispositivo</p>
       </div>
       
       <div class="auth-tabs">
-        <div class="auth-tab active" data-tab="login">Login</div>
-        <div class="auth-tab" data-tab="signup">Sign Up</div>
+        <div class="auth-tab active" data-tab="login">Iniciar Sesión</div>
+        <div class="auth-tab" data-tab="signup">Registrarse</div>
       </div>
       
       <!-- Login Form -->
@@ -268,26 +392,26 @@
         </div>
         
         <div class="form-group">
-          <label for="login-password" class="form-label">Password</label>
+          <label for="login-password" class="form-label">Contraseña</label>
           <input type="password" id="login-password" class="form-control" required>
         </div>
         
         <div class="form-group text-right">
-          <a href="#" class="text-sm text-blue-500 hover:text-blue-700" id="forgot-password">Forgot password?</a>
+          <a href="#" class="text-sm text-blue-500 hover:text-blue-700" id="forgot-password">¿Olvidó su contraseña?</a>
         </div>
         
-        <button type="submit" class="btn-primary w-full mt-2">Login</button>
+        <button type="submit" class="btn-primary w-full mt-2">Iniciar Sesión</button>
       </form>
       
       <!-- Signup Form -->
       <form id="signup-form" class="auth-form">
         <div class="form-group">
-          <label for="signup-first-name" class="form-label">First Name</label>
+          <label for="signup-first-name" class="form-label">Nombre</label>
           <input type="text" id="signup-first-name" class="form-control" required>
         </div>
         
         <div class="form-group">
-          <label for="signup-last-name" class="form-label">Last Name</label>
+          <label for="signup-last-name" class="form-label">Apellido</label>
           <input type="text" id="signup-last-name" class="form-control" required>
         </div>
         
@@ -297,16 +421,16 @@
         </div>
         
         <div class="form-group">
-          <label for="signup-password" class="form-label">Password</label>
+          <label for="signup-password" class="form-label">Contraseña</label>
           <input type="password" id="signup-password" class="form-control" required minlength="6">
         </div>
         
         <div class="form-group">
-          <label for="signup-confirm-password" class="form-label">Confirm Password</label>
+          <label for="signup-confirm-password" class="form-label">Confirmar Contraseña</label>
           <input type="password" id="signup-confirm-password" class="form-control" required>
         </div>
         
-        <button type="submit" class="btn-primary w-full mt-2">Sign Up</button>
+        <button type="submit" class="btn-primary w-full mt-2">Registrarse</button>
       </form>
       
       <div id="auth-alert" class="alert mt-4 hidden"></div>
@@ -322,7 +446,7 @@
     <header class="bg-white shadow-sm">
       <div class="container mx-auto px-4 py-4 flex justify-between items-center">
         <h1 class="text-2xl font-bold text-gray-800">
-          <i class="fas fa-clock mr-2 text-blue-500"></i> TimeBook
+          <i class="fas fa-clock mr-2 text-blue-500"></i> TimeBook Pro
         </h1>
         
         <div class="flex items-center space-x-4">
@@ -347,10 +471,10 @@
                 <div class="text-sm text-gray-600 truncate" id="dropdown-user-email"></div>
               </div>
               <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" id="edit-profile-btn">
-                <i class="fas fa-user-edit mr-2"></i> Edit Profile
+                <i class="fas fa-user-edit mr-2"></i> Editar Perfil
               </a>
               <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" id="logout-btn">
-                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
               </a>
             </div>
           </div>
@@ -365,57 +489,57 @@
         <div class="lg:col-span-1 space-y-6">
           <!-- Time Entry Form Card -->
           <div class="card p-4">
-            <h2 class="text-xl font-semibold mb-4">Register Hours</h2>
+            <h2 class="text-xl font-semibold mb-4">Registrar Horas</h2>
             
             <form id="time-entry-form">
               <div class="form-group">
-                <label for="entry-date" class="form-label">Date</label>
+                <label for="entry-date" class="form-label">Fecha</label>
                 <input type="date" id="entry-date" class="form-control" required>
               </div>
               
               <div class="form-group">
                 <div class="flex justify-between items-center mb-2">
-                  <label for="project" class="form-label mb-0">Project</label>
+                  <label for="project" class="form-label mb-0">Proyecto</label>
                   <button id="manage-projects" type="button" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-cog"></i>
                   </button>
                 </div>
                 <select id="project" class="form-control" required>
-                  <option value="">Select a project</option>
+                  <option value="">Seleccionar proyecto</option>
                   <!-- Projects will be loaded dynamically -->
                 </select>
               </div>
               
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="form-group">
-                  <label for="start-time" class="form-label">Start Time</label>
+                  <label for="start-time" class="form-label">Hora de Inicio</label>
                   <input type="time" id="start-time" class="form-control" required>
                 </div>
                 
                 <div class="form-group">
-                  <label for="end-time" class="form-label">End Time</label>
+                  <label for="end-time" class="form-label">Hora de Fin</label>
                   <input type="time" id="end-time" class="form-control" required>
                 </div>
               </div>
               
               <div class="form-group">
-                <label for="break-time" class="form-label">Break Time (minutes)</label>
+                <label for="break-time" class="form-label">Tiempo de Descanso (minutos)</label>
                 <input type="number" id="break-time" class="form-control" min="0" value="30" required>
               </div>
               
               <div class="form-group">
-                <label for="notes" class="form-label">Notes</label>
+                <label for="notes" class="form-label">Notas</label>
                 <textarea id="notes" class="form-control" rows="3"></textarea>
               </div>
               
               <div class="form-group">
-                <label for="coworkers" class="form-label">Coworkers</label>
-                <input type="text" id="coworkers" class="form-control" placeholder="John, Jane, etc.">
+                <label for="coworkers" class="form-label">Compañeros</label>
+                <input type="text" id="coworkers" class="form-control" placeholder="Juan, María, etc.">
               </div>
               
               <div class="flex justify-between mt-6">
-                <button type="button" id="reset-form" class="btn-outline">Cancel</button>
-                <button type="submit" id="save-record-btn" class="btn-primary">Save Record</button>
+                <button type="button" id="reset-form" class="btn-outline">Cancelar</button>
+                <button type="submit" id="save-record-btn" class="btn-primary">Guardar Registro</button>
               </div>
             </form>
           </div>
@@ -423,7 +547,7 @@
           <!-- Records History -->
           <div class="card">
             <div class="p-4 border-b flex justify-between items-center">
-              <h2 class="text-xl font-semibold">Records History</h2>
+              <h2 class="text-xl font-semibold">Historial de Registros</h2>
               <button class="text-gray-500 hover:text-gray-700" id="toggle-records">
                 <i class="fas fa-chevron-down"></i>
               </button>
@@ -433,24 +557,24 @@
               <!-- Filters -->
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
-                  <label for="year-filter" class="form-label">Year</label>
+                  <label for="year-filter" class="form-label">Año</label>
                   <select id="year-filter" class="form-control">
                     <!-- Years will be added dynamically -->
                   </select>
                 </div>
                 
                 <div>
-                  <label for="month-filter" class="form-label">Month</label>
+                  <label for="month-filter" class="form-label">Mes</label>
                   <select id="month-filter" class="form-control">
-                    <option value="all">All Months</option>
+                    <option value="all">Todos los Meses</option>
                     <!-- Months will be added dynamically -->
                   </select>
                 </div>
                 
                 <div>
-                  <label for="week-filter" class="form-label">Week</label>
+                  <label for="week-filter" class="form-label">Semana</label>
                   <select id="week-filter" class="form-control">
-                    <option value="all">All Weeks</option>
+                    <option value="all">Todas las Semanas</option>
                     <!-- Weeks will be added dynamically -->
                   </select>
                 </div>
@@ -459,26 +583,26 @@
               <!-- Entries Container -->
               <div id="entries-container" class="mt-4">
                 <!-- Entries will be added dynamically -->
-                <div class="text-gray-500 text-center py-6">No records found</div>
+                <div class="text-gray-500 text-center py-6">No se encontraron registros</div>
               </div>
             </div>
           </div>
           
           <!-- Import/Export Section -->
           <div class="card p-4">
-            <h3 class="text-lg font-semibold mb-4">Import / Export</h3>
+            <h3 class="text-lg font-semibold mb-4">Importar / Exportar</h3>
             
             <div class="flex flex-wrap gap-2">
-              <button id="export-pdf" class="btn-outline text-sm">
-                <i class="fas fa-file-pdf mr-1"></i> Export PDF
+              <button id="export-pdf" class="btn-primary text-sm">
+                <i class="fas fa-file-pdf mr-1"></i> Exportar PDF
               </button>
               
               <button id="export-json" class="btn-outline text-sm">
-                <i class="fas fa-file-code mr-1"></i> Export JSON
+                <i class="fas fa-file-code mr-1"></i> Exportar JSON
               </button>
               
               <button id="import-json" class="btn-outline text-sm">
-                <i class="fas fa-file-import mr-1"></i> Import JSON
+                <i class="fas fa-file-import mr-1"></i> Importar JSON
               </button>
               <input type="file" id="import-file" accept=".json" class="hidden">
             </div>
@@ -490,7 +614,7 @@
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <!-- User Info Card -->
             <div class="md:col-span-1 card p-4">
-              <h3 class="text-lg font-semibold mb-3">User Info</h3>
+              <h3 class="text-lg font-semibold mb-3">Información de Usuario</h3>
               
               <div>
                 <p class="font-medium" id="user-name"></p>
@@ -499,29 +623,29 @@
               </div>
               
               <button id="edit-user-btn" class="btn-outline w-full mt-4 text-sm">
-                <i class="fas fa-user-edit mr-1"></i> Edit User
+                <i class="fas fa-user-edit mr-1"></i> Editar Usuario
               </button>
             </div>
             
             <!-- Quick Stats Cards -->
             <div class="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div class="stat-card">
-                <div class="text-sm text-gray-500 mb-1">Total Hours</div>
+                <div class="text-sm text-gray-500 mb-1">Horas Totales</div>
                 <div class="text-xl font-bold" id="total-hours">0</div>
               </div>
               
               <div class="stat-card">
-                <div class="text-sm text-gray-500 mb-1">Total Days</div>
+                <div class="text-sm text-gray-500 mb-1">Días Totales</div>
                 <div class="text-xl font-bold" id="total-days">0</div>
               </div>
               
               <div class="stat-card">
-                <div class="text-sm text-gray-500 mb-1">Current Week Hours</div>
+                <div class="text-sm text-gray-500 mb-1">Horas Semana Actual</div>
                 <div class="text-xl font-bold" id="week-hours">0</div>
               </div>
               
               <div class="stat-card">
-                <div class="text-sm text-gray-500 mb-1">Current Month Hours</div>
+                <div class="text-sm text-gray-500 mb-1">Horas Mes Actual</div>
                 <div class="text-xl font-bold" id="month-hours">0</div>
               </div>
             </div>
@@ -529,14 +653,14 @@
           
           <!-- Visual Statistics -->
           <div class="card p-4">
-            <h3 class="text-lg font-semibold mb-4">Visual Statistics</h3>
+            <h3 class="text-lg font-semibold mb-4">Estadísticas Visuales</h3>
             
             <div class="mb-6">
               <div class="flex justify-between items-center mb-3">
-                <h4 class="font-medium">Hours per Week</h4>
+                <h4 class="font-medium">Horas por Semana</h4>
                 <div class="flex gap-2">
-                  <button class="text-sm px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 view-toggle active" data-view="monthly">Monthly</button>
-                  <button class="text-sm px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 view-toggle" data-view="quarterly">Quarterly</button>
+                  <button class="text-sm px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 view-toggle active" data-view="monthly">Mensual</button>
+                  <button class="text-sm px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 view-toggle" data-view="quarterly">Trimestral</button>
                 </div>
               </div>
               <div class="h-64">
@@ -545,7 +669,7 @@
             </div>
             
             <div>
-              <h4 class="font-medium mb-3">Project Distribution</h4>
+              <h4 class="font-medium mb-3">Distribución por Proyecto</h4>
               <div class="h-64">
                 <canvas id="project-chart"></canvas>
               </div>
@@ -554,17 +678,17 @@
           
           <!-- Hours Summary Table -->
           <div class="card p-4">
-            <h3 class="text-lg font-semibold mb-4">Hours Summary</h3>
+            <h3 class="text-lg font-semibold mb-4">Resumen de Horas</h3>
             
             <div class="overflow-x-auto">
               <table class="w-full" id="resumenHoras">
                 <thead>
                   <tr class="bg-gray-50 border-b">
-                    <th class="py-2 px-3 text-left">Date</th>
-                    <th class="py-2 px-3 text-left">Week</th>
-                    <th class="py-2 px-3 text-left">Project</th>
-                    <th class="py-2 px-3 text-right">Worked Hours</th>
-                    <th class="py-2 px-3 text-right">Break</th>
+                    <th class="py-2 px-3 text-left">Fecha</th>
+                    <th class="py-2 px-3 text-left">Semana</th>
+                    <th class="py-2 px-3 text-left">Proyecto</th>
+                    <th class="py-2 px-3 text-right">Horas Trabajadas</th>
+                    <th class="py-2 px-3 text-right">Descanso</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -588,7 +712,7 @@
     <div id="project-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
       <div class="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div class="p-4 border-b flex justify-between items-center">
-          <h3 class="text-xl font-semibold">Project Management</h3>
+          <h3 class="text-xl font-semibold">Gestión de Proyectos</h3>
           <button id="close-project-modal" class="text-gray-500 hover:text-gray-700">
             <i class="fas fa-times"></i>
           </button>
@@ -597,8 +721,8 @@
         <div class="p-4">
           <!-- Tabs -->
           <div class="flex border-b mb-4">
-            <button class="px-4 py-2 tab-active" id="projects-tab">View Projects</button>
-            <button class="px-4 py-2" id="add-project-tab">Add Project</button>
+            <button class="px-4 py-2 tab-active" id="projects-tab">Ver Proyectos</button>
+            <button class="px-4 py-2" id="add-project-tab">Agregar Proyecto</button>
           </div>
           
           <!-- View Projects Tab -->
@@ -612,16 +736,16 @@
           <div id="add-project-content" class="hidden">
             <form id="add-project-form">
               <div class="form-group">
-                <label for="new-project-name" class="form-label">Project Name</label>
+                <label for="new-project-name" class="form-label">Nombre del Proyecto</label>
                 <input type="text" id="new-project-name" class="form-control" required>
               </div>
               
               <div class="form-group">
-                <label for="new-project-code" class="form-label">Project Code</label>
+                <label for="new-project-code" class="form-label">Código del Proyecto</label>
                 <input type="text" id="new-project-code" class="form-control" required>
               </div>
               
-              <button type="submit" id="add-project-btn" class="btn-primary w-full mt-4">Add Project</button>
+              <button type="submit" id="add-project-btn" class="btn-primary w-full mt-4">Agregar Proyecto</button>
             </form>
           </div>
         </div>
@@ -632,7 +756,7 @@
     <div id="edit-user-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
       <div class="bg-white rounded-lg max-w-md w-full">
         <div class="p-4 border-b flex justify-between items-center">
-          <h3 class="text-xl font-semibold">Edit Profile</h3>
+          <h3 class="text-xl font-semibold">Editar Perfil</h3>
           <button id="close-edit-user-modal" class="text-gray-500 hover:text-gray-700">
             <i class="fas fa-times"></i>
           </button>
@@ -641,23 +765,23 @@
         <div class="p-4">
           <form id="edit-user-form">
             <div class="form-group">
-              <label for="edit-first-name" class="form-label">First Name</label>
+              <label for="edit-first-name" class="form-label">Nombre</label>
               <input type="text" id="edit-first-name" class="form-control" required>
             </div>
             
             <div class="form-group">
-              <label for="edit-last-name" class="form-label">Last Name</label>
+              <label for="edit-last-name" class="form-label">Apellido</label>
               <input type="text" id="edit-last-name" class="form-control" required>
             </div>
             
             <div class="form-group">
-              <label for="edit-phone" class="form-label">Phone</label>
+              <label for="edit-phone" class="form-label">Teléfono</label>
               <input type="tel" id="edit-phone" class="form-control">
             </div>
             
             <div class="flex justify-between mt-6">
-              <button type="button" id="cancel-edit-user" class="btn-outline">Cancel</button>
-              <button type="submit" class="btn-primary">Save</button>
+              <button type="button" id="cancel-edit-user" class="btn-outline">Cancelar</button>
+              <button type="submit" class="btn-primary">Guardar</button>
             </div>
           </form>
         </div>
@@ -668,7 +792,7 @@
     <div id="edit-record-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
       <div class="bg-white rounded-lg max-w-lg w-full">
         <div class="p-4 border-b flex justify-between items-center">
-          <h3 class="text-xl font-semibold">Edit Record</h3>
+          <h3 class="text-xl font-semibold">Editar Registro</h3>
           <button id="close-edit-record-modal" class="text-gray-500 hover:text-gray-700">
             <i class="fas fa-times"></i>
           </button>
@@ -679,12 +803,12 @@
             <input type="hidden" id="edit-record-id">
             
             <div class="form-group">
-              <label for="edit-entry-date" class="form-label">Date</label>
+              <label for="edit-entry-date" class="form-label">Fecha</label>
               <input type="date" id="edit-entry-date" class="form-control" required>
             </div>
             
             <div class="form-group">
-              <label for="edit-project" class="form-label">Project</label>
+              <label for="edit-project" class="form-label">Proyecto</label>
               <select id="edit-project" class="form-control" required>
                 <!-- Projects will be loaded dynamically -->
               </select>
@@ -692,38 +816,38 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="form-group">
-                <label for="edit-start-time" class="form-label">Start Time</label>
+                <label for="edit-start-time" class="form-label">Hora de Inicio</label>
                 <input type="time" id="edit-start-time" class="form-control" required>
               </div>
               
               <div class="form-group">
-                <label for="edit-end-time" class="form-label">End Time</label>
+                <label for="edit-end-time" class="form-label">Hora de Fin</label>
                 <input type="time" id="edit-end-time" class="form-control" required>
               </div>
             </div>
             
             <div class="form-group">
-              <label for="edit-break-time" class="form-label">Break Time (minutes)</label>
+              <label for="edit-break-time" class="form-label">Tiempo de Descanso (minutos)</label>
               <input type="number" id="edit-break-time" class="form-control" min="0" required>
             </div>
             
             <div class="form-group">
-              <label for="edit-notes" class="form-label">Notes</label>
+              <label for="edit-notes" class="form-label">Notas</label>
               <textarea id="edit-notes" class="form-control" rows="3"></textarea>
             </div>
             
             <div class="form-group">
-              <label for="edit-coworkers" class="form-label">Coworkers</label>
+              <label for="edit-coworkers" class="form-label">Compañeros</label>
               <input type="text" id="edit-coworkers" class="form-control">
             </div>
             
             <div class="flex justify-between mt-6">
               <button type="button" id="delete-record" class="text-red-500 hover:text-red-700">
-                <i class="fas fa-trash mr-1"></i> Delete
+                <i class="fas fa-trash mr-1"></i> Eliminar
               </button>
               <div>
-                <button type="button" id="cancel-edit-record" class="btn-outline">Cancel</button>
-                <button type="submit" class="btn-primary ml-2">Save</button>
+                <button type="button" id="cancel-edit-record" class="btn-outline">Cancelar</button>
+                <button type="submit" class="btn-primary ml-2">Guardar</button>
               </div>
             </div>
           </form>
@@ -735,8 +859,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   
   <script>
     // Firebase configuration
@@ -754,23 +876,26 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const database = firebase.database();
+    const { jsPDF } = window.jspdf;
 
     // Application state
     const state = {
       user: null,
-      projects: [],
-      records: [],
+      projects: {},
+      records: {},
       weeklyChart: null,
       projectChart: null,
       currentYearFilter: new Date().getFullYear(),
       currentMonthFilter: 'all',
-      currentWeekFilter: 'all'
+      currentWeekFilter: 'all',
+      isOnline: true
     };
 
     // DOM ready
     document.addEventListener('DOMContentLoaded', () => {
       initApp();
       setupEventListeners();
+      setupConnectionMonitoring();
     });
 
     // Initialize application
@@ -788,7 +913,7 @@
           
           showApp();
           loadUserProfile();
-          loadDataFromFirebase();
+          setupRealtimeListeners();
         } else {
           // No user is signed in
           showAuthScreen();
@@ -859,6 +984,94 @@
       document.getElementById('export-json').addEventListener('click', exportToJSON);
       document.getElementById('import-json').addEventListener('click', () => document.getElementById('import-file').click());
       document.getElementById('import-file').addEventListener('change', importFromJSON);
+      
+      // Chart view toggle
+      document.querySelectorAll('.view-toggle').forEach(btn => {
+        btn.addEventListener('click', toggleChartView);
+      });
+    }
+
+    // Set up realtime listeners for data synchronization
+    function setupRealtimeListeners() {
+      if (!state.user) return;
+      
+      const userId = state.user.uid;
+      
+      // Projects listener
+      database.ref(`users/${userId}/projects`).on('value', (snapshot) => {
+        state.projects = snapshot.val() || {};
+        loadProjects();
+        updateStatistics();
+        initCharts();
+        updateSyncStatus('synced');
+      });
+      
+      // Records listener
+      database.ref(`users/${userId}/records`).on('value', (snapshot) => {
+        state.records = snapshot.val() || {};
+        loadRecords();
+        updateStatistics();
+        initCharts();
+        updateSyncStatus('synced');
+      });
+      
+      // Connection status listener
+      database.ref('.info/connected').on('value', (snapshot) => {
+        state.isOnline = snapshot.val() === true;
+        updateConnectionStatus();
+      });
+    }
+
+    // Update UI based on connection status
+    function updateConnectionStatus() {
+      const indicator = document.getElementById('sync-indicator');
+      
+      if (!state.isOnline) {
+        indicator.className = 'sync-indicator offline';
+        indicator.innerHTML = '<div class="dot"></div><span>Sin conexión</span>';
+        return;
+      }
+      
+      // Online status - default to syncing until we get data
+      indicator.className = 'sync-indicator syncing';
+      indicator.innerHTML = '<div class="dot"></div><span>Sincronizando...</span>';
+    }
+
+    // Update sync status
+    function updateSyncStatus(status) {
+      if (!state.isOnline) return;
+      
+      const indicator = document.getElementById('sync-indicator');
+      
+      if (status === 'syncing') {
+        indicator.className = 'sync-indicator syncing';
+        indicator.innerHTML = '<div class="dot"></div><span>Sincronizando...</span>';
+      } else if (status === 'synced') {
+        indicator.className = 'sync-indicator synced';
+        indicator.innerHTML = '<div class="dot"></div><span>Sincronizado</span>';
+        
+        // Reset to syncing after 3 seconds
+        setTimeout(() => {
+          if (state.isOnline && indicator.className.includes('synced')) {
+            indicator.className = 'sync-indicator syncing';
+            indicator.innerHTML = '<div class="dot"></div><span>Sincronizando...</span>';
+          }
+        }, 3000);
+      }
+    }
+
+    // Setup connection monitoring
+    function setupConnectionMonitoring() {
+      window.addEventListener('online', () => {
+        state.isOnline = true;
+        updateConnectionStatus();
+        updateSyncStatus('syncing');
+      });
+      
+      window.addEventListener('offline', () => {
+        state.isOnline = false;
+        updateConnectionStatus();
+      });
     }
 
     // Handle login
@@ -881,7 +1094,7 @@
           
           showApp();
           loadUserProfile();
-          loadDataFromFirebase();
+          setupRealtimeListeners();
           showLoading(false);
         })
         .catch((error) => {
@@ -903,7 +1116,7 @@
       
       if (password !== confirmPassword) {
         showLoading(false);
-        showAuthAlert('Passwords do not match', 'error');
+        showAuthAlert('Las contraseñas no coinciden', 'error');
         return;
       }
       
@@ -935,19 +1148,19 @@
         })
         .then(() => {
           // Add default projects
-          const defaultProjects = [
-            { id: '1', name: 'Construction Site Alpha', code: 'CSA-01' },
-            { id: '2', name: 'Office Renovation', code: 'ORN-22' },
-            { id: '3', name: 'Bridge Maintenance', code: 'BRM-45' },
-            { id: '4', name: 'Highway Extension', code: 'HWY-12' }
-          ];
+          const defaultProjects = {
+            [uuid.v4()]: { name: 'Sitio de Construcción Alpha', code: 'CSA-01' },
+            [uuid.v4()]: { name: 'Renovación de Oficina', code: 'ORN-22' },
+            [uuid.v4()]: { name: 'Mantenimiento de Puente', code: 'BRM-45' },
+            [uuid.v4()]: { name: 'Extensión de Carretera', code: 'HWY-12' }
+          };
           
           return database.ref(`users/${state.user.uid}/projects`).set(defaultProjects);
         })
         .then(() => {
           showApp();
           loadUserProfile();
-          loadDataFromFirebase();
+          setupRealtimeListeners();
           showLoading(false);
         })
         .catch((error) => {
@@ -961,8 +1174,8 @@
       e.preventDefault();
       auth.signOut().then(() => {
         state.user = null;
-        state.projects = [];
-        state.records = [];
+        state.projects = {};
+        state.records = {};
         showAuthScreen();
       });
     }
@@ -990,6 +1203,8 @@
 
     // Load user profile from Firebase
     function loadUserProfile() {
+      if (!state.user) return;
+      
       return database.ref(`users/${state.user.uid}`).once('value').then(snapshot => {
         const userData = snapshot.val();
         if (userData) {
@@ -1004,48 +1219,6 @@
           updateUserInfo();
         }
       });
-    }
-
-    // Load data from Firebase
-    function loadDataFromFirebase() {
-      showLoading(true);
-      
-      // Load projects
-      database.ref(`users/${state.user.uid}/projects`).once('value').then(snapshot => {
-        state.projects = snapshot.val() || [];
-        loadProjects();
-        
-        // Load records
-        return database.ref(`users/${state.user.uid}/records`).once('value');
-      }).then(snapshot => {
-        state.records = snapshot.val() || [];
-        loadRecords();
-        updateStatistics();
-        initCharts();
-        showLoading(false);
-      }).catch(error => {
-        showLoading(false);
-        showAlert('Error loading data: ' + error.message, 'error');
-      });
-    }
-
-    // Save data to Firebase
-    function saveDataToFirebase() {
-      showLoading(true);
-      
-      // Save projects
-      database.ref(`users/${state.user.uid}/projects`).set(state.projects)
-        .then(() => {
-          // Save records
-          return database.ref(`users/${state.user.uid}/records`).set(state.records);
-        })
-        .then(() => {
-          showLoading(false);
-        })
-        .catch(error => {
-          showLoading(false);
-          showAlert('Error saving data: ' + error.message, 'error');
-        });
     }
 
     // Update user information display
@@ -1087,6 +1260,7 @@
     function handleEditUser(e) {
       e.preventDefault();
       showLoading(true);
+      updateSyncStatus('syncing');
       
       state.user.firstName = document.getElementById('edit-first-name').value;
       state.user.lastName = document.getElementById('edit-last-name').value;
@@ -1109,10 +1283,10 @@
         updateUserInfo();
         closeEditUserModal();
         showLoading(false);
-        showAlert('Profile updated successfully', 'success');
+        showAlert('Perfil actualizado correctamente', 'success');
       }).catch(error => {
         showLoading(false);
-        showAlert('Error updating profile: ' + error.message, 'error');
+        showAlert('Error al actualizar perfil: ' + error.message, 'error');
       });
     }
 
@@ -1177,19 +1351,19 @@
       // Add default option
       const defaultOption = document.createElement('option');
       defaultOption.value = '';
-      defaultOption.textContent = 'Select a project';
+      defaultOption.textContent = 'Seleccionar proyecto';
       projectSelect.appendChild(defaultOption);
       
       const editDefaultOption = document.createElement('option');
       editDefaultOption.value = '';
-      editDefaultOption.textContent = 'Select a project';
+      editDefaultOption.textContent = 'Seleccionar proyecto';
       editProjectSelect.appendChild(editDefaultOption);
       
       // Add projects
-      state.projects.forEach(project => {
+      Object.entries(state.projects).forEach(([id, project]) => {
         // Add to select
         const option = document.createElement('option');
-        option.value = project.id;
+        option.value = id;
         option.textContent = `${project.code} - ${project.name}`;
         projectSelect.appendChild(option);
         
@@ -1206,10 +1380,10 @@
             <span class="text-sm text-gray-500 ml-2">${project.code}</span>
           </div>
           <div>
-            <button class="text-gray-500 hover:text-gray-700 mr-2 edit-project" data-id="${project.id}">
+            <button class="text-gray-500 hover:text-gray-700 mr-2 edit-project" data-id="${id}">
               <i class="fas fa-pencil-alt"></i>
             </button>
-            <button class="text-red-500 hover:text-red-700 delete-project" data-id="${project.id}">
+            <button class="text-red-500 hover:text-red-700 delete-project" data-id="${id}">
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -1221,7 +1395,7 @@
       document.querySelectorAll('.edit-project').forEach(btn => {
         btn.addEventListener('click', () => {
           const projectId = btn.dataset.id;
-          const project = state.projects.find(p => p.id === projectId);
+          const project = state.projects[projectId];
           
           if (project) {
             document.getElementById('new-project-name').value = project.name;
@@ -1234,9 +1408,7 @@
       document.querySelectorAll('.delete-project').forEach(btn => {
         btn.addEventListener('click', () => {
           const projectId = btn.dataset.id;
-          state.projects = state.projects.filter(p => p.id !== projectId);
-          saveDataToFirebase();
-          loadProjects();
+          delete database.ref(`users/${state.user.uid}/projects/${projectId}`).remove();
         });
       });
     }
@@ -1244,24 +1416,25 @@
     // Handle time entry submission
     function handleTimeEntrySubmit(e) {
       e.preventDefault();
+      updateSyncStatus('syncing');
       
       // Validate form
       const date = document.getElementById('entry-date').value;
-      const project = document.getElementById('project').value;
+      const projectId = document.getElementById('project').value;
       const startTime = document.getElementById('start-time').value;
       const endTime = document.getElementById('end-time').value;
       const breakTime = parseInt(document.getElementById('break-time').value);
       
-      if (!date || !project || !startTime || !endTime) {
-        showAlert('Please fill in all required fields', 'error');
+      if (!date || !projectId || !startTime || !endTime) {
+        showAlert('Por favor complete todos los campos requeridos', 'error');
         return;
       }
       
       // Create new record
+      const recordId = uuid.v4();
       const newRecord = {
-        id: Date.now().toString(),
         date,
-        projectId: project,
+        projectId,
         startTime,
         endTime,
         breakTime,
@@ -1269,22 +1442,18 @@
         coworkers: document.getElementById('coworkers').value
       };
       
-      // Add to state
-      state.records.push(newRecord);
-      
       // Save to Firebase
-      saveDataToFirebase();
-      
-      // Update UI
-      loadRecords();
-      updateStatistics();
-      initCharts();
-      
-      // Reset form
-      resetTimeEntryForm();
-      
-      // Show success message
-      showAlert('Record saved successfully', 'success');
+      database.ref(`users/${state.user.uid}/records/${recordId}`).set(newRecord)
+        .then(() => {
+          // Reset form
+          resetTimeEntryForm();
+          
+          // Show success message
+          showAlert('Registro guardado correctamente', 'success');
+        })
+        .catch(error => {
+          showAlert('Error al guardar registro: ' + error.message, 'error');
+        });
     }
 
     // Reset time entry form
@@ -1333,18 +1502,22 @@
       yearFilter.innerHTML = '';
       
       // Get unique years from records
-      const years = [...new Set(state.records.map(record => new Date(record.date).getFullYear()))];
+      const years = new Set();
+      Object.values(state.records).forEach(record => {
+        const year = new Date(record.date).getFullYear();
+        years.add(year);
+      });
       
       // If no records yet, add current year
-      if (years.length === 0) {
-        years.push(new Date().getFullYear());
+      if (years.size === 0) {
+        years.add(new Date().getFullYear());
       }
       
       // Sort years in descending order
-      years.sort((a, b) => b - a);
+      const sortedYears = Array.from(years).sort((a, b) => b - a);
       
       // Add years to filter
-      years.forEach(year => {
+      sortedYears.forEach(year => {
         const option = document.createElement('option');
         option.value = year;
         option.textContent = year;
@@ -1360,7 +1533,7 @@
       
       const allMonthsOption = document.createElement('option');
       allMonthsOption.value = 'all';
-      allMonthsOption.textContent = 'All Months';
+      allMonthsOption.textContent = 'Todos los Meses';
       monthFilter.appendChild(allMonthsOption);
       
       // Add months (1-12)
@@ -1377,14 +1550,14 @@
       
       const allWeeksOption = document.createElement('option');
       allWeeksOption.value = 'all';
-      allWeeksOption.textContent = 'All Weeks';
+      allWeeksOption.textContent = 'Todas las Semanas';
       weekFilter.appendChild(allWeeksOption);
       
       // Add weeks (1-52)
       for (let i = 1; i <= 52; i++) {
         const option = document.createElement('option');
         option.value = i;
-        option.textContent = `Week ${i}`;
+        option.textContent = `Semana ${i}`;
         weekFilter.appendChild(option);
       }
     }
@@ -1400,7 +1573,7 @@
       state.currentWeekFilter = weekFilter.value;
       
       // Filter records based on selection
-      let filteredRecords = state.records.filter(record => {
+      let filteredRecords = Object.entries(state.records).filter(([id, record]) => {
         const recordDate = new Date(record.date);
         const recordYear = recordDate.getFullYear();
         
@@ -1427,7 +1600,7 @@
       });
       
       // Sort records by date (newest first)
-      filteredRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+      filteredRecords.sort((a, b) => new Date(b[1].date) - new Date(a[1].date));
       
       // Display filtered records
       displayRecords(filteredRecords);
@@ -1451,7 +1624,7 @@
       if (records.length === 0) {
         entriesContainer.innerHTML = `
           <div class="text-gray-500 text-center py-6">
-            No records found
+            No se encontraron registros
           </div>
         `;
         return;
@@ -1459,7 +1632,7 @@
       
       // Group records by week
       const recordsByWeek = {};
-      records.forEach(record => {
+      records.forEach(([id, record]) => {
         const date = new Date(record.date);
         const week = getWeekNumber(date);
         
@@ -1467,7 +1640,7 @@
           recordsByWeek[week] = [];
         }
         
-        recordsByWeek[week].push(record);
+        recordsByWeek[week].push([id, record]);
       });
       
       // Display records grouped by week
@@ -1477,17 +1650,17 @@
         // Add week separator
         const weekSeparator = document.createElement('div');
         weekSeparator.className = 'week-separator';
-        weekSeparator.textContent = `Week ${week}`;
+        weekSeparator.textContent = `Semana ${week}`;
         entriesContainer.appendChild(weekSeparator);
         
         // Group records by date within the week
         const recordsByDate = {};
-        weekRecords.forEach(record => {
+        weekRecords.forEach(([id, record]) => {
           if (!recordsByDate[record.date]) {
             recordsByDate[record.date] = [];
           }
           
-          recordsByDate[record.date].push(record);
+          recordsByDate[record.date].push([id, record]);
         });
         
         // Display records grouped by date
@@ -1502,8 +1675,8 @@
           entriesContainer.appendChild(dateSeparator);
           
           // Add records for this date
-          dateRecords.forEach(record => {
-            const project = state.projects.find(p => p.id === record.projectId) || { name: 'Unknown', code: '?' };
+          dateRecords.forEach(([id, record]) => {
+            const project = state.projects[record.projectId] || { name: 'Desconocido', code: '?' };
             
             // Calculate hours worked
             const startTime = record.startTime.split(':');
@@ -1525,10 +1698,10 @@
                   ${record.coworkers ? `<div class="text-xs text-gray-500 mt-1"><i class="fas fa-users mr-1"></i> ${record.coworkers}</div>` : ''}
                 </div>
                 <div>
-                  <button class="text-gray-500 hover:text-gray-700 mr-2 edit-record" data-id="${record.id}">
+                  <button class="text-gray-500 hover:text-gray-700 mr-2 edit-record" data-id="${id}">
                     <i class="fas fa-edit"></i>
                   </button>
-                  <button class="text-red-500 hover:text-red-700 delete-record" data-id="${record.id}">
+                  <button class="text-red-500 hover:text-red-700 delete-record" data-id="${id}">
                     <i class="fas fa-trash"></i>
                   </button>
                 </div>
@@ -1550,7 +1723,7 @@
       document.querySelectorAll('.delete-record').forEach(btn => {
         btn.addEventListener('click', () => {
           const recordId = btn.dataset.id;
-          if (confirm('Are you sure you want to delete this record?')) {
+          if (confirm('¿Está seguro de que desea eliminar este registro?')) {
             deleteRecord(recordId);
           }
         });
@@ -1560,7 +1733,7 @@
     // Format date for display
     function formatDate(dateString) {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+      return date.toLocaleDateString('es-ES', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
     }
 
     // Update summary table
@@ -1571,10 +1744,10 @@
       let totalHours = 0;
       
       // Sort records by date (oldest first)
-      records.sort((a, b) => new Date(a.date) - new Date(b.date));
+      records.sort((a, b) => new Date(a[1].date) - new Date(b[1].date));
       
-      records.forEach(record => {
-        const project = state.projects.find(p => p.id === record.projectId) || { name: 'Unknown', code: '?' };
+      records.forEach(([id, record]) => {
+        const project = state.projects[record.projectId] || { name: 'Desconocido', code: '?' };
         
         // Calculate hours worked
         const startTime = record.startTime.split(':');
@@ -1632,7 +1805,7 @@
         data: {
           labels,
           datasets: [{
-            label: 'Hours per Week',
+            label: 'Horas por Semana',
             data,
             backgroundColor: 'rgba(59, 130, 246, 0.7)',
             borderColor: 'rgba(59, 130, 246, 1)',
@@ -1647,7 +1820,7 @@
               beginAtZero: true,
               title: {
                 display: true,
-                text: 'Worked Hours'
+                text: 'Horas Trabajadas'
               }
             }
           }
@@ -1666,7 +1839,7 @@
         // Last 4 weeks
         for (let i = 3; i >= 0; i--) {
           const weekNumber = getWeekNumber(new Date()) - i;
-          labels.push(`Week ${weekNumber}`);
+          labels.push(`Semana ${weekNumber}`);
           
           // Calculate hours for this week
           const weekHours = calculateHoursForWeek(currentYear, weekNumber);
@@ -1676,7 +1849,7 @@
         // Quarterly view - last 12 weeks
         for (let i = 11; i >= 0; i--) {
           const weekNumber = getWeekNumber(new Date()) - i;
-          labels.push(`Week ${weekNumber}`);
+          labels.push(`Semana ${weekNumber}`);
           
           // Calculate hours for this week
           const weekHours = calculateHoursForWeek(currentYear, weekNumber);
@@ -1691,7 +1864,7 @@
     function calculateHoursForWeek(year, week) {
       let totalHours = 0;
       
-      state.records.forEach(record => {
+      Object.values(state.records).forEach(record => {
         const recordDate = new Date(record.date);
         const recordYear = recordDate.getFullYear();
         const recordWeek = getWeekNumber(recordDate);
@@ -1723,11 +1896,11 @@
       
       // Calculate hours per project
       const projectHours = {};
-      state.projects.forEach(project => {
-        projectHours[project.id] = 0;
+      Object.entries(state.projects).forEach(([id]) => {
+        projectHours[id] = 0;
       });
       
-      state.records.forEach(record => {
+      Object.values(state.records).forEach(record => {
         if (projectHours[record.projectId] !== undefined) {
           // Calculate hours worked
           const startTime = record.startTime.split(':');
@@ -1758,7 +1931,7 @@
       
       let colorIndex = 0;
       Object.entries(projectHours).forEach(([projectId, hours]) => {
-        const project = state.projects.find(p => p.id === projectId);
+        const project = state.projects[projectId];
         if (project && hours > 0) {
           labels.push(`${project.code} - ${project.name}`);
           data.push(hours);
@@ -1821,7 +1994,7 @@
       const currentMonth = currentDate.getMonth();
       const currentWeek = getWeekNumber(currentDate);
       
-      state.records.forEach(record => {
+      Object.values(state.records).forEach(record => {
         const recordDate = new Date(record.date);
         const recordYear = recordDate.getFullYear();
         const recordMonth = recordDate.getMonth();
@@ -1860,36 +2033,35 @@
     // Handle add project
     function handleAddProject(e) {
       e.preventDefault();
+      updateSyncStatus('syncing');
       
       const name = document.getElementById('new-project-name').value;
       const code = document.getElementById('new-project-code').value;
       
       if (!name || !code) {
-        showAlert('Please fill in all required fields', 'error');
+        showAlert('Por favor complete todos los campos requeridos', 'error');
         return;
       }
       
+      const projectId = uuid.v4();
       const newProject = {
-        id: Date.now().toString(),
         name,
         code
       };
       
-      // Add to state
-      state.projects.push(newProject);
-      
       // Save to Firebase
-      saveDataToFirebase();
-      
-      // Update UI
-      loadProjects();
-      
-      // Reset form and switch to projects tab
-      document.getElementById('add-project-form').reset();
-      switchToProjectsTab();
-      
-      // Show success message
-      showAlert('Project added successfully', 'success');
+      database.ref(`users/${state.user.uid}/projects/${projectId}`).set(newProject)
+        .then(() => {
+          // Reset form and switch to projects tab
+          document.getElementById('add-project-form').reset();
+          switchToProjectsTab();
+          
+          // Show success message
+          showAlert('Proyecto agregado correctamente', 'success');
+        })
+        .catch(error => {
+          showAlert('Error al agregar proyecto: ' + error.message, 'error');
+        });
     }
 
     // Open project management modal
@@ -1939,10 +2111,10 @@
 
     // Open edit record modal
     function openEditRecordModal(recordId) {
-      const record = state.records.find(r => r.id === recordId);
+      const record = state.records[recordId];
       if (!record) return;
       
-      document.getElementById('edit-record-id').value = record.id;
+      document.getElementById('edit-record-id').value = recordId;
       document.getElementById('edit-entry-date').value = record.date;
       document.getElementById('edit-project').value = record.projectId;
       document.getElementById('edit-start-time').value = record.startTime;
@@ -1964,15 +2136,12 @@
     // Handle edit record
     function handleEditRecord(e) {
       e.preventDefault();
+      updateSyncStatus('syncing');
       
       const recordId = document.getElementById('edit-record-id').value;
-      const recordIndex = state.records.findIndex(r => r.id === recordId);
       
-      if (recordIndex === -1) return;
-      
-      // Update record
-      state.records[recordIndex] = {
-        id: recordId,
+      // Create updated record
+      const updatedRecord = {
         date: document.getElementById('edit-entry-date').value,
         projectId: document.getElementById('edit-project').value,
         startTime: document.getElementById('edit-start-time').value,
@@ -1983,18 +2152,17 @@
       };
       
       // Save to Firebase
-      saveDataToFirebase();
-      
-      // Update UI
-      loadRecords();
-      updateStatistics();
-      initCharts();
-      
-      // Close modal
-      closeEditRecordModal();
-      
-      // Show success message
-      showAlert('Record updated successfully', 'success');
+      database.ref(`users/${state.user.uid}/records/${recordId}`).set(updatedRecord)
+        .then(() => {
+          // Close modal
+          closeEditRecordModal();
+          
+          // Show success message
+          showAlert('Registro actualizado correctamente', 'success');
+        })
+        .catch(error => {
+          showAlert('Error al actualizar registro: ' + error.message, 'error');
+        });
     }
 
     // Handle delete record
@@ -2006,24 +2174,221 @@
 
     // Delete record
     function deleteRecord(recordId) {
-      // Remove record from state
-      state.records = state.records.filter(r => r.id !== recordId);
+      updateSyncStatus('syncing');
       
-      // Save to Firebase
-      saveDataToFirebase();
-      
-      // Update UI
-      loadRecords();
-      updateStatistics();
-      initCharts();
-      
-      // Show success message
-      showAlert('Record deleted successfully', 'success');
+      // Remove record from Firebase
+      database.ref(`users/${state.user.uid}/records/${recordId}`).remove()
+        .then(() => {
+          showAlert('Registro eliminado correctamente', 'success');
+        })
+        .catch(error => {
+          showAlert('Error al eliminar registro: ' + error.message, 'error');
+        });
     }
 
     // Export to PDF
     function exportToPDF() {
-      showAlert('PDF export functionality will be implemented in future versions', 'info');
+      showLoading(true);
+      
+      // Prepare PDF data
+      const today = new Date();
+      const year = state.currentYearFilter;
+      const month = state.currentMonthFilter === 'all' ? 'Todos' : 
+        new Date(year, state.currentMonthFilter - 1, 1).toLocaleString('es-ES', { month: 'long' });
+      const week = state.currentWeekFilter === 'all' ? 'Todas' : `Semana ${state.currentWeekFilter}`;
+      
+      document.getElementById('pdf-user-name').textContent = `${state.user.firstName} ${state.user.lastName}`;
+      document.getElementById('pdf-user-email').textContent = state.user.email;
+      document.getElementById('pdf-gen-date').textContent = today.toLocaleDateString('es-ES');
+      document.getElementById('pdf-period').textContent = `${year}, ${month}, ${week}`;
+      
+      // Prepare records for PDF
+      const tableBody = document.querySelector('#pdf-summary-table tbody');
+      tableBody.innerHTML = '';
+      
+      let totalHours = 0;
+      const filteredRecords = Object.entries(state.records).filter(([id, record]) => {
+        const recordDate = new Date(record.date);
+        const recordYear = recordDate.getFullYear();
+        
+        if (recordYear !== state.currentYearFilter) return false;
+        if (state.currentMonthFilter !== 'all' && 
+            (recordDate.getMonth() + 1) !== parseInt(state.currentMonthFilter)) return false;
+        if (state.currentWeekFilter !== 'all' && 
+            getWeekNumber(recordDate) !== parseInt(state.currentWeekFilter)) return false;
+        
+        return true;
+      });
+      
+      // Sort records by date
+      filteredRecords.sort((a, b) => new Date(a[1].date) - new Date(b[1].date));
+      
+      // Add records to PDF table
+      filteredRecords.forEach(([id, record]) => {
+        const project = state.projects[record.projectId] || { name: 'Desconocido', code: '?' };
+        
+        // Calculate hours worked
+        const startTime = record.startTime.split(':');
+        const endTime = record.endTime.split(':');
+        const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
+        const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
+        const workedMinutes = endMinutes - startMinutes - record.breakTime;
+        const workedHours = workedMinutes / 60;
+        
+        totalHours += workedHours;
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="border py-2 px-3">${formatDate(record.date)}</td>
+          <td class="border py-2 px-3">${getWeekNumber(new Date(record.date))}</td>
+          <td class="border py-2 px-3">${project.code} - ${project.name}</td>
+          <td class="border py-2 px-3 text-right">${workedHours.toFixed(2)}</td>
+          <td class="border py-2 px-3 text-right">${record.breakTime} min</td>
+        `;
+        tableBody.appendChild(row);
+      });
+      
+      // Update total hours
+      document.getElementById('pdf-total-hours').textContent = totalHours.toFixed(2);
+      
+      // Create charts for PDF
+      createPdfCharts();
+      
+      // Generate PDF
+      setTimeout(() => {
+        html2canvas(document.getElementById('pdf-export'), {
+          scale: 2,
+          useCORS: true
+        }).then(canvas => {
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const imgWidth = 210;
+          const pageHeight = 295;
+          const imgHeight = canvas.height * imgWidth / canvas.width;
+          let heightLeft = imgHeight;
+          let position = 0;
+          
+          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+          
+          // Add new pages as needed
+          while (heightLeft >= 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+          }
+          
+          // Save PDF
+          pdf.save(`reporte_horas_${today.getFullYear()}_${today.getMonth() + 1}_${today.getDate()}.pdf`);
+          showLoading(false);
+        });
+      }, 500);
+    }
+
+    // Create charts for PDF export
+    function createPdfCharts() {
+      // Project distribution chart
+      const projectCtx = document.getElementById('pdf-project-chart').getContext('2d');
+      
+      // Calculate hours per project
+      const projectHours = {};
+      Object.entries(state.projects).forEach(([id]) => {
+        projectHours[id] = 0;
+      });
+      
+      Object.values(state.records).forEach(record => {
+        if (projectHours[record.projectId] !== undefined) {
+          // Calculate hours worked
+          const startTime = record.startTime.split(':');
+          const endTime = record.endTime.split(':');
+          const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
+          const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
+          const workedMinutes = endMinutes - startMinutes - record.breakTime;
+          const workedHours = workedMinutes / 60;
+          
+          projectHours[record.projectId] += workedHours;
+        }
+      });
+      
+      // Prepare chart data
+      const projectLabels = [];
+      const projectData = [];
+      const projectColors = [
+        'rgba(59, 130, 246, 0.7)',
+        'rgba(16, 185, 129, 0.7)',
+        'rgba(245, 158, 11, 0.7)',
+        'rgba(239, 68, 68, 0.7)',
+        'rgba(139, 92, 246, 0.7)',
+        'rgba(236, 72, 153, 0.7)',
+        'rgba(37, 99, 235, 0.7)',
+        'rgba(5, 150, 105, 0.7)'
+      ];
+      
+      let colorIndex = 0;
+      Object.entries(projectHours).forEach(([projectId, hours]) => {
+        const project = state.projects[projectId];
+        if (project && hours > 0) {
+          projectLabels.push(`${project.code} - ${project.name}`);
+          projectData.push(hours);
+          colorIndex++;
+        }
+      });
+      
+      new Chart(projectCtx, {
+        type: 'doughnut',
+        data: {
+          labels: projectLabels,
+          datasets: [{
+            data: projectData,
+            backgroundColor: projectColors,
+            borderColor: 'white',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+            }
+          }
+        }
+      });
+      
+      // Weekly hours chart
+      const weeklyCtx = document.getElementById('pdf-weekly-chart').getContext('2d');
+      
+      // Prepare data for monthly view
+      const { labels, data } = prepareWeeklyChartData('monthly');
+      
+      new Chart(weeklyCtx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Horas por Semana',
+            data,
+            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Horas Trabajadas'
+              }
+            }
+          }
+        }
+      });
     }
 
     // Export to JSON
@@ -2044,7 +2409,7 @@
       linkElement.setAttribute('download', exportFileDefaultName);
       linkElement.click();
       
-      showAlert('Data exported successfully', 'success');
+      showAlert('Datos exportados correctamente', 'success');
     }
 
     // Import from JSON
@@ -2053,6 +2418,7 @@
       if (!file) return;
       
       const reader = new FileReader();
+      updateSyncStatus('syncing');
       
       reader.onload = function(event) {
         try {
@@ -2061,24 +2427,19 @@
           // Validate data structure
           if (data.projects && data.records) {
             // Import data
-            state.projects = data.projects;
-            state.records = data.records;
-            
-            // Save to Firebase
-            saveDataToFirebase();
-            
-            // Update UI
-            loadProjects();
-            loadRecords();
-            updateStatistics();
-            initCharts();
-            
-            showAlert('Data imported successfully', 'success');
+            database.ref(`users/${state.user.uid}`).update({
+              projects: data.projects,
+              records: data.records
+            }).then(() => {
+              showAlert('Datos importados correctamente', 'success');
+            }).catch(error => {
+              showAlert('Error al importar datos: ' + error.message, 'error');
+            });
           } else {
-            showAlert('Invalid data format', 'error');
+            showAlert('Formato de datos inválido', 'error');
           }
         } catch (error) {
-          showAlert('Error importing data', 'error');
+          showAlert('Error al importar datos', 'error');
         }
       };
       
