@@ -286,29 +286,34 @@
   <div class="text-sm leading-tight mb-6">
     <p>Köpmangatan 5, plan 10</p>
     <p>151 71 Södertälje</p>
+<div id="pdf-export" style="position: absolute; left: -9999px; top: 0; width: 800px; background: white; padding: 30px; box-sizing: border-box;">
+  <!-- Encabezado -->
+  <div class="text-sm leading-tight mb-6">
+    <p>Köpmangatan 5, plan 10</p>
+    <p>151 71 Södertälje</p>
     <p>Tel: 079-079 00 45</p>
     <p>Organisationsnummer: 559096-5983</p>
     <p class="mt-2 font-semibold">Mätningsingenjör: Vinicio Atiencia</p>
   </div>
 
-  <!-- Título del reporte -->
+  <!-- Título -->
   <div class="text-center mb-6">
     <h1 class="text-2xl font-bold">Tidrapport</h1>
   </div>
 
-  <!-- Información del usuario -->
+  <!-- Datos del usuario y período -->
   <div class="flex justify-between mb-4 text-sm border-b pb-2">
     <div>
-      <p class="font-semibold" id="pdf-user-name"></p>
-      <p id="pdf-user-email"></p>
+      <p class="font-semibold" id="pdf-user-name">[Namn]</p>
+      <p id="pdf-user-email">[Email]</p>
     </div>
     <div class="text-right">
-      <p>Datum för generering: <span id="pdf-gen-date"></span></p>
-      <p>Period: <span id="pdf-period"></span></p>
+      <p>Datum för generering: <span id="pdf-gen-date">[YYYY-MM-DD]</span></p>
+      <p>Period: <span id="pdf-period">[Period]</span></p>
     </div>
   </div>
 
-  <!-- Tabla de horas -->
+  <!-- Tabla de registros -->
   <table class="w-full border-collapse text-sm mb-8" id="pdf-summary-table">
     <thead class="bg-gray-100">
       <tr>
@@ -316,25 +321,25 @@
         <th class="border py-1 px-2 text-left">Dag</th>
         <th class="border py-1 px-2 text-left">Från</th>
         <th class="border py-1 px-2 text-left">Till</th>
-        <th class="border py-1 px-2 text-left">Rast</th>
+        <th class="border py-1 px-2 text-left">Rast (min)</th>
         <th class="border py-1 px-2 text-left">Tim</th>
         <th class="border py-1 px-2 text-left">Projektnamn</th>
         <th class="border py-1 px-2 text-left">Arbetsbeskrivning</th>
       </tr>
     </thead>
     <tbody>
-      <!-- Filas se insertan dinámicamente -->
+      <!-- Filas generadas por JS -->
     </tbody>
     <tfoot>
       <tr class="font-semibold">
         <td colspan="5" class="border py-1 px-2 text-right">Totalt:</td>
-        <td class="border py-1 px-2 text-left" id="pdf-total-hours"></td>
+        <td class="border py-1 px-2 text-left" id="pdf-total-hours">0</td>
         <td class="border py-1 px-2" colspan="2"></td>
       </tr>
     </tfoot>
   </table>
 
-  <!-- Información de pie -->
+  <!-- Footer -->
   <div class="text-center text-xs text-gray-500 mt-10">
     <p>Detta rapport genererades automatiskt av TimeBook Pro</p>
     <p>© 2025 TimeBook Pro – Alla rättigheter förbehållna</p>
