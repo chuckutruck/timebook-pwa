@@ -281,115 +281,115 @@
       100% { opacity: 1; }
     }
     
-<div id="pdf-export" style="position: absolute; left: -9999px; top: 0; width: 800px; background: white; padding: 30px; box-sizing: border-box;">
-  <!-- Encabezado de empresa -->
-  <div class="text-sm leading-tight mb-6">
-    <p>Köpmangatan 5, plan 10</p>
-    <p>151 71 Södertälje</p>
-<div id="pdf-export" style="position: absolute; left: -9999px; top: 0; width: 800px; background: white; padding: 30px; box-sizing: border-box;">
-  <!-- Encabezado -->
-  <div class="text-sm leading-tight mb-6">
-    <p>Köpmangatan 5, plan 10</p>
-    <p>151 71 Södertälje</p>
-    <p>Tel: 079-079 00 45</p>
-    <p>Organisationsnummer: 559096-5983</p>
-    <p class="mt-2 font-semibold">Mätningsingenjör: Vinicio Atiencia</p>
-  </div>
-
-  <!-- Título -->
-  <div class="text-center mb-6">
-    <h1 class="text-2xl font-bold">Tidrapport</h1>
-  </div>
-
-  <!-- Datos del usuario y período -->
-  <div class="flex justify-between mb-4 text-sm border-b pb-2">
-    <div>
-      <p class="font-semibold" id="pdf-user-name">[Namn]</p>
-      <p id="pdf-user-email">[Email]</p>
+  <div id="pdf-export" style="position: absolute; left: -9999px; top: 0; width: 800px; background: white; padding: 30px; box-sizing: border-box;">
+    <!-- Encabezado de empresa -->
+    <div class="text-sm leading-tight mb-6">
+      <p>Köpmangatan 5, plan 10</p>
+      <p>151 71 Södertälje</p>
+  <div id="pdf-export" style="position: absolute; left: -9999px; top: 0; width: 800px; background: white; padding: 30px; box-sizing: border-box;">
+    <!-- Encabezado -->
+    <div class="text-sm leading-tight mb-6">
+      <p>Köpmangatan 5, plan 10</p>
+      <p>151 71 Södertälje</p>
+      <p>Tel: 079-079 00 45</p>
+      <p>Organisationsnummer: 559096-5983</p>
+      <p class="mt-2 font-semibold">Mätningsingenjör: Vinicio Atiencia</p>
     </div>
-    <div class="text-right">
-      <p>Datum för generering: <span id="pdf-gen-date">[YYYY-MM-DD]</span></p>
-      <p>Period: <span id="pdf-period">[Period]</span></p>
+  
+    <!-- Título -->
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold">Tidrapport</h1>
+    </div>
+  
+    <!-- Datos del usuario y período -->
+    <div class="flex justify-between mb-4 text-sm border-b pb-2">
+      <div>
+        <p class="font-semibold" id="pdf-user-name">[Namn]</p>
+        <p id="pdf-user-email">[Email]</p>
+      </div>
+      <div class="text-right">
+        <p>Datum för generering: <span id="pdf-gen-date">[YYYY-MM-DD]</span></p>
+        <p>Period: <span id="pdf-period">[Period]</span></p>
+      </div>
+    </div>
+  
+    <!-- Tabla de registros -->
+    <table class="w-full border-collapse text-sm mb-8" id="pdf-summary-table">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="border py-1 px-2 text-left">Datum</th>
+          <th class="border py-1 px-2 text-left">Dag</th>
+          <th class="border py-1 px-2 text-left">Från</th>
+          <th class="border py-1 px-2 text-left">Till</th>
+          <th class="border py-1 px-2 text-left">Rast (min)</th>
+          <th class="border py-1 px-2 text-left">Tim</th>
+          <th class="border py-1 px-2 text-left">Projektnamn</th>
+          <th class="border py-1 px-2 text-left">Arbetsbeskrivning</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Filas generadas por JS -->
+      </tbody>
+      <tfoot>
+        <tr class="font-semibold">
+          <td colspan="5" class="border py-1 px-2 text-right">Totalt:</td>
+          <td class="border py-1 px-2 text-left" id="pdf-total-hours">0</td>
+          <td class="border py-1 px-2" colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>
+  
+    <!-- Footer -->
+    <div class="text-center text-xs text-gray-500 mt-10">
+      <p>Detta rapport genererades automatiskt av TimeBook Pro</p>
+      <p>© 2025 TimeBook Pro – Alla rättigheter förbehållna</p>
     </div>
   </div>
-
-  <!-- Tabla de registros -->
-  <table class="w-full border-collapse text-sm mb-8" id="pdf-summary-table">
-    <thead class="bg-gray-100">
-      <tr>
-        <th class="border py-1 px-2 text-left">Datum</th>
-        <th class="border py-1 px-2 text-left">Dag</th>
-        <th class="border py-1 px-2 text-left">Från</th>
-        <th class="border py-1 px-2 text-left">Till</th>
-        <th class="border py-1 px-2 text-left">Rast (min)</th>
-        <th class="border py-1 px-2 text-left">Tim</th>
-        <th class="border py-1 px-2 text-left">Projektnamn</th>
-        <th class="border py-1 px-2 text-left">Arbetsbeskrivning</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Filas generadas por JS -->
-    </tbody>
-    <tfoot>
-      <tr class="font-semibold">
-        <td colspan="5" class="border py-1 px-2 text-right">Totalt:</td>
-        <td class="border py-1 px-2 text-left" id="pdf-total-hours">0</td>
-        <td class="border py-1 px-2" colspan="2"></td>
-      </tr>
-    </tfoot>
-  </table>
-
-  <!-- Footer -->
-  <div class="text-center text-xs text-gray-500 mt-10">
-    <p>Detta rapport genererades automatiskt av TimeBook Pro</p>
-    <p>© 2025 TimeBook Pro – Alla rättigheter förbehållna</p>
-  </div>
-</div>
-
-    <!-- Main Application -->
-  <div id="app" class="hidden">
-    <!-- Alert Container -->
-    <div id="alert-container" class="fixed top-4 right-4 z-50 max-w-sm"></div>
-    
-    <!-- Header -->
-    <header class="bg-white shadow-sm">
-      <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-800">
-          <i class="fas fa-clock mr-2 text-blue-500"></i> TimeBook Pro
-        </h1>
-        
-        <div class="flex items-center space-x-4">
-          <!-- User info -->
-          <div class="text-right hidden md:block">
-            <div class="font-medium" id="header-user-name"></div>
-            <div class="text-sm text-gray-600" id="header-user-email"></div>
-          </div>
+  
+      <!-- Main Application -->
+    <div id="app" class="hidden">
+      <!-- Alert Container -->
+      <div id="alert-container" class="fixed top-4 right-4 z-50 max-w-sm"></div>
+      
+      <!-- Header -->
+      <header class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+          <h1 class="text-2xl font-bold text-gray-800">
+            <i class="fas fa-clock mr-2 text-blue-500"></i> TimeBook Pro
+          </h1>
           
-          <!-- User avatar -->
-          <div class="relative">
-            <button id="user-menu-btn" class="flex items-center focus:outline-none">
-              <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold" id="user-avatar">
-                U
-              </div>
-            </button>
+          <div class="flex items-center space-x-4">
+            <!-- User info -->
+            <div class="text-right hidden md:block">
+              <div class="font-medium" id="header-user-name"></div>
+              <div class="text-sm text-gray-600" id="header-user-email"></div>
+            </div>
             
-            <!-- User dropdown menu -->
-            <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden z-50">
-              <div class="px-4 py-2 border-b">
-                <div class="font-medium" id="dropdown-user-name"></div>
-                <div class="text-sm text-gray-600 truncate" id="dropdown-user-email"></div>
+            <!-- User avatar -->
+            <div class="relative">
+              <button id="user-menu-btn" class="flex items-center focus:outline-none">
+                <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold" id="user-avatar">
+                  U
+                </div>
+              </button>
+              
+              <!-- User dropdown menu -->
+              <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden z-50">
+                <div class="px-4 py-2 border-b">
+                  <div class="font-medium" id="dropdown-user-name"></div>
+                  <div class="text-sm text-gray-600 truncate" id="dropdown-user-email"></div>
+                </div>
+                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" id="edit-profile-btn">
+                  <i class="fas fa-user-edit mr-2"></i> Editar Perfil
+                </a>
+                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" id="logout-btn">
+                  <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+                </a>
               </div>
-              <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" id="edit-profile-btn">
-                <i class="fas fa-user-edit mr-2"></i> Editar Perfil
-              </a>
-              <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" id="logout-btn">
-                <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
-              </a>
             </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
     
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-8">
@@ -2382,3 +2382,4 @@ function initApp() {
   </script>
 </body>
 </html>
+
