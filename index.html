@@ -600,8 +600,13 @@
               </div>
               
               <div class="form-group">
-                <label for="break-time" class="form-label" data-i18n="break_time">Tiempo de Descanso (minutos)</label>
-                <input type="number" id="break-time" class="form-control" min="0" value="30" required>
+                <label for="break-time" class="form-label">Tiempo de Descanso</label>
+                <select id="break-time" class="form-control" required>
+                  <option value="0">0 minutos</option>
+                  <option value="30" selected>Media hora</option>
+                  <option value="60">1 hora</option>
+                  <option value="120">2 horas</option>
+                </select>
               </div>
               
               <div class="form-group">
@@ -2804,3 +2809,4 @@
   </script>
 </body>
 </html>
+
