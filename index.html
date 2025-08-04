@@ -315,7 +315,7 @@
     }
     
     .flag-es { background: linear-gradient(to bottom, #c60b1e 25%, #ffc400 25% 75%, #c60b1e 75%); }
-    .flag-us { background: linear-gradient(to bottom, #012169 0% 40%, white 40% 60%, #c8102e 60% 100%); }
+    .flag-en { background: linear-gradient(to bottom, #012169 0% 40%, white 40% 60%, #c8102e 60% 100%); }
     .flag-sv { background: linear-gradient(to bottom, #006aa7 0% 40%, #fecc00 40% 60%, #006aa7 60% 100%); }
     
     .language-dropdown {
@@ -2544,71 +2544,89 @@
     }
 
     // Export to PDF
-    // Export to PDF
-    async function exportToPDF() {
-        showLoading(true);
-        
-        // Guardar estado original del contenedor PDF
-        const pdfExport = document.getElementById('pdf-export');
-        const originalStyles = {
-            position: pdfExport.style.position,
-            left: pdfExport.style.left,
-            top: pdfExport.style.top,
-            zIndex: pdfExport.style.zIndex,
-            transform: pdfExport.style.transform
-        };
+async function exportToPDF() {
+    showLoading(true);
     
-        try {
-            // Hacer visible temporalmente el contenedor PDF
-            pdfExport.style.position = 'fixed';
-            pdfExport.style.left = '50%';
-            pdfExport.style.top = '50%';
-            pdfExport.style.transform = 'translate(-50%, -50%)';
-            pdfExport.style.zIndex = '9999';
-            
-            // Preparar datos del PDF
-            const today = new Date();
-            const year = state.currentYearFilter;
-            const month = state.currentMonthFilter === 'all' ? translations[state.currentLanguage]['all_months'] : 
-                new Date(year, state.currentMonthFilter - 1, 1).toLocaleString(state.currentLanguage, { month: 'long' });
-            const week = state.currentWeekFilter === 'all' ? translations[state.currentLanguage]['all_weeks'] : `${translations[state.currentLanguage]['week']} ${state.currentWeekFilter}`;
-            
-            document.getElementById('pdf-user-name').textContent = `${state.user.firstName} ${state.user.lastName}`;
-            document.getElementById('pdf-user-email').textContent = state.user.email;
-            document.getElementById('pdf-gen-date').textContent = today.toLocaleDateString(state.currentLanguage);
-            document.getElementById('pdf-period').textContent = `${year}, ${month}, ${week}`;
-            
-            // Preparar registros para el PDF
-            const tableBody = document.querySelector('#pdf-summary-table tbody');
+    // Guardar estado original del contenedor PDF
+    const pdfExport = document.getElementById('pdf-export');
+    if (!pdfExport) {
+        showAlert('PDF export container not found', 'error');
+        showLoading(false);
+        return;
+    }
+    
+    const originalStyles = {
+        position: pdfExport.style.position,
+        left: pdfExport.style.left,
+        top: pdfExport.style.top,
+        zIndex: pdfExport.style.zIndex,
+        transform: pdfExport.style.transform
+    };
+
+    try {
+        // Hacer visible temporalmente el contenedor PDF
+        pdfExport.style.position = 'fixed';
+        pdfExport.style.left = '50%';
+        pdfExport.style.top = '50%';
+        pdfExport.style.transform = 'translate(-50%, -50%)';
+        pdfExport.style.zIndex = '9999';
+        
+        // Preparar datos del PDF
+        const today = new Date();
+        const year = state.currentYearFilter;
+        const month = state.currentMonthFilter === 'all' 
+            ? translations[state.currentLanguage]['all_months'] 
+            : new Date(year, state.currentMonthFilter - 1, 1).toLocaleString(state.currentLanguage, { month: 'long' });
+        
+        const week = state.currentWeekFilter === 'all' 
+            ? translations[state.currentLanguage]['all_weeks'] 
+            : `${translations[state.currentLanguage]['week']} ${state.currentWeekFilter}`;
+        
+        // Asegurarse de que los elementos existen antes de asignar valores
+        safeSetTextContent('pdf-user-name', `${state.user.firstName} ${state.user.lastName}`);
+        safeSetTextContent('pdf-user-email', state.user.email || '');
+        safeSetTextContent('pdf-gen-date', today.toLocaleDateString(state.currentLanguage));
+        safeSetTextContent('pdf-period', `${year}, ${month}, ${week}`);
+        
+        // Preparar registros para el PDF
+        const tableBody = document.querySelector('#pdf-summary-table tbody');
+        if (tableBody) {
             tableBody.innerHTML = '';
+        } else {
+            console.error('PDF summary table body not found');
+        }
+        
+        let totalHours = 0;
+        const filteredRecords = Object.entries(state.records).filter(([id, record]) => {
+            const recordDate = new Date(record.date);
+            const recordYear = recordDate.getFullYear();
             
-            let totalHours = 0;
-            const filteredRecords = Object.entries(state.records).filter(([id, record]) => {
-                const recordDate = new Date(record.date);
-                const recordYear = recordDate.getFullYear();
-                
-                if (recordYear !== state.currentYearFilter) return false;
-                if (state.currentMonthFilter !== 'all' && 
-                    (recordDate.getMonth() + 1) !== parseInt(state.currentMonthFilter)) return false;
-                if (state.currentWeekFilter !== 'all' && 
-                    getWeekNumber(recordDate) !== parseInt(state.currentWeekFilter)) return false;
-                
-                return true;
-            });
+            if (recordYear !== state.currentYearFilter) return false;
+            if (state.currentMonthFilter !== 'all' && 
+                (recordDate.getMonth() + 1) !== parseInt(state.currentMonthFilter)) return false;
+            if (state.currentWeekFilter !== 'all' && 
+                getWeekNumber(recordDate) !== parseInt(state.currentWeekFilter)) return false;
             
-            // Ordenar registros por fecha
-            filteredRecords.sort((a, b) => new Date(a[1].date) - new Date(b[1].date));
-            
-            // Añadir registros a la tabla PDF
+            return true;
+        });
+        
+        // Ordenar registros por fecha
+        filteredRecords.sort((a, b) => new Date(a[1].date) - new Date(b[1].date));
+        
+        // Añadir registros a la tabla PDF
+        if (tableBody) {
             filteredRecords.forEach(([id, record]) => {
-                const project = state.projects[record.projectId] || { name: translations[state.currentLanguage]['unknown'], code: '?' };
+                const project = state.projects[record.projectId] || { 
+                    name: translations[state.currentLanguage]['unknown'], 
+                    code: '?' 
+                };
                 
                 // Calcular horas trabajadas
-                const startTime = record.startTime.split(':');
-                const endTime = record.endTime.split(':');
-                const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
-                const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
-                const workedMinutes = endMinutes - startMinutes - record.breakTime;
+                const [startHours, startMinutes] = record.startTime.split(':').map(Number);
+                const [endHours, endMinutes] = record.endTime.split(':').map(Number);
+                const startTotalMinutes = startHours * 60 + startMinutes;
+                const endTotalMinutes = endHours * 60 + endMinutes;
+                const workedMinutes = endTotalMinutes - startTotalMinutes - record.breakTime;
                 const workedHours = workedMinutes / 60;
                 
                 totalHours += workedHours;
@@ -2623,127 +2641,145 @@
                 `;
                 tableBody.appendChild(row);
             });
-            
-            // Actualizar total de horas
-            document.getElementById('pdf-total-hours').textContent = totalHours.toFixed(2);
-            
-            // Crear gráficos para el PDF
-            createPdfCharts();
-            
-            // Esperar a que los gráficos se rendericen
-            await waitForChartsToRender();
-            
-            // Generar PDF
-            const canvas = await html2canvas(pdfExport, {
-                scale: 2,
-                useCORS: true,
-                logging: false
-            });
-            
-            const imgData = canvas.toDataURL('image/jpeg', 0.95);
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const imgWidth = 210;
-            const pageHeight = 295;
-            const imgHeight = canvas.height * imgWidth / canvas.width;
-            let heightLeft = imgHeight;
-            let position = 0;
-            
+        }
+        
+        // Actualizar total de horas
+        safeSetTextContent('pdf-total-hours', totalHours.toFixed(2));
+        
+        // Crear gráficos para el PDF
+        createPdfCharts();
+        
+        // Esperar a que los gráficos se rendericen
+        await waitForChartsToRender();
+        
+        // Generar PDF
+        const canvas = await html2canvas(pdfExport, {
+            scale: 2,
+            useCORS: true,
+            logging: false
+        });
+        
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgWidth = 210;
+        const pageHeight = 295;
+        const imgHeight = canvas.height * imgWidth / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
+        
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+        
+        // Añadir nuevas páginas si es necesario
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
             pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
             heightLeft -= pageHeight;
-            
-            // Añadir nuevas páginas si es necesario
-            while (heightLeft > 0) {
-                position = heightLeft - imgHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-            
-            // Guardar PDF
-            pdf.save(`reporte_horas_${today.getFullYear()}_${today.getMonth() + 1}_${today.getDate()}.pdf`);
-            
-        } catch (error) {
-            console.error('Error al generar PDF:', error);
-            showAlert('Error al generar el PDF: ' + error.message, 'error');
-        } finally {
-            // Restaurar estilos originales
-            Object.assign(pdfExport.style, originalStyles);
-            showLoading(false);
         }
+        
+        // Guardar PDF
+        pdf.save(`reporte_horas_${today.getFullYear()}_${today.getMonth() + 1}_${today.getDate()}.pdf`);
+        
+    } catch (error) {
+        console.error('Error al generar PDF:', error);
+        showAlert('Error al generar el PDF: ' + error.message, 'error');
+    } finally {
+        // Restaurar estilos originales
+        if (pdfExport) {
+            Object.assign(pdfExport.style, originalStyles);
+        }
+        showLoading(false);
     }
-    
-    // Esperar a que los gráficos se rendericen completamente
-    function waitForChartsToRender() {
-        return new Promise(resolve => {
-            const checkCharts = () => {
-                const projectCanvas = document.getElementById('pdf-project-chart');
-                const weeklyCanvas = document.getElementById('pdf-weekly-chart');
-                
-                // Verificar si ambos canvas tienen contenido
-                if (projectCanvas && weeklyCanvas) {
-                    // Verificar si los gráficos se han renderizado (comprobando si tienen un ancho mayor a 0)
-                    if (projectCanvas.width > 0 && weeklyCanvas.width > 0) {
-                        resolve();
-                    } else {
-                        requestAnimationFrame(checkCharts);
-                    }
+}
+
+// Función segura para establecer contenido de texto
+function safeSetTextContent(elementId, text) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = text;
+    } else {
+        console.error(`Element with ID '${elementId}' not found`);
+    }
+}
+
+// Esperar a que los gráficos se rendericen completamente
+function waitForChartsToRender() {
+    return new Promise(resolve => {
+        const checkCharts = () => {
+            const projectCanvas = document.getElementById('pdf-project-chart');
+            const weeklyCanvas = document.getElementById('pdf-weekly-chart');
+            
+            if (projectCanvas && weeklyCanvas) {
+                // Verificar si los gráficos están completamente renderizados
+                if (projectCanvas.offsetWidth > 0 && weeklyCanvas.offsetWidth > 0) {
+                    resolve();
                 } else {
-                    requestAnimationFrame(checkCharts);
+                    setTimeout(checkCharts, 50);
                 }
-            };
-            checkCharts();
-        });
+            } else {
+                setTimeout(checkCharts, 50);
+            }
+        };
+        checkCharts();
+    });
+}
+
+// Crear gráficos para exportación PDF
+function createPdfCharts() {
+    // Gráfico de distribución por proyecto
+    const projectCanvas = document.getElementById('pdf-project-chart');
+    if (!projectCanvas) {
+        console.error('Project chart canvas not found');
+        return;
     }
     
-    // Crear gráficos para exportación PDF
-    function createPdfCharts() {
-        // Gráfico de distribución por proyecto
-        const projectCtx = document.getElementById('pdf-project-chart').getContext('2d');
-        
-        // Calcular horas por proyecto
-        const projectHours = {};
-        Object.entries(state.projects).forEach(([id]) => {
-            projectHours[id] = 0;
-        });
-        
-        Object.values(state.records).forEach(record => {
-            if (projectHours[record.projectId] !== undefined) {
-                // Calcular horas trabajadas
-                const startTime = record.startTime.split(':');
-                const endTime = record.endTime.split(':');
-                const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
-                const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
-                const workedMinutes = endMinutes - startMinutes - record.breakTime;
-                const workedHours = workedMinutes / 60;
-                
-                projectHours[record.projectId] += workedHours;
-            }
-        });
-        
-        // Preparar datos del gráfico
-        const projectLabels = [];
-        const projectData = [];
-        const projectColors = [
-            'rgba(59, 130, 246, 0.7)',
-            'rgba(16, 185, 129, 0.7)',
-            'rgba(245, 158, 11, 0.7)',
-            'rgba(239, 68, 68, 0.7)',
-            'rgba(139, 92, 246, 0.7)',
-            'rgba(236, 72, 153, 0.7)',
-            'rgba(37, 99, 235, 0.7)',
-            'rgba(5, 150, 105, 0.7)'
-        ];
-        
-        let colorIndex = 0;
-        Object.entries(projectHours).forEach(([projectId, hours]) => {
-            const project = state.projects[projectId];
-            if (project && hours > 0) {
-                projectLabels.push(`${project.code} - ${project.name}`);
-                projectData.push(hours);
-                colorIndex++;
-            }
-        });
-        
+    const projectCtx = projectCanvas.getContext('2d');
+    
+    // Calcular horas por proyecto
+    const projectHours = {};
+    Object.entries(state.projects).forEach(([id]) => {
+        projectHours[id] = 0;
+    });
+    
+    Object.values(state.records).forEach(record => {
+        if (record.projectId && projectHours[record.projectId] !== undefined) {
+            // Calcular horas trabajadas
+            const [startHours, startMinutes] = record.startTime.split(':').map(Number);
+            const [endHours, endMinutes] = record.endTime.split(':').map(Number);
+            const startTotalMinutes = startHours * 60 + startMinutes;
+            const endTotalMinutes = endHours * 60 + endMinutes;
+            const workedMinutes = endTotalMinutes - startTotalMinutes - record.breakTime;
+            const workedHours = workedMinutes / 60;
+            
+            projectHours[record.projectId] += workedHours;
+        }
+    });
+    
+    // Preparar datos del gráfico
+    const projectLabels = [];
+    const projectData = [];
+    const projectColors = [
+        'rgba(59, 130, 246, 0.7)',
+        'rgba(16, 185, 129, 0.7)',
+        'rgba(245, 158, 11, 0.7)',
+        'rgba(239, 68, 68, 0.7)',
+        'rgba(139, 92, 246, 0.7)',
+        'rgba(236, 72, 153, 0.7)',
+        'rgba(37, 99, 235, 0.7)',
+        'rgba(5, 150, 105, 0.7)'
+    ];
+    
+    Object.entries(projectHours).forEach(([projectId, hours]) => {
+        const project = state.projects[projectId];
+        if (project && hours > 0) {
+            projectLabels.push(`${project.code} - ${project.name}`);
+            projectData.push(hours);
+        }
+    });
+    
+    // Solo crear el gráfico si hay datos
+    if (projectData.length > 0) {
         new Chart(projectCtx, {
             type: 'doughnut',
             data: {
@@ -2758,7 +2794,7 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: false, // Desactivar animaciones
+                animation: false,
                 plugins: {
                     legend: {
                         position: 'right',
@@ -2766,13 +2802,22 @@
                 }
             }
         });
-        
-        // Gráfico de horas semanales
-        const weeklyCtx = document.getElementById('pdf-weekly-chart').getContext('2d');
-        
-        // Preparar datos para vista mensual
-        const { labels, data } = prepareWeeklyChartData('monthly');
-        
+    }
+    
+    // Gráfico de horas semanales
+    const weeklyCanvas = document.getElementById('pdf-weekly-chart');
+    if (!weeklyCanvas) {
+        console.error('Weekly chart canvas not found');
+        return;
+    }
+    
+    const weeklyCtx = weeklyCanvas.getContext('2d');
+    
+    // Preparar datos para vista mensual
+    const { labels, data } = prepareWeeklyChartData('monthly');
+    
+    // Solo crear el gráfico si hay datos
+    if (data.length > 0) {
         new Chart(weeklyCtx, {
             type: 'bar',
             data: {
@@ -2788,7 +2833,7 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: false, // Desactivar animaciones
+                animation: false,
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -2801,7 +2846,7 @@
             }
         });
     }
-
+}
     // Export to JSON
     function exportToJSON() {
       const data = {
@@ -2876,6 +2921,7 @@
   </script>
 </body>
 </html>
+
 
 
 
