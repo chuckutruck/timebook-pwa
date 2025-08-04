@@ -2544,208 +2544,262 @@
     }
 
     // Export to PDF
-    function exportToPDF() {
-      showLoading(true);
-      
-      // Prepare PDF data
-      const today = new Date();
-      const year = state.currentYearFilter;
-      const month = state.currentMonthFilter === 'all' ? translations[state.currentLanguage]['all_months'] : 
-        new Date(year, state.currentMonthFilter - 1, 1).toLocaleString(state.currentLanguage, { month: 'long' });
-      const week = state.currentWeekFilter === 'all' ? translations[state.currentLanguage]['all_weeks'] : `${translations[state.currentLanguage]['week']} ${state.currentWeekFilter}`;
-      
-      document.getElementById('pdf-user-name').textContent = `${state.user.firstName} ${state.user.lastName}`;
-      document.getElementById('pdf-user-email').textContent = state.user.email;
-      document.getElementById('pdf-gen-date').textContent = today.toLocaleDateString(state.currentLanguage);
-      document.getElementById('pdf-period').textContent = `${year}, ${month}, ${week}`;
-      
-      // Prepare records for PDF
-      const tableBody = document.querySelector('#pdf-summary-table tbody');
-      tableBody.innerHTML = '';
-      
-      let totalHours = 0;
-      const filteredRecords = Object.entries(state.records).filter(([id, record]) => {
-        const recordDate = new Date(record.date);
-        const recordYear = recordDate.getFullYear();
+    // Export to PDF
+    async function exportToPDF() {
+        showLoading(true);
         
-        if (recordYear !== state.currentYearFilter) return false;
-        if (state.currentMonthFilter !== 'all' && 
-            (recordDate.getMonth() + 1) !== parseInt(state.currentMonthFilter)) return false;
-        if (state.currentWeekFilter !== 'all' && 
-            getWeekNumber(recordDate) !== parseInt(state.currentWeekFilter)) return false;
-        
-        return true;
-      });
-      
-      // Sort records by date
-      filteredRecords.sort((a, b) => new Date(a[1].date) - new Date(b[1].date));
-      
-      // Add records to PDF table
-      filteredRecords.forEach(([id, record]) => {
-        const project = state.projects[record.projectId] || { name: translations[state.currentLanguage]['unknown'], code: '?' };
-        
-        // Calculate hours worked
-        const startTime = record.startTime.split(':');
-        const endTime = record.endTime.split(':');
-        const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
-        const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
-        const workedMinutes = endMinutes - startMinutes - record.breakTime;
-        const workedHours = workedMinutes / 60;
-        
-        totalHours += workedHours;
-        
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td class="border py-2 px-3">${formatDate(record.date)}</td>
-          <td class="border py-2 px-3">${getWeekNumber(new Date(record.date))}</td>
-          <td class="border py-2 px-3">${project.code} - ${project.name}</td>
-          <td class="border py-2 px-3 text-right">${workedHours.toFixed(2)}</td>
-          <td class="border py-2 px-3 text-right">${record.breakTime} min</td>
-        `;
-        tableBody.appendChild(row);
-      });
-      
-      // Update total hours
-      document.getElementById('pdf-total-hours').textContent = totalHours.toFixed(2);
-      
-      // Create charts for PDF
-      createPdfCharts();
-      
-      // Generate PDF
-      setTimeout(() => {
-        html2canvas(document.getElementById('pdf-export'), {
-          scale: 2,
-          useCORS: true
-        }).then(canvas => {
-          const imgData = canvas.toDataURL('image/jpeg', 0.95);
-          const pdf = new jsPDF('p', 'mm', 'a4');
-          const imgWidth = 210;
-          const pageHeight = 295;
-          const imgHeight = canvas.height * imgWidth / canvas.width;
-          let heightLeft = imgHeight;
-          let position = 0;
-          
-          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
-          
-          // Add new pages as needed
-          while (heightLeft >= 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
+        // Guardar estado original del contenedor PDF
+        const pdfExport = document.getElementById('pdf-export');
+        const originalStyles = {
+            position: pdfExport.style.position,
+            left: pdfExport.style.left,
+            top: pdfExport.style.top,
+            zIndex: pdfExport.style.zIndex,
+            transform: pdfExport.style.transform
+        };
+    
+        try {
+            // Hacer visible temporalmente el contenedor PDF
+            pdfExport.style.position = 'fixed';
+            pdfExport.style.left = '50%';
+            pdfExport.style.top = '50%';
+            pdfExport.style.transform = 'translate(-50%, -50%)';
+            pdfExport.style.zIndex = '9999';
+            
+            // Preparar datos del PDF
+            const today = new Date();
+            const year = state.currentYearFilter;
+            const month = state.currentMonthFilter === 'all' ? translations[state.currentLanguage]['all_months'] : 
+                new Date(year, state.currentMonthFilter - 1, 1).toLocaleString(state.currentLanguage, { month: 'long' });
+            const week = state.currentWeekFilter === 'all' ? translations[state.currentLanguage]['all_weeks'] : `${translations[state.currentLanguage]['week']} ${state.currentWeekFilter}`;
+            
+            document.getElementById('pdf-user-name').textContent = `${state.user.firstName} ${state.user.lastName}`;
+            document.getElementById('pdf-user-email').textContent = state.user.email;
+            document.getElementById('pdf-gen-date').textContent = today.toLocaleDateString(state.currentLanguage);
+            document.getElementById('pdf-period').textContent = `${year}, ${month}, ${week}`;
+            
+            // Preparar registros para el PDF
+            const tableBody = document.querySelector('#pdf-summary-table tbody');
+            tableBody.innerHTML = '';
+            
+            let totalHours = 0;
+            const filteredRecords = Object.entries(state.records).filter(([id, record]) => {
+                const recordDate = new Date(record.date);
+                const recordYear = recordDate.getFullYear();
+                
+                if (recordYear !== state.currentYearFilter) return false;
+                if (state.currentMonthFilter !== 'all' && 
+                    (recordDate.getMonth() + 1) !== parseInt(state.currentMonthFilter)) return false;
+                if (state.currentWeekFilter !== 'all' && 
+                    getWeekNumber(recordDate) !== parseInt(state.currentWeekFilter)) return false;
+                
+                return true;
+            });
+            
+            // Ordenar registros por fecha
+            filteredRecords.sort((a, b) => new Date(a[1].date) - new Date(b[1].date));
+            
+            // Añadir registros a la tabla PDF
+            filteredRecords.forEach(([id, record]) => {
+                const project = state.projects[record.projectId] || { name: translations[state.currentLanguage]['unknown'], code: '?' };
+                
+                // Calcular horas trabajadas
+                const startTime = record.startTime.split(':');
+                const endTime = record.endTime.split(':');
+                const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
+                const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
+                const workedMinutes = endMinutes - startMinutes - record.breakTime;
+                const workedHours = workedMinutes / 60;
+                
+                totalHours += workedHours;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="border py-2 px-3">${formatDate(record.date)}</td>
+                    <td class="border py-2 px-3">${getWeekNumber(new Date(record.date))}</td>
+                    <td class="border py-2 px-3">${project.code} - ${project.name}</td>
+                    <td class="border py-2 px-3 text-right">${workedHours.toFixed(2)}</td>
+                    <td class="border py-2 px-3 text-right">${record.breakTime} min</td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            // Actualizar total de horas
+            document.getElementById('pdf-total-hours').textContent = totalHours.toFixed(2);
+            
+            // Crear gráficos para el PDF
+            createPdfCharts();
+            
+            // Esperar a que los gráficos se rendericen
+            await waitForChartsToRender();
+            
+            // Generar PDF
+            const canvas = await html2canvas(pdfExport, {
+                scale: 2,
+                useCORS: true,
+                logging: false
+            });
+            
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgWidth = 210;
+            const pageHeight = 295;
+            const imgHeight = canvas.height * imgWidth / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 0;
+            
             pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
             heightLeft -= pageHeight;
-          }
-          
-          // Save PDF
-          pdf.save(`reporte_horas_${today.getFullYear()}_${today.getMonth() + 1}_${today.getDate()}.pdf`);
-          showLoading(false);
-        });
-      }, 500);
+            
+            // Añadir nuevas páginas si es necesario
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+            
+            // Guardar PDF
+            pdf.save(`reporte_horas_${today.getFullYear()}_${today.getMonth() + 1}_${today.getDate()}.pdf`);
+            
+        } catch (error) {
+            console.error('Error al generar PDF:', error);
+            showAlert('Error al generar el PDF: ' + error.message, 'error');
+        } finally {
+            // Restaurar estilos originales
+            Object.assign(pdfExport.style, originalStyles);
+            showLoading(false);
+        }
     }
-
-    // Create charts for PDF export
+    
+    // Esperar a que los gráficos se rendericen completamente
+    function waitForChartsToRender() {
+        return new Promise(resolve => {
+            const checkCharts = () => {
+                const projectCanvas = document.getElementById('pdf-project-chart');
+                const weeklyCanvas = document.getElementById('pdf-weekly-chart');
+                
+                // Verificar si ambos canvas tienen contenido
+                if (projectCanvas && weeklyCanvas) {
+                    // Verificar si los gráficos se han renderizado (comprobando si tienen un ancho mayor a 0)
+                    if (projectCanvas.width > 0 && weeklyCanvas.width > 0) {
+                        resolve();
+                    } else {
+                        requestAnimationFrame(checkCharts);
+                    }
+                } else {
+                    requestAnimationFrame(checkCharts);
+                }
+            };
+            checkCharts();
+        });
+    }
+    
+    // Crear gráficos para exportación PDF
     function createPdfCharts() {
-      // Project distribution chart
-      const projectCtx = document.getElementById('pdf-project-chart').getContext('2d');
-      
-      // Calculate hours per project
-      const projectHours = {};
-      Object.entries(state.projects).forEach(([id]) => {
-        projectHours[id] = 0;
-      });
-      
-      Object.values(state.records).forEach(record => {
-        if (projectHours[record.projectId] !== undefined) {
-          // Calculate hours worked
-          const startTime = record.startTime.split(':');
-          const endTime = record.endTime.split(':');
-          const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
-          const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
-          const workedMinutes = endMinutes - startMinutes - record.breakTime;
-          const workedHours = workedMinutes / 60;
-          
-          projectHours[record.projectId] += workedHours;
-        }
-      });
-      
-      // Prepare chart data
-      const projectLabels = [];
-      const projectData = [];
-      const projectColors = [
-        'rgba(59, 130, 246, 0.7)',
-        'rgba(16, 185, 129, 0.7)',
-        'rgba(245, 158, 11, 0.7)',
-        'rgba(239, 68, 68, 0.7)',
-        'rgba(139, 92, 246, 0.7)',
-        'rgba(236, 72, 153, 0.7)',
-        'rgba(37, 99, 235, 0.7)',
-        'rgba(5, 150, 105, 0.7)'
-      ];
-      
-      let colorIndex = 0;
-      Object.entries(projectHours).forEach(([projectId, hours]) => {
-        const project = state.projects[projectId];
-        if (project && hours > 0) {
-          projectLabels.push(`${project.code} - ${project.name}`);
-          projectData.push(hours);
-          colorIndex++;
-        }
-      });
-      
-      new Chart(projectCtx, {
-        type: 'doughnut',
-        data: {
-          labels: projectLabels,
-          datasets: [{
-            data: projectData,
-            backgroundColor: projectColors,
-            borderColor: 'white',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'right',
+        // Gráfico de distribución por proyecto
+        const projectCtx = document.getElementById('pdf-project-chart').getContext('2d');
+        
+        // Calcular horas por proyecto
+        const projectHours = {};
+        Object.entries(state.projects).forEach(([id]) => {
+            projectHours[id] = 0;
+        });
+        
+        Object.values(state.records).forEach(record => {
+            if (projectHours[record.projectId] !== undefined) {
+                // Calcular horas trabajadas
+                const startTime = record.startTime.split(':');
+                const endTime = record.endTime.split(':');
+                const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
+                const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
+                const workedMinutes = endMinutes - startMinutes - record.breakTime;
+                const workedHours = workedMinutes / 60;
+                
+                projectHours[record.projectId] += workedHours;
             }
-          }
-        }
-      });
-      
-      // Weekly hours chart
-      const weeklyCtx = document.getElementById('pdf-weekly-chart').getContext('2d');
-      
-      // Prepare data for monthly view
-      const { labels, data } = prepareWeeklyChartData('monthly');
-      
-      new Chart(weeklyCtx, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{
-            label: translations[state.currentLanguage]['hours_per_week'],
-            data,
-            backgroundColor: 'rgba(59, 130, 246, 0.7)',
-            borderColor: 'rgba(59, 130, 246, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true,
-              title: {
-                display: true,
-                text: translations[state.currentLanguage]['worked_hours']
-              }
+        });
+        
+        // Preparar datos del gráfico
+        const projectLabels = [];
+        const projectData = [];
+        const projectColors = [
+            'rgba(59, 130, 246, 0.7)',
+            'rgba(16, 185, 129, 0.7)',
+            'rgba(245, 158, 11, 0.7)',
+            'rgba(239, 68, 68, 0.7)',
+            'rgba(139, 92, 246, 0.7)',
+            'rgba(236, 72, 153, 0.7)',
+            'rgba(37, 99, 235, 0.7)',
+            'rgba(5, 150, 105, 0.7)'
+        ];
+        
+        let colorIndex = 0;
+        Object.entries(projectHours).forEach(([projectId, hours]) => {
+            const project = state.projects[projectId];
+            if (project && hours > 0) {
+                projectLabels.push(`${project.code} - ${project.name}`);
+                projectData.push(hours);
+                colorIndex++;
             }
-          }
-        }
-      });
+        });
+        
+        new Chart(projectCtx, {
+            type: 'doughnut',
+            data: {
+                labels: projectLabels,
+                datasets: [{
+                    data: projectData,
+                    backgroundColor: projectColors,
+                    borderColor: 'white',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false, // Desactivar animaciones
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+        
+        // Gráfico de horas semanales
+        const weeklyCtx = document.getElementById('pdf-weekly-chart').getContext('2d');
+        
+        // Preparar datos para vista mensual
+        const { labels, data } = prepareWeeklyChartData('monthly');
+        
+        new Chart(weeklyCtx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: translations[state.currentLanguage]['hours_per_week'],
+                    data,
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false, // Desactivar animaciones
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: translations[state.currentLanguage]['worked_hours']
+                        }
+                    }
+                }
+            }
+        });
     }
 
     // Export to JSON
@@ -2822,6 +2876,7 @@
   </script>
 </body>
 </html>
+
 
 
 
