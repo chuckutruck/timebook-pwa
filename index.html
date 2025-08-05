@@ -359,7 +359,7 @@
   </div>
 
   <!-- PDF Export Container (hidden) -->
-  <div id="pdf-export">
+  <div id="pdf-export" style="position: absolute; left: -9999px; top: 0; width: 800px; background: white; padding: 30px; box-sizing: border-box;">
     <div class="text-center mb-8">
       <h1 class="text-3xl font-bold" data-i18n="hours_report">Informe de Horas Trabajadas</h1>
       <div class="flex justify-center items-center mt-4">
@@ -388,37 +388,27 @@
     <table class="w-full border-collapse mb-8" id="pdf-summary-table">
       <thead>
         <tr class="bg-gray-100">
-          <th class="border py-2 px-3 text-left" data-i18n="date">Fecha</th>
-          <th class="border py-2 px-3 text-left" data-i18n="week">Semana</th>
-          <th class="border py-2 px-3 text-left" data-i18n="project">Proyecto</th>
-          <th class="border py-2 px-3 text-right" data-i18n="worked_hours">Horas Trabajadas</th>
-          <th class="border py-2 px-3 text-right" data-i18n="break">Descanso</th>
+          <th class="border py-2 px-3 text-left" data-i18n="date">Datum</th>
+          <th class="border py-2 px-3 text-left" data-i18n="day">Dag</th>
+          <th class="border py-2 px-3 text-left" data-i18n="from">Från</th>
+          <th class="border py-2 px-3 text-left" data-i18n="to">Till</th>
+          <th class="border py-2 px-3 text-right" data-i18n="break">Rast</th>
+          <th class="border py-2 px-3 text-right" data-i18n="hours">Tim</th>
+          <th class="border py-2 px-3 text-left" data-i18n="project_name">Projektnamn</th>
+          <th class="border py-2 px-3 text-left" data-i18n="work_description">Arbetsbeskrivning</th>
         </tr>
       </thead>
-      <tbody>
-      </tbody>
+      <tbody></tbody>
       <tfoot>
         <tr class="font-semibold">
-          <td colspan="3" class="border py-2 px-3 text-right" data-i18n="total">Total:</td>
+          <td colspan="7" class="border py-2 px-3 text-right" data-i18n="total">Total:</td>
           <td class="border py-2 px-3 text-right" id="pdf-total-hours"></td>
-          <td class="border py-2 px-3"></td>
         </tr>
       </tfoot>
     </table>
     
-    <div class="grid grid-cols-2 gap-8 mb-8">
-      <div>
-        <h3 class="text-lg font-semibold mb-4" data-i18n="project_distribution">Distribución por Proyecto</h3>
-        <canvas id="pdf-project-chart" height="300"></canvas>
-      </div>
-      <div>
-        <h3 class="text-lg font-semibold mb-4" data-i18n="hours_per_week">Horas por Semana</h3>
-        <canvas id="pdf-weekly-chart" height="300"></canvas>
-      </div>
-    </div>
-    
     <div class="text-center text-sm text-gray-500 mt-12">
-      <p data-i18n="report_generated">Este informe fue generado automáticamente por Vinny</p>
+      <p data-i18n="report_generated">Este informe fue generado automáticamente por TimeBook Pro</p>
       <p>© 2025 TimeBook Pro - <span data-i18n="all_rights_reserved">Todos los derechos reservados</span></p>
     </div>
   </div>
@@ -2781,6 +2771,7 @@
   </script>
 </body>
 </html>
+
 
 
 
