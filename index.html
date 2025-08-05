@@ -2614,7 +2614,7 @@ async function exportToPDF() {
             <th style="border: 1px solid #000; padding: 5px;">Dag</th>
             <th style="border: 1px solid #000; padding: 5px;">Från</th>
             <th style="border: 1px solid #000; padding: 5px;">Till</th>
-            <th style="border: 1px solid #000; padding: 5px;">Rast (min)</th>
+            <th style="border: 1px solid #000; padding: 5px;">Rast (h)</th>
             <th style="border: 1px solid #000; padding: 5px;">Tim</th>
             <th style="border: 1px solid #000; padding: 5px;">Projektnamn</th>
             <th style="border: 1px solid #000; padding: 5px;">Arbetsbeskrivning</th>
@@ -2673,7 +2673,7 @@ async function exportToPDF() {
         <td style="border: 1px solid #000; padding: 5px;">${dayName}</td>
         <td style="border: 1px solid #000; padding: 5px;">${record.startTime}</td>
         <td style="border: 1px solid #000; padding: 5px;">${record.endTime}</td>
-        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${record.breakTime}</td>
+        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${(record.breakTime / 60).toFixed(2)}</td>
         <td style="border: 1px solid #000; padding: 5px; text-align: right;">${workedHours.toFixed(2)}</td>
         <td style="border: 1px solid #000; padding: 5px;">${project.name}</td>
         <td style="border: 1px solid #000; padding: 5px;">${record.notes || ''}</td>
@@ -2796,4 +2796,5 @@ async function exportToPDF() {
   </script>
 </body>
 </html>
+
 
