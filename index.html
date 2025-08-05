@@ -2544,308 +2544,183 @@
     }
 
     // Export to PDF
+// Función para formatear fecha en formato yy-mm-dd
+function formatDateShort(dateString) {
+  const date = new Date(dateString);
+  const year = date.getFullYear().toString().substring(2);
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Función para obtener el nombre del día en sueco
+function getSwedishDayName(date) {
+  const days = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag'];
+  return days[date.getDay()];
+}
+
+// Export to PDF
 async function exportToPDF() {
-    showLoading(true);
-    
-    // Guardar estado original del contenedor PDF
-    const pdfExport = document.getElementById('pdf-export');
-    if (!pdfExport) {
-        showAlert('PDF export container not found', 'error');
-        showLoading(false);
-        return;
-    }
-    
-    const originalStyles = {
-        position: pdfExport.style.position,
-        left: pdfExport.style.left,
-        top: pdfExport.style.top,
-        zIndex: pdfExport.style.zIndex,
-        transform: pdfExport.style.transform
-    };
+  showLoading(true);
+  
+  const pdfExport = document.getElementById('pdf-export');
+  if (!pdfExport) {
+    showAlert('PDF export container not found', 'error');
+    showLoading(false);
+    return;
+  }
+  
+  const originalStyles = {
+    position: pdfExport.style.position,
+    left: pdfExport.style.left,
+    top: pdfExport.style.top,
+    zIndex: pdfExport.style.zIndex,
+    transform: pdfExport.style.transform,
+    width: pdfExport.style.width,
+    padding: pdfExport.style.padding
+  };
 
-    try {
-        // Hacer visible temporalmente el contenedor PDF
-        pdfExport.style.position = 'fixed';
-        pdfExport.style.left = '50%';
-        pdfExport.style.top = '50%';
-        pdfExport.style.transform = 'translate(-50%, -50%)';
-        pdfExport.style.zIndex = '9999';
-        
-        // Preparar datos del PDF
-        const today = new Date();
-        const year = state.currentYearFilter;
-        const month = state.currentMonthFilter === 'all' 
-            ? translations[state.currentLanguage]['all_months'] 
-            : new Date(year, state.currentMonthFilter - 1, 1).toLocaleString(state.currentLanguage, { month: 'long' });
-        
-        const week = state.currentWeekFilter === 'all' 
-            ? translations[state.currentLanguage]['all_weeks'] 
-            : `${translations[state.currentLanguage]['week']} ${state.currentWeekFilter}`;
-        
-        // Asegurarse de que los elementos existen antes de asignar valores
-        safeSetTextContent('pdf-user-name', `${state.user.firstName} ${state.user.lastName}`);
-        safeSetTextContent('pdf-user-email', state.user.email || '');
-        safeSetTextContent('pdf-gen-date', today.toLocaleDateString(state.currentLanguage));
-        safeSetTextContent('pdf-period', `${year}, ${month}, ${week}`);
-        
-        // Preparar registros para el PDF
-        const tableBody = document.querySelector('#pdf-summary-table tbody');
-        if (tableBody) {
-            tableBody.innerHTML = '';
-        } else {
-            console.error('PDF summary table body not found');
-        }
-        
-        let totalHours = 0;
-        const filteredRecords = Object.entries(state.records).filter(([id, record]) => {
-            const recordDate = new Date(record.date);
-            const recordYear = recordDate.getFullYear();
-            
-            if (recordYear !== state.currentYearFilter) return false;
-            if (state.currentMonthFilter !== 'all' && 
-                (recordDate.getMonth() + 1) !== parseInt(state.currentMonthFilter)) return false;
-            if (state.currentWeekFilter !== 'all' && 
-                getWeekNumber(recordDate) !== parseInt(state.currentWeekFilter)) return false;
-            
-            return true;
-        });
-        
-        // Ordenar registros por fecha
-        filteredRecords.sort((a, b) => new Date(a[1].date) - new Date(b[1].date));
-        
-        // Añadir registros a la tabla PDF
-        if (tableBody) {
-            filteredRecords.forEach(([id, record]) => {
-                const project = state.projects[record.projectId] || { 
-                    name: translations[state.currentLanguage]['unknown'], 
-                    code: '?' 
-                };
-                
-                // Calcular horas trabajadas
-                const [startHours, startMinutes] = record.startTime.split(':').map(Number);
-                const [endHours, endMinutes] = record.endTime.split(':').map(Number);
-                const startTotalMinutes = startHours * 60 + startMinutes;
-                const endTotalMinutes = endHours * 60 + endMinutes;
-                const workedMinutes = endTotalMinutes - startTotalMinutes - record.breakTime;
-                const workedHours = workedMinutes / 60;
-                
-                totalHours += workedHours;
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="border py-2 px-3">${formatDate(record.date)}</td>
-                    <td class="border py-2 px-3">${getWeekNumber(new Date(record.date))}</td>
-                    <td class="border py-2 px-3">${project.code} - ${project.name}</td>
-                    <td class="border py-2 px-3 text-right">${workedHours.toFixed(2)}</td>
-                    <td class="border py-2 px-3 text-right">${record.breakTime} min</td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-        
-        // Actualizar total de horas
-        safeSetTextContent('pdf-total-hours', totalHours.toFixed(2));
-        
-        // Crear gráficos para el PDF
-        createPdfCharts();
-        
-        // Esperar a que los gráficos se rendericen
-        await waitForChartsToRender();
-        
-        // Generar PDF
-        const canvas = await html2canvas(pdfExport, {
-            scale: 2,
-            useCORS: true,
-            logging: false
-        });
-        
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgWidth = 210;
-        const pageHeight = 295;
-        const imgHeight = canvas.height * imgWidth / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 0;
-        
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-        
-        // Añadir nuevas páginas si es necesario
-        while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-        }
-        
-        // Guardar PDF
-        pdf.save(`reporte_horas_${today.getFullYear()}_${today.getMonth() + 1}_${today.getDate()}.pdf`);
-        
-    } catch (error) {
-        console.error('Error al generar PDF:', error);
-        showAlert('Error al generar el PDF: ' + error.message, 'error');
-    } finally {
-        // Restaurar estilos originales
-        if (pdfExport) {
-            Object.assign(pdfExport.style, originalStyles);
-        }
-        showLoading(false);
-    }
-}
-
-// Función segura para establecer contenido de texto
-function safeSetTextContent(elementId, text) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.textContent = text;
-    } else {
-        console.error(`Element with ID '${elementId}' not found`);
-    }
-}
-
-// Esperar a que los gráficos se rendericen completamente
-function waitForChartsToRender() {
-    return new Promise(resolve => {
-        const checkCharts = () => {
-            const projectCanvas = document.getElementById('pdf-project-chart');
-            const weeklyCanvas = document.getElementById('pdf-weekly-chart');
-            
-            if (projectCanvas && weeklyCanvas) {
-                // Verificar si los gráficos están completamente renderizados
-                if (projectCanvas.offsetWidth > 0 && weeklyCanvas.offsetWidth > 0) {
-                    resolve();
-                } else {
-                    setTimeout(checkCharts, 50);
-                }
-            } else {
-                setTimeout(checkCharts, 50);
-            }
-        };
-        checkCharts();
-    });
-}
-
-// Crear gráficos para exportación PDF
-function createPdfCharts() {
-    // Gráfico de distribución por proyecto
-    const projectCanvas = document.getElementById('pdf-project-chart');
-    if (!projectCanvas) {
-        console.error('Project chart canvas not found');
-        return;
-    }
+  try {
+    // Hacer visible temporalmente el contenedor PDF
+    pdfExport.style.position = 'fixed';
+    pdfExport.style.left = '50%';
+    pdfExport.style.top = '50%';
+    pdfExport.style.transform = 'translate(-50%, -50%)';
+    pdfExport.style.zIndex = '9999';
+    pdfExport.style.width = '210mm';
+    pdfExport.style.padding = '20px';
     
-    const projectCtx = projectCanvas.getContext('2d');
+    // Construir nuevo contenido para el PDF
+    pdfExport.innerHTML = `
+      <div style="text-align: left; margin-bottom: 20px; font-size: 11px; line-height: 1.4;">
+        <div>Köpmangatan 5, plan 10</div>
+        <div>151 71 Södertälje</div>
+        <div>Tel 079-079 00 45</div>
+        <div>Organisationsnummer: 559096-5983</div>
+      </div>
+      
+      <h1 style="text-align: left; font-size: 24px; font-weight: bold; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+        Tidrapport
+      </h1>
+      
+      <div style="margin-bottom: 20px; font-size: 14px;">
+        <strong>Mätningsingenjör:</strong> ${state.user.firstName} ${state.user.lastName}
+      </div>
+      
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 10px;" border="1" id="pdf-summary-table">
+        <thead>
+          <tr>
+            <th style="border: 1px solid #000; padding: 5px;">Datum (yy-mm-d)</th>
+            <th style="border: 1px solid #000; padding: 5px;">Dag</th>
+            <th style="border: 1px solid #000; padding: 5px;">Från</th>
+            <th style="border: 1px solid #000; padding: 5px;">Till</th>
+            <th style="border: 1px solid #000; padding: 5px;">Rast (min)</th>
+            <th style="border: 1px solid #000; padding: 5px;">Tim</th>
+            <th style="border: 1px solid #000; padding: 5px;">Projektnamn</th>
+            <th style="border: 1px solid #000; padding: 5px;">Arbetsbeskrivning</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Registros se llenarán aquí -->
+        </tbody>
+      </table>
+    `;
     
-    // Calcular horas por proyecto
-    const projectHours = {};
-    Object.entries(state.projects).forEach(([id]) => {
-        projectHours[id] = 0;
+    const tableBody = pdfExport.querySelector('#pdf-summary-table tbody');
+    let totalHours = 0;
+    
+    // Obtener registros filtrados
+    const filteredRecords = Object.entries(state.records).filter(([id, record]) => {
+      const recordDate = new Date(record.date);
+      const recordYear = recordDate.getFullYear();
+      
+      if (recordYear !== state.currentYearFilter) return false;
+      if (state.currentMonthFilter !== 'all' && 
+          (recordDate.getMonth() + 1) !== parseInt(state.currentMonthFilter)) return false;
+      if (state.currentWeekFilter !== 'all' && 
+          getWeekNumber(recordDate) !== parseInt(state.currentWeekFilter)) return false;
+      
+      return true;
     });
     
-    Object.values(state.records).forEach(record => {
-        if (record.projectId && projectHours[record.projectId] !== undefined) {
-            // Calcular horas trabajadas
-            const [startHours, startMinutes] = record.startTime.split(':').map(Number);
-            const [endHours, endMinutes] = record.endTime.split(':').map(Number);
-            const startTotalMinutes = startHours * 60 + startMinutes;
-            const endTotalMinutes = endHours * 60 + endMinutes;
-            const workedMinutes = endTotalMinutes - startTotalMinutes - record.breakTime;
-            const workedHours = workedMinutes / 60;
-            
-            projectHours[record.projectId] += workedHours;
-        }
+    // Ordenar registros por fecha
+    filteredRecords.sort((a, b) => new Date(a[1].date) - new Date(b[1].date));
+    
+    // Añadir registros a la tabla PDF
+    filteredRecords.forEach(([id, record]) => {
+      const project = state.projects[record.projectId] || { 
+        name: 'Okänd', 
+        code: '?' 
+      };
+      
+      const date = new Date(record.date);
+      const dateStr = formatDateShort(record.date);
+      const dayName = getSwedishDayName(date);
+      
+      // Calcular horas trabajadas
+      const [startHours, startMinutes] = record.startTime.split(':').map(Number);
+      const [endHours, endMinutes] = record.endTime.split(':').map(Number);
+      const startTotalMinutes = startHours * 60 + startMinutes;
+      const endTotalMinutes = endHours * 60 + endMinutes;
+      const workedMinutes = endTotalMinutes - startTotalMinutes - record.breakTime;
+      const workedHours = workedMinutes / 60;
+      
+      totalHours += workedHours;
+      
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td style="border: 1px solid #000; padding: 5px;">${dateStr}</td>
+        <td style="border: 1px solid #000; padding: 5px;">${dayName}</td>
+        <td style="border: 1px solid #000; padding: 5px;">${record.startTime}</td>
+        <td style="border: 1px solid #000; padding: 5px;">${record.endTime}</td>
+        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${record.breakTime}</td>
+        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${workedHours.toFixed(2)}</td>
+        <td style="border: 1px solid #000; padding: 5px;">${project.name}</td>
+        <td style="border: 1px solid #000; padding: 5px;">${record.notes || ''}</td>
+      `;
+      tableBody.appendChild(row);
     });
     
-    // Preparar datos del gráfico
-    const projectLabels = [];
-    const projectData = [];
-    const projectColors = [
-        'rgba(59, 130, 246, 0.7)',
-        'rgba(16, 185, 129, 0.7)',
-        'rgba(245, 158, 11, 0.7)',
-        'rgba(239, 68, 68, 0.7)',
-        'rgba(139, 92, 246, 0.7)',
-        'rgba(236, 72, 153, 0.7)',
-        'rgba(37, 99, 235, 0.7)',
-        'rgba(5, 150, 105, 0.7)'
-    ];
+    // Añadir fila de totales
+    const footerRow = document.createElement('tr');
+    footerRow.innerHTML = `
+      <td colspan="5" style="border: 1px solid #000; padding: 5px; text-align: right; font-weight: bold;">Totalt:</td>
+      <td style="border: 1px solid #000; padding: 5px; text-align: right; font-weight: bold;">${totalHours.toFixed(2)}</td>
+      <td colspan="2" style="border: 1px solid #000; padding: 5px;"></td>
+    `;
+    tableBody.appendChild(footerRow);
     
-    Object.entries(projectHours).forEach(([projectId, hours]) => {
-        const project = state.projects[projectId];
-        if (project && hours > 0) {
-            projectLabels.push(`${project.code} - ${project.name}`);
-            projectData.push(hours);
-        }
+    // Esperar a que se renderice el contenido
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Generar PDF
+    const canvas = await html2canvas(pdfExport, {
+      scale: 2,
+      useCORS: true,
+      logging: false
     });
     
-    // Solo crear el gráfico si hay datos
-    if (projectData.length > 0) {
-        new Chart(projectCtx, {
-            type: 'doughnut',
-            data: {
-                labels: projectLabels,
-                datasets: [{
-                    data: projectData,
-                    backgroundColor: projectColors,
-                    borderColor: 'white',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                    }
-                }
-            }
-        });
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgWidth = 210;
+    const pageHeight = 295;
+    const imgHeight = canvas.height * imgWidth / canvas.width;
+    
+    pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+    pdf.save(`tidrapport_${new Date().getTime()}.pdf`);
+    
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    showAlert('Error generating PDF: ' + error.message, 'error');
+  } finally {
+    // Restaurar estilos originales
+    if (pdfExport) {
+      Object.assign(pdfExport.style, originalStyles);
     }
-    
-    // Gráfico de horas semanales
-    const weeklyCanvas = document.getElementById('pdf-weekly-chart');
-    if (!weeklyCanvas) {
-        console.error('Weekly chart canvas not found');
-        return;
-    }
-    
-    const weeklyCtx = weeklyCanvas.getContext('2d');
-    
-    // Preparar datos para vista mensual
-    const { labels, data } = prepareWeeklyChartData('monthly');
-    
-    // Solo crear el gráfico si hay datos
-    if (data.length > 0) {
-        new Chart(weeklyCtx, {
-            type: 'bar',
-            data: {
-                labels,
-                datasets: [{
-                    label: translations[state.currentLanguage]['hours_per_week'],
-                    data,
-                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                    borderColor: 'rgba(59, 130, 246, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: translations[state.currentLanguage]['worked_hours']
-                        }
-                    }
-                }
-            }
-        });
-    }
+    // Restaurar contenido original
+    pdfExport.innerHTML = originalContent;
+    showLoading(false);
+  }
 }
     // Export to JSON
     function exportToJSON() {
@@ -2921,3 +2796,4 @@ function createPdfCharts() {
   </script>
 </body>
 </html>
+
