@@ -2548,159 +2548,164 @@
     }
 
     // Export to PDF
-async function exportToPDF() {
-    showLoading(true);
-
-    const pdfExport = document.getElementById('pdf-export');
-    if (!pdfExport) {
-        showAlert('PDF export container not found', 'error');
-        showLoading(false);
-        return;
-    }
-
-    // Guardar estilos originales
-    const originalStyles = {
-        position: pdfExport.style.position,
-        left: pdfExport.style.left,
-        top: pdfExport.style.top,
-        zIndex: pdfExport.style.zIndex,
-        transform: pdfExport.style.transform
-    };
-
-    try {
-        // Mostrar contenedor PDF en pantalla para renderizado
-        pdfExport.style.position = 'fixed';
-        pdfExport.style.left = '50%';
-        pdfExport.style.top = '50%';
-        pdfExport.style.transform = 'translate(-50%, -50%)';
-        pdfExport.style.zIndex = '9999';
-
-        const today = new Date();
-
-        // Formatear mes y semana
-        const year = state.currentYearFilter;
-        const month = state.currentMonthFilter === 'all'
-            ? translations[state.currentLanguage]['all_months']
-            : new Date(year, state.currentMonthFilter - 1, 1).toLocaleString(state.currentLanguage, { month: 'long' });
-
-        const week = state.currentWeekFilter === 'all'
-            ? translations[state.currentLanguage]['all_weeks']
-            : `${translations[state.currentLanguage]['week']} ${state.currentWeekFilter}`;
-
-        // Establecer info de cabecera en el PDF
-        safeSetTextContent('pdf-user-name', `${state.user.firstName} ${state.user.lastName}`);
-        safeSetTextContent('pdf-user-email', state.user.email || '');
-        safeSetTextContent('pdf-gen-date', formatDateToYMD(today));
-        safeSetTextContent('pdf-period', `${year}, ${month}, ${week}`);
-
-        const tableBody = document.querySelector('#pdf-summary-table tbody');
-        if (tableBody) tableBody.innerHTML = '';
-
-        let totalHours = 0;
-
-        const filteredRecords = Object.entries(state.records).filter(([_, record]) => {
-            const recordDate = new Date(record.date);
-            const recordYear = recordDate.getFullYear();
-
-            if (recordYear !== state.currentYearFilter) return false;
-            if (state.currentMonthFilter !== 'all' && (recordDate.getMonth() + 1) !== parseInt(state.currentMonthFilter)) return false;
-            if (state.currentWeekFilter !== 'all' && getWeekNumber(recordDate) !== parseInt(state.currentWeekFilter)) return false;
-
-            return true;
-        });
-
-        // Ordenar registros por fecha
-        filteredRecords.sort((a, b) => new Date(a[1].date) - new Date(b[1].date));
-
-        const swedishDays = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag'];
-
-        if (tableBody) {
-            filteredRecords.forEach(([_, record]) => {
-                const project = state.projects[record.projectId] || {
-                    name: translations[state.currentLanguage]['unknown'],
-                    code: '?'
-                };
-
-                const [startHours, startMinutes] = record.startTime.split(':').map(Number);
-                const [endHours, endMinutes] = record.endTime.split(':').map(Number);
-                const workedMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes) - record.breakTime;
-                const workedHours = workedMinutes / 60;
-
-                totalHours += workedHours;
-
-                const recordDate = new Date(record.date);
-                const dayName = swedishDays[recordDate.getDay()];
-                const formattedDate = formatDateToYMD(record.date);
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="border py-2 px-3">${formattedDate}</td>
-                    <td class="border py-2 px-3">${dayName}</td>
-                    <td class="border py-2 px-3">${record.startTime}</td>
-                    <td class="border py-2 px-3">${record.endTime}</td>
-                    <td class="border py-2 px-3 text-right">${record.breakTime}</td>
-                    <td class="border py-2 px-3 text-right">${workedHours.toFixed(2)}</td>
-                    <td class="border py-2 px-3">${project.code} - ${project.name}</td>
-                    <td class="border py-2 px-3">${record.description || ''}</td>
-                `;
-                tableBody.appendChild(row);
-            });
+    // Export to PDF
+    async function exportToPDF() {
+        showLoading(true);
+    
+        const pdfExport = document.getElementById('pdf-export');
+        if (!pdfExport) {
+            showAlert('PDF export container not found', 'error');
+            showLoading(false);
+            return;
         }
-
-        safeSetTextContent('pdf-total-hours', totalHours.toFixed(2));
-
-        // Esperar para renderizar antes de capturar
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        const canvas = await html2canvas(pdfExport, {
-            scale: 2,
-            useCORS: true,
-            logging: false
-        });
-
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgWidth = 210;
-        const pageHeight = 295;
-        const imgHeight = canvas.height * imgWidth / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-
-        while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
+    
+        // Guardar estilos originales
+        const originalStyles = {
+            position: pdfExport.style.position,
+            left: pdfExport.style.left,
+            top: pdfExport.style.top,
+            zIndex: pdfExport.style.zIndex,
+            transform: pdfExport.style.transform,
+            visibility: pdfExport.style.visibility
+        };
+    
+        try {
+            // 1. Agregar encabezado empresarial
+            const companyHeader = document.createElement('div');
+            companyHeader.id = 'pdf-company-header';
+            companyHeader.innerHTML = `
+                <p>Köpmangatan 5, plan 10</p>
+                <p>151 71 Södertälje</p>
+                <p>Tel 079-079 00 45</p>
+                <p>Organisationsnummer: 559096-5983</p>
+            `;
+            pdfExport.insertBefore(companyHeader, pdfExport.firstChild);
+    
+            // 2. Preparar contenedor para renderizado
+            pdfExport.style.position = 'fixed';
+            pdfExport.style.left = '50%';
+            pdfExport.style.top = '50%';
+            pdfExport.style.transform = 'translate(-50%, -50%)';
+            pdfExport.style.zIndex = '9999';
+            pdfExport.style.visibility = 'visible';
+    
+            const today = new Date();
+    
+            // 3. Actualizar información de cabecera
+            safeSetTextContent('pdf-user-name', `${state.user.firstName} ${state.user.lastName}`);
+            safeSetTextContent('pdf-user-email', state.user.email || '');
+            safeSetTextContent('pdf-gen-date', formatDateToYMD(today));
+            
+            // 4. Actualizar período
+            const year = state.currentYearFilter;
+            const month = state.currentMonthFilter === 'all'
+                ? translations[state.currentLanguage]['all_months']
+                : new Date(year, state.currentMonthFilter - 1, 1).toLocaleString(state.currentLanguage, { month: 'long' });
+            
+            const week = state.currentWeekFilter === 'all'
+                ? translations[state.currentLanguage]['all_weeks']
+                : `${translations[state.currentLanguage]['week']} ${state.currentWeekFilter}`;
+            
+            safeSetTextContent('pdf-period', `${year}, ${month}, ${week}`);
+    
+            // 5. Generar tabla
+            const tableBody = document.querySelector('#pdf-summary-table tbody');
+            if (tableBody) tableBody.innerHTML = '';
+    
+            let totalHours = 0;
+            const swedishDays = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag'];
+    
+            const filteredRecords = Object.entries(state.records)
+                .filter(([_, record]) => {
+                    const recordDate = new Date(record.date);
+                    const recordYear = recordDate.getFullYear();
+                    
+                    if (recordYear !== state.currentYearFilter) return false;
+                    if (state.currentMonthFilter !== 'all' && (recordDate.getMonth() + 1) !== parseInt(state.currentMonthFilter)) return false;
+                    if (state.currentWeekFilter !== 'all' && getWeekNumber(recordDate) !== parseInt(state.currentWeekFilter)) return false;
+                    
+                    return true;
+                })
+                .sort((a, b) => new Date(a[1].date) - new Date(b[1].date));
+    
+            if (tableBody) {
+                filteredRecords.forEach(([_, record]) => {
+                    const project = state.projects[record.projectId] || {
+                        name: translations[state.currentLanguage]['unknown'],
+                        code: '?'
+                    };
+    
+                    const [startHours, startMinutes] = record.startTime.split(':').map(Number);
+                    const [endHours, endMinutes] = record.endTime.split(':').map(Number);
+                    const workedMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes) - record.breakTime;
+                    const workedHours = workedMinutes / 60;
+                    totalHours += workedHours;
+    
+                    const recordDate = new Date(record.date);
+                    const dayName = swedishDays[recordDate.getDay()];
+                    const formattedDate = formatDateToYMD(record.date);
+    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="border py-2 px-3">${formattedDate}</td>
+                        <td class="border py-2 px-3">${dayName}</td>
+                        <td class="border py-2 px-3">${record.startTime}</td>
+                        <td class="border py-2 px-3">${record.endTime}</td>
+                        <td class="border py-2 px-3 text-right">${record.breakTime}</td>
+                        <td class="border py-2 px-3 text-right">${workedHours.toFixed(2).replace('.', ',')}</td>
+                        <td class="border py-2 px-3">${project.name}${project.code && project.code !== '?' ? ` (${project.code})` : ''}</td>
+                        <td class="border py-2 px-3">${record.description || ''}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+    
+            safeSetTextContent('pdf-total-hours', totalHours.toFixed(2).replace('.', ','));
+    
+            // 6. Esperar renderizado y generar PDF
+            await new Promise(resolve => setTimeout(resolve, 500)); // Más tiempo para render
+    
+            const canvas = await html2canvas(pdfExport, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#FFFFFF'
+            });
+    
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgWidth = 210;
+            const pageHeight = 297; // Altura estándar A4
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            let heightLeft = imgHeight;
+            let position = 0;
+    
             pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
             heightLeft -= pageHeight;
+    
+            // Páginas adicionales
+            while (heightLeft > -pageHeight) {
+                position = heightLeft - imgHeight + 10; // Ajuste de superposición
+                pdf.addPage();
+                pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+    
+            pdf.save(`reporte_horas_${today.getFullYear()}_${today.getMonth() + 1}_${today.getDate()}.pdf`);
+            
+        } catch (error) {
+            console.error('Error al generar PDF:', error);
+            showAlert('Error al generar el PDF: ' + error.message, 'error');
+        } finally {
+            // 7. Limpieza final
+            const header = document.getElementById('pdf-company-header');
+            if (header) header.remove();
+            
+            Object.assign(pdfExport.style, originalStyles);
+            showLoading(false);
         }
-
-        pdf.save(`reporte_horas_${today.getFullYear()}_${today.getMonth() + 1}_${today.getDate()}.pdf`);
-    } catch (error) {
-        console.error('Error al generar PDF:', error);
-        showAlert('Error al generar el PDF: ' + error.message, 'error');
-    } finally {
-        // Restaurar estilos
-        Object.assign(pdfExport.style, originalStyles);
-        showLoading(false);
     }
-}
-
-// Utilidad para texto seguro
-function safeSetTextContent(elementId, text) {
-    const element = document.getElementById(elementId);
-    if (element) element.textContent = text;
-}
-
-// Formatear como "YY-MM-DD"
-function formatDateToYMD(dateInput) {
-    const date = new Date(dateInput);
-    const year = String(date.getFullYear()).slice(-2);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
 
     // Export to JSON
     function exportToJSON() {
@@ -2776,6 +2781,7 @@ function formatDateToYMD(dateInput) {
   </script>
 </body>
 </html>
+
 
 
 
