@@ -2673,12 +2673,16 @@ async function exportToPDF() {
         <td style="border: 1px solid #000; padding: 5px;">${dayName}</td>
         <td style="border: 1px solid #000; padding: 5px;">${record.startTime}</td>
         <td style="border: 1px solid #000; padding: 5px;">${record.endTime}</td>
-        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${(record.breakTime / 60).toFixed(2)}</td>
+        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${record.breakTime}</td>
         <td style="border: 1px solid #000; padding: 5px; text-align: right;">${workedHours.toFixed(2)}</td>
-        <td style="border: 1px solid #000; padding: 5px;">${project.name}</td>
+        <td style="border: 1px solid #000; padding: 5px;">
+          ${project.name}<br>
+          <small style="color: #555;">${project.code}</small>
+        </td>
         <td style="border: 1px solid #000; padding: 5px;">${record.notes || ''}</td>
       `;
       tableBody.appendChild(row);
+
     });
     
     // Añadir fila de totales
@@ -2796,5 +2800,6 @@ async function exportToPDF() {
   </script>
 </body>
 </html>
+
 
 
