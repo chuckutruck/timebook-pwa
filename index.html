@@ -2543,7 +2543,6 @@
         });
     }
 
-    // Export to PDF
 // Función para formatear fecha en formato yy-mm-dd
 function formatDateShort(dateString) {
   const date = new Date(dateString);
@@ -2570,6 +2569,8 @@ async function exportToPDF() {
     return;
   }
   
+  // Guardar contenido original ANTES de modificarlo
+  const originalContent = pdfExport.innerHTML;
   const originalStyles = {
     position: pdfExport.style.position,
     left: pdfExport.style.left,
@@ -2682,7 +2683,6 @@ async function exportToPDF() {
         <td style="border: 1px solid #000; padding: 5px;">${record.notes || ''}</td>
       `;
       tableBody.appendChild(row);
-
     });
     
     // Añadir fila de totales
@@ -2720,12 +2720,13 @@ async function exportToPDF() {
     // Restaurar estilos originales
     if (pdfExport) {
       Object.assign(pdfExport.style, originalStyles);
+      // Restaurar contenido original también aquí
+      pdfExport.innerHTML = originalContent;
     }
-    // Restaurar contenido original
-    pdfExport.innerHTML = originalContent;
     showLoading(false);
   }
 }
+
     // Export to JSON
     function exportToJSON() {
       const data = {
@@ -2800,6 +2801,7 @@ async function exportToPDF() {
   </script>
 </body>
 </html>
+
 
 
 
