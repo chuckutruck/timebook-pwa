@@ -662,6 +662,14 @@
                 </div>
               </div>
               
+              <div>
+              <label for="project-filter" class="form-label" data-i18n="project">Proyecto</label>
+              <select id="project-filter" class="form-control">
+                <option value="all" data-i18n="all_projects">Todos los Proyectos</option>
+                <!-- Se cargarán dinámicamente -->
+              </select>
+            </div>
+
               <!-- Entries Container -->
               <div id="entries-container" class="mt-4">
                 <!-- Entries will be added dynamically -->
@@ -1695,58 +1703,76 @@
     }
 
     // Load projects from state
-    function loadProjects() {
-      const projectSelect = document.getElementById('project');
-      const editProjectSelect = document.getElementById('edit-project');
-      const projectsList = document.getElementById('projects-list');
-      
-      // Clear existing options/items
-      projectSelect.innerHTML = '';
-      editProjectSelect.innerHTML = '';
-      projectsList.innerHTML = '';
-      
-      // Add default option
-      const defaultOption = document.createElement('option');
-      defaultOption.value = '';
-      defaultOption.textContent = translations[state.currentLanguage]['select_project'];
-      projectSelect.appendChild(defaultOption);
-      
-      const editDefaultOption = document.createElement('option');
-      editDefaultOption.value = '';
-      editDefaultOption.textContent = translations[state.currentLanguage]['select_project'];
-      editProjectSelect.appendChild(editDefaultOption);
-      
-      // Add projects
-      Object.entries(state.projects).forEach(([id, project]) => {
-        // Add to select
-        const option = document.createElement('option');
-        option.value = id;
-        option.textContent = `${project.code} - ${project.name}`;
-        projectSelect.appendChild(option);
-        
-        // Add to edit select
-        const editOption = option.cloneNode(true);
-        editProjectSelect.appendChild(editOption);
-        
-        // Add to projects list
-        const projectItem = document.createElement('div');
-        projectItem.className = 'flex justify-between items-center p-2 border-b';
-        projectItem.innerHTML = `
-          <div>
-            <span class="font-medium">${project.name}</span>
-            <span class="text-sm text-gray-500 ml-2">${project.code}</span>
-          </div>
-          <div>
-            <button class="text-gray-500 hover:text-gray-700 mr-2 edit-project" data-id="${id}">
-              <i class="fas fa-pencil-alt"></i>
-            </button>
-            <button class="text-red-500 hover:text-red-700 delete-project" data-id="${id}">
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
-        `;
-        projectsList.appendChild(projectItem);
-      });
+  function loadProjects() {
+    const projectSelect = document.getElementById('project');
+    const editProjectSelect = document.getElementById('edit-project');
+    const projectsList = document.getElementById('projects-list');
+    const projectFilterSelect = document.getElementById('project-filter'); // Nuevo filtro
+  
+    // Clear existing options/items
+    projectSelect.innerHTML = '';
+    editProjectSelect.innerHTML = '';
+    projectsList.innerHTML = '';
+    if (projectFilterSelect) {
+      projectFilterSelect.innerHTML = '';
+    }
+  
+    // Add default option
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = translations[state.currentLanguage]['select_project'];
+    projectSelect.appendChild(defaultOption);
+  
+    const editDefaultOption = document.createElement('option');
+    editDefaultOption.value = '';
+    editDefaultOption.textContent = translations[state.currentLanguage]['select_project'];
+    editProjectSelect.appendChild(editDefaultOption);
+  
+    // Add default for project filter
+    if (projectFilterSelect) {
+      const filterDefaultOption = document.createElement('option');
+      filterDefaultOption.value = 'all';
+      filterDefaultOption.textContent = translations[state.currentLanguage]['all_projects'] || 'Todos los Proyectos';
+      projectFilterSelect.appendChild(filterDefaultOption);
+    }
+  
+    // Add projects
+    Object.entries(state.projects).forEach(([id, project]) => {
+      // For time entry form
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = `${project.code} - ${project.name}`;
+      projectSelect.appendChild(option);
+  
+      // For edit form
+      const editOption = option.cloneNode(true);
+      editProjectSelect.appendChild(editOption);
+  
+      // For project filter
+      if (projectFilterSelect) {
+        const filterOption = option.cloneNode(true);
+        projectFilterSelect.appendChild(filterOption);
+      }
+  
+      // For projects list
+      const projectItem = document.createElement('div');
+      projectItem.className = 'flex justify-between items-center p-2 border-b';
+      projectItem.innerHTML = `
+        <div>
+          <span class="font-medium">${project.name}</span>
+          <span class="text-sm text-gray-500 ml-2">${project.code}</span>
+        </div>
+        <div>
+          <button class="text-gray-500 hover:text-gray-700 mr-2 edit-project" data-id="${id}">
+            <i class="fas fa-pencil-alt"></i>
+          </button>
+          <button class="text-red-500 hover:text-red-700 delete-project" data-id="${id}">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      `;
+      projectsList.appendChild(projectItem);
+    });
       
       // Add event listeners to edit/delete buttons
       document.querySelectorAll('.edit-project').forEach(btn => {
@@ -1924,26 +1950,51 @@
       const yearFilter = document.getElementById('year-filter');
       const monthFilter = document.getElementById('month-filter');
       const weekFilter = document.getElementById('week-filter');
-      
+      const projectFilter = document.getElementById('project-filter'); // Nuevo filtro de proyecto
+    
       state.currentYearFilter = parseInt(yearFilter.value);
       state.currentMonthFilter = monthFilter.value;
       state.currentWeekFilter = weekFilter.value;
-      
-      // Filter records based on selection
+      state.currentProjectFilter = projectFilter.value; // Guardamos el proyecto seleccionado
+    
+      // Filtrar registros según los filtros seleccionados
       let filteredRecords = Object.entries(state.records).filter(([id, record]) => {
         const recordDate = new Date(record.date);
         const recordYear = recordDate.getFullYear();
-        
+    
+        // Año
         if (recordYear !== state.currentYearFilter) {
           return false;
         }
-        
+    
+        // Mes
         if (state.currentMonthFilter !== 'all') {
-          const recordMonth = recordDate.getMonth() + 1; // getMonth() returns 0-11
+          const recordMonth = recordDate.getMonth() + 1; // getMonth() devuelve 0-11
           if (parseInt(state.currentMonthFilter) !== recordMonth) {
             return false;
           }
         }
+    
+        // Semana
+        if (state.currentWeekFilter !== 'all') {
+          const recordWeek = getWeekNumber(recordDate); // asumiendo que ya tienes una función getWeekNumber()
+          if (parseInt(state.currentWeekFilter) !== recordWeek) {
+            return false;
+          }
+        }
+    
+        // Proyecto
+        if (state.currentProjectFilter !== 'all') {
+          if (record.projectId !== state.currentProjectFilter) {
+            return false;
+          }
+        }
+    
+        return true;
+      });
+    
+      renderRecords(filteredRecords); // Asumiendo que esta función muestra los registros filtrados
+    }
         
         if (state.currentWeekFilter !== 'all') {
           // Get ISO week number (1-53)
@@ -2801,6 +2852,7 @@ async function exportToPDF() {
   </script>
 </body>
 </html>
+
 
 
 
