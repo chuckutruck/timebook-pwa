@@ -637,7 +637,7 @@
             
             <div id="records-content" class="p-4">
               <!-- Filters -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 <div>
                   <label for="year-filter" class="form-label" data-i18n="year">Año</label>
                   <select id="year-filter" class="form-control">
@@ -658,6 +658,14 @@
                   <select id="week-filter" class="form-control">
                     <option value="all" data-i18n="all_weeks">Todas las Semanas</option>
                     <!-- Weeks will be added dynamically -->
+                  </select>
+                </div>
+                
+                <div>
+                  <label for="project-filter" class="form-label" data-i18n="project">Proyecto</label>
+                  <select id="project-filter" class="form-control">
+                    <option value="all" data-i18n="all_projects">Todos los Proyectos</option>
+                    <!-- Projects will be added dynamically -->
                   </select>
                 </div>
               </div>
@@ -970,6 +978,7 @@
       currentYearFilter: new Date().getFullYear(),
       currentMonthFilter: 'all',
       currentWeekFilter: 'all',
+      currentProjectFilter: 'all', // Nuevo campo para el filtro de proyecto
       isOnline: true,
       currentLanguage: 'es'
     };
@@ -996,6 +1005,7 @@
         'end_time': 'Hora de Fin',
         'break_time': 'Tiempo de Descanso (minutos)',
         'notes': 'Notas',
+        'all_projects': 'Todos los Proyectos',
         'coworkers': 'Compañeros',
         'coworkers_placeholder': 'Juan, María, etc.',
         'cancel': 'Cancelar',
@@ -1068,6 +1078,7 @@
         'end_time': 'End Time',
         'break_time': 'Break Time (minutes)',
         'notes': 'Notes',
+        'all_projects': 'All Projects',
         'coworkers': 'Coworkers',
         'coworkers_placeholder': 'John, Jane, etc.',
         'cancel': 'Cancel',
@@ -1140,6 +1151,7 @@
         'end_time': 'Sluttid',
         'break_time': 'Rasttid (minuter)',
         'notes': 'Anteckningar',
+        'all_projects': 'Alla projekt',
         'coworkers': 'Kollegor',
         'coworkers_placeholder': 'Anna, Erik, etc.',
         'cancel': 'Avbryt',
@@ -1917,17 +1929,36 @@
         option.textContent = `${translations[state.currentLanguage]['week']} ${i}`;
         weekFilter.appendChild(option);
       }
+      
+      // Populate project filter
+      const projectFilter = document.getElementById('project-filter');
+      projectFilter.innerHTML = '';
+      
+      const allProjectsOption = document.createElement('option');
+      allProjectsOption.value = 'all';
+      allProjectsOption.textContent = translations[state.currentLanguage]['all_projects'];
+      projectFilter.appendChild(allProjectsOption);
+      
+      // Add projects
+      Object.entries(state.projects).forEach(([id, project]) => {
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = `${project.code} - ${project.name}`;
+        projectFilter.appendChild(option);
+      });
     }
 
-    // Filter records based on selected filters
+    // Actualización de la función filterRecords para incluir el filtro por proyecto
     function filterRecords() {
       const yearFilter = document.getElementById('year-filter');
       const monthFilter = document.getElementById('month-filter');
       const weekFilter = document.getElementById('week-filter');
+      const projectFilter = document.getElementById('project-filter');
       
       state.currentYearFilter = parseInt(yearFilter.value);
       state.currentMonthFilter = monthFilter.value;
       state.currentWeekFilter = weekFilter.value;
+      state.currentProjectFilter = projectFilter.value;
       
       // Filter records based on selection
       let filteredRecords = Object.entries(state.records).filter(([id, record]) => {
@@ -1939,19 +1970,46 @@
         }
         
         if (state.currentMonthFilter !== 'all') {
-          const recordMonth = recordDate.getMonth() + 1; // getMonth() returns 0-11
+          const recordMonth = recordDate.getMonth() + 1;
           if (parseInt(state.currentMonthFilter) !== recordMonth) {
             return false;
           }
         }
         
         if (state.currentWeekFilter !== 'all') {
-          // Get ISO week number (1-53)
           const recordWeek = getWeekNumber(recordDate);
           if (parseInt(state.currentWeekFilter) !== recordWeek) {
             return false;
           }
         }
+        
+        if (state.currentProjectFilter !== 'all') {
+          if (record.projectId !== state.currentProjectFilter) {
+            return false;
+          }
+        }
+        
+        return true;
+      });
+      
+      // Sort records by date (newest first)
+      filteredRecords.sort((a, b) => new Date(b[1].date) - new Date(a[1].date));
+      
+      // Display filtered records
+      displayRecords(filteredRecords);
+      updateSummaryTable(filteredRecords);
+    }
+
+    // Actualización de setupEventListeners para incluir el nuevo filtro
+    function setupEventListeners() {
+      // ... otros event listeners ...
+      
+      // Records history
+      document.getElementById('toggle-records').addEventListener('click', toggleRecordsVisibility);
+      document.getElementById('year-filter').addEventListener('change', filterRecords);
+      document.getElementById('month-filter').addEventListener('change', filterRecords);
+      document.getElementById('week-filter').addEventListener('change', filterRecords);
+      document.getElementById('project-filter').addEventListener('change', filterRecords); // Nuevo event listener
         
         return true;
       });
@@ -2801,3 +2859,4 @@ async function exportToPDF() {
   </script>
 </body>
 </html>
+
